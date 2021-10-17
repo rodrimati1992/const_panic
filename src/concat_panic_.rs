@@ -18,8 +18,7 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     }
 
     lengths! {
-        128,
-        1024,
+        256,
         4096;
         32768
     }
@@ -48,13 +47,25 @@ macro_rules! write_to_buffer {
         'outer: while let [mut outer, ref nargs @ ..] = args {
             while let [arg, nouter @ ..] = outer {
                 let rem_space = $capacity - $len;
-                let (mut string, was_truncated) = arg.string(rem_space);
+                let (mut lpad, mut rpad, mut string, was_truncated) = arg.string(rem_space);
+
+                while lpad != 0 {
+                    $buffer[$len] = b' ';
+                    $len += 1;
+                    lpad -= 1;
+                }
 
                 while let [byte, ref rem @ ..] = *string {
                     $buffer[$len] = byte;
                     $len += 1;
 
                     string = rem;
+                }
+
+                while rpad != 0 {
+                    $buffer[$len] = b' ';
+                    $len += 1;
+                    rpad -= 1;
                 }
 
                 if let WasTruncated::Yes = was_truncated {

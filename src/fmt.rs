@@ -8,7 +8,7 @@ pub trait PanicFmt {
     type Kind;
 
     /// The length of the array returned in `Self::to_panicvals`.
-    const PV_LEN: usize;
+    const PV_COUNT: usize;
 
     const PROOF: IsPanicFmt<Self, Self::This, Self::Kind> = IsPanicFmt::NEW;
 }
@@ -16,12 +16,12 @@ pub trait PanicFmt {
 impl<'a, T: PanicFmt + ?Sized> PanicFmt for &'a T {
     type This = T::This;
     type Kind = T::Kind;
-    const PV_LEN: usize = T::PV_LEN;
+    const PV_COUNT: usize = T::PV_COUNT;
 }
 
-pub struct StdType;
+pub struct IsStdType;
 
-pub struct CustomType;
+pub struct IsCustomType;
 
 pub struct IsPanicFmt<S: ?Sized, T: ?Sized, K> {
     pub self_: PhantomData<fn() -> S>,
@@ -45,13 +45,13 @@ impl<S: ?Sized, T: ?Sized, K> IsPanicFmt<S, T, K> {
     }
 }
 
-impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, StdType> {
+impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsStdType> {
     pub const fn coerce(self, x: &T) -> Wrapper<&T> {
         Wrapper(x)
     }
 }
 
-impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, CustomType> {
+impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsCustomType> {
     pub const fn coerce(self, x: &T) -> &T {
         x
     }
@@ -61,5 +61,22 @@ impl<S: ?Sized, T: ?Sized, K> Copy for IsPanicFmt<S, T, K> {}
 impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
     fn clone(&self) -> Self {
         *self
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone)]
+#[non_exhaustive]
+pub struct FmtArg {
+    pub indentation: u8,
+}
+
+impl FmtArg {
+    pub const NEW: Self = Self { indentation: 0 };
+
+    pub const fn add_indentation(mut self, indentation: u8) -> Self {
+        self.indentation += indentation;
+        self
     }
 }

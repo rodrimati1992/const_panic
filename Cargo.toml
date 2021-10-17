@@ -7,3 +7,7 @@ license = "Zlib"
 description = "Basic const panic with Display-formatting, coming before Rust 1.57.0."
 
 [dependencies]
+
+[features]
+default = ["all_items"]
+all_items = []
