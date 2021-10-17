@@ -1,3 +1,34 @@
+#[derive(Copy, Clone)]
+pub(crate) struct ShortArrayVec<const LEN: usize> {
+    pub(crate) start: u8,
+    pub(crate) buffer: [u8; LEN],
+}
+
+impl<const LEN: usize> ShortArrayVec<LEN> {
+    pub(crate) const fn get(&self) -> &[u8] {
+        let mut rem = self.start;
+        let mut out: &[u8] = &self.buffer;
+        while rem != 0 {
+            if let [_, rem @ ..] = out {
+                out = rem;
+            }
+            rem -= 1;
+        }
+        out
+    }
+
+    pub(crate) const fn len(&self) -> usize {
+        LEN - self.start as usize
+    }
+}
+
+#[derive(Copy, Clone)]
+pub(crate) enum Sign {
+    Negative,
+    Positive,
+}
+
+#[derive(Copy, Clone)]
 pub(crate) enum WasTruncated {
     Yes,
     No,
@@ -22,11 +53,4 @@ pub(crate) const fn truncate_str(mut bytes: &[u8], truncate_to: usize) -> (&[u8]
 
         (bytes, WasTruncated::Yes)
     }
-}
-
-pub(crate) const fn trim_trailing_nul(mut bytes: &[u8]) -> &[u8] {
-    while let [ref rem @ .., 0] = *bytes {
-        bytes = rem;
-    }
-    bytes
 }

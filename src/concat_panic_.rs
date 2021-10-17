@@ -1,12 +1,9 @@
-use crate::{
-    panic_arg::PanicArg,
-    str_utils::{self, WasTruncated},
-};
+use crate::{panic_val::PanicVal, utils::WasTruncated};
 
 #[cold]
 #[inline(never)]
 #[track_caller]
-pub const fn concat_panic(args: &[&[PanicArg<'_>]]) -> ! {
+pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     let len = compute_length(args);
 
     macro_rules! lengths {
@@ -28,7 +25,7 @@ pub const fn concat_panic(args: &[&[PanicArg<'_>]]) -> ! {
     }
 }
 
-const fn compute_length(mut args: &[&[PanicArg<'_>]]) -> usize {
+const fn compute_length(mut args: &[&[PanicVal<'_>]]) -> usize {
     let mut len = 0usize;
 
     while let [mut outer, ref nargs @ ..] = args {
@@ -73,7 +70,7 @@ macro_rules! write_to_buffer {
 #[cold]
 #[inline(never)]
 #[track_caller]
-const fn panic_inner<const LEN: usize>(args: &[&[PanicArg<'_>]]) -> ! {
+const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> ! {
     write_to_buffer! {
         args,
         buffer,
@@ -81,12 +78,8 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicArg<'_>]]) -> ! {
         LEN,
     }
 
-    // apparently this isn't necessary?
-    // it prints the same on linux anyway
-    let trimmed = str_utils::trim_trailing_nul(&buffer);
-
     unsafe {
-        let str = core::str::from_utf8_unchecked(&trimmed);
+        let str = core::str::from_utf8_unchecked(&buffer);
         panic!("{}", str)
     }
 }
