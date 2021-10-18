@@ -6,7 +6,7 @@ use crate::{
 #[non_exhaustive]
 #[derive(Copy, Clone)]
 pub struct PanicVal<'a> {
-    var: PanicVariant<'a>,
+    pub(crate) var: PanicVariant<'a>,
     leftpad: u8,
     rightpad: u8,
 }
@@ -16,10 +16,23 @@ pub struct PanicVal<'a> {
 pub(crate) enum PanicVariant<'a> {
     Str(&'a str),
     Int(IntVal),
+    #[cfg(feature = "all_items")]
+    Slice(crate::slice_stuff::Slice<'a>),
 }
 
 impl<'a> PanicVal<'a> {
-    pub const EMPTY: Self = PanicVal::from_str("", FmtArg::NEW);
+    pub const EMPTY: Self = PanicVal::from_str("", FmtArg::DISPLAY);
+
+    /// Constructs a PanicVal which outputs the contents of `string` verbatim.
+    ///
+    /// Equivalent to `PanicVal::from_str(string, FmtArg::DISPLAY)`
+    pub const fn write_str(string: &'a str) -> Self {
+        PanicVal {
+            var: PanicVariant::Str(string),
+            leftpad: 0,
+            rightpad: 0,
+        }
+    }
 
     /// How many spaces are printed before this
     pub const fn leftpad(&self) -> u8 {
@@ -38,7 +51,7 @@ impl<'a> PanicVal<'a> {
         }
     }
 
-    pub(crate) const fn string(
+    pub(crate) const fn __string(
         &self,
         mut truncate_to: usize,
     ) -> (usize, usize, &[u8], WasTruncated) {
@@ -52,21 +65,14 @@ impl<'a> PanicVal<'a> {
         let (string, was_trunc) = match &self.var {
             PanicVariant::Str(str) => truncate_str(str.as_bytes(), truncate_to),
             PanicVariant::Int(int) => truncate_str(int.0.get(), truncate_to),
+            #[cfg(feature = "all_items")]
+            PanicVariant::Slice(_) => panic!("this method should only be called on non-slices"),
         };
         truncate_to -= string.len();
 
         let rightpad = crate::utils::min_usize(self.rightpad as usize, truncate_to);
 
         (leftpad, rightpad, string, was_trunc)
-    }
-
-    pub(crate) const fn len(&self) -> usize {
-        let var_len = match self.var {
-            PanicVariant::Str(str) => str.len(),
-            PanicVariant::Int(int) => int.0.len(),
-        };
-
-        var_len + self.leftpad as usize
     }
 }
 

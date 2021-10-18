@@ -73,7 +73,9 @@ pub struct FmtArg {
 }
 
 impl FmtArg {
-    pub const NEW: Self = Self { indentation: 0 };
+    pub const DISPLAY: Self = Self { indentation: 0 };
+
+    pub const DEBUG: Self = Self { indentation: 0 };
 
     pub const fn add_indentation(mut self, indentation: u8) -> Self {
         self.indentation += indentation;

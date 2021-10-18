@@ -60,12 +60,28 @@ macro_rules! impl_panicfmt_panicarg {
 
 macro_rules! impl_panicfmt_int {
     ($panic_arg_ctor:ident, $intarg_contructor:ident, $ty:ty) => {
-        impl_panicfmt_panicarg! {
-            fn $panic_arg_ctor[](this: $ty, f) -> PanicVal<'static> {
+        impl PanicVal<'_> {
+            pub const fn $panic_arg_ctor(this: $ty, f: FmtArg) -> PanicVal<'static> {
                 PanicVal::__new(
                     PanicVariant::Int(IntVal::$intarg_contructor(this as _, f)),
                     f,
                 )
+            }
+        }
+
+        impl PanicFmt for $ty {
+            type This = Self;
+            type Kind = crate::fmt::IsStdType;
+
+            const PV_COUNT: usize = 1;
+        }
+
+        impl<'s> Wrapper<&'s $ty> {
+            pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'static>; 1] {
+                [PanicVal::$panic_arg_ctor(*self.0, f)]
+            }
+            pub const fn to_panicval(self: Self, f: FmtArg) -> PanicVal<'static> {
+                PanicVal::$panic_arg_ctor(*self.0, f)
             }
         }
     };
@@ -86,8 +102,8 @@ impl_panicfmt_int! {from_i128, from_i128, i128}
 impl_panicfmt_int! {from_isize, from_i128, isize}
 
 impl_panicfmt_panicarg! {
-    fn from_bool[](this: bool, f) -> PanicVal<'static> {
-        PanicVal::from_str(if this { "true" } else { "false" }, f)
+    fn from_bool[](this: bool, _f) -> PanicVal<'static> {
+        PanicVal::write_str(if this { "true" } else { "false" })
     }
 }
 

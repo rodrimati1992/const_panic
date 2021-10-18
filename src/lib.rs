@@ -1,8 +1,16 @@
+#[macro_use]
+mod macros;
+
 mod concat_panic_;
 pub mod fmt;
-mod macros;
+#[cfg(feature = "all_items")]
+mod non_basic_utils;
 mod panic_val;
 mod utils;
+
+#[cfg(feature = "all_items")]
+mod slice_stuff;
+
 mod wrapper;
 
 mod fmt_impls {
@@ -18,8 +26,8 @@ pub use crate::{
 
 #[doc(hidden)]
 pub mod __ {
-    pub use crate::{
-        fmt::{FmtArg, PanicFmt},
-        utils::{flatten_panicvals, panicvals_id},
-    };
+    pub use crate::fmt::{FmtArg, PanicFmt};
+
+    #[cfg(feature = "all_items")]
+    pub use crate::non_basic_utils::{flatten_panicvals, panicvals_id};
 }

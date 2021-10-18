@@ -4,73 +4,102 @@ use crate::{panic_val::PanicVal, utils::WasTruncated};
 #[inline(never)]
 #[track_caller]
 pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
-    let len = compute_length(args);
+    // The panic message capacity starts small and gets larger each time,
+    // so that platforms with smaller stacks can call this at runtime.
+    //
+    // Also, given that most(?) panic messages are smaller than 1024 bytes long,
+    // it's not going to be any less efficient in the common case.
+    if let Err(_) = panic_inner::<1024>(args) {}
 
-    macro_rules! lengths {
-        ($($length: expr),*; $max_length:expr) => (
-            match () {
-                $(
-                    _ if len < $length => panic_inner::<$length>(args),
-                )*
-                _ => panic_inner::<$max_length>(args)
-            }
-        )
-    }
+    if let Err(_) = panic_inner::<{ 1024 * 6 }>(args) {}
 
-    lengths! {
-        256,
-        4096;
-        32768
+    match panic_inner::<MAX_PANIC_MSG_LEN>(args) {
+        Ok(x) => match x {},
+        Err(_) => panic!(
+            "\
+            unreachable:\n\
+            the `write_panicval_to_buffer` macro must not return Err when \
+            $capacity == $max_capacity\
+        "
+        ),
     }
 }
 
-const fn compute_length(mut args: &[&[PanicVal<'_>]]) -> usize {
-    let mut len = 0usize;
+// this should probably be smaller on platforms where this
+// const fn is called at runtime, and the stack is finy.
+const MAX_PANIC_MSG_LEN: usize = 32768;
 
-    while let [mut outer, ref nargs @ ..] = args {
-        while let [arg, nouter @ ..] = outer {
-            len += arg.len();
-            outer = nouter;
+macro_rules! write_panicval_to_buffer {
+    (
+        $outer_label:lifetime,
+        $buffer:ident,
+        $len:ident,
+        ($capacity:expr, $max_capacity:expr),
+        $panicval:expr
+        $(,)*
+    ) => {
+        let rem_space = $capacity - $len;
+        let arg = $panicval;
+        let (mut lpad, mut rpad, mut string, was_truncated) = arg.__string(rem_space);
+
+        while lpad != 0 {
+            __write_array! {$buffer, $len, b' '}
+            lpad -= 1;
         }
-        args = nargs;
-    }
 
-    len
+        while let [byte, ref rem @ ..] = *string {
+            __write_array! {$buffer, $len, byte}
+            string = rem;
+        }
+
+        while rpad != 0 {
+            __write_array! {$buffer, $len, b' '}
+            rpad -= 1;
+        }
+
+        if let WasTruncated::Yes = was_truncated {
+            if $capacity < $max_capacity {
+                return Err(NotEnoughSpace);
+            } else {
+                break $outer_label;
+            }
+        }
+    };
 }
 
 macro_rules! write_to_buffer {
-    ($args:ident, $buffer:ident, $len:ident, $capacity:expr $(,)*) => {
+    ($args:ident, $buffer:ident, $len:ident, $wptb_args:tt $(,)*) => {
         let mut $buffer = [0u8; LEN];
         let mut $len = 0usize;
 
         let mut args = $args;
         'outer: while let [mut outer, ref nargs @ ..] = args {
             while let [arg, nouter @ ..] = outer {
-                let rem_space = $capacity - $len;
-                let (mut lpad, mut rpad, mut string, was_truncated) = arg.string(rem_space);
+                match arg.var {
+                    #[cfg(feature = "all_items")]
+                    crate::panic_val::PanicVariant::Slice(slice) => {
+                        let mut iter = slice.iter();
 
-                while lpad != 0 {
-                    $buffer[$len] = b' ';
-                    $len += 1;
-                    lpad -= 1;
+                        'iter: loop {
+                            let (two_args, niter) = iter.next();
+
+                            let mut two_args: &[_] = &two_args;
+                            while let [arg, ntwo_args @ ..] = two_args {
+                                write_panicval_to_buffer! {'outer, $buffer, $len, $wptb_args, arg}
+                                two_args = ntwo_args;
+                            }
+
+                            match niter {
+                                Some(x) => iter = x,
+                                None => break 'iter,
+                            }
+                        }
+                    }
+                    _ => {
+                        write_panicval_to_buffer! {'outer, $buffer, $len, $wptb_args, arg}
+                    }
                 }
 
-                while let [byte, ref rem @ ..] = *string {
-                    $buffer[$len] = byte;
-                    $len += 1;
-
-                    string = rem;
-                }
-
-                while rpad != 0 {
-                    $buffer[$len] = b' ';
-                    $len += 1;
-                    rpad -= 1;
-                }
-
-                if let WasTruncated::Yes = was_truncated {
-                    break 'outer;
-                }
                 outer = nouter;
             }
             args = nargs;
@@ -81,12 +110,12 @@ macro_rules! write_to_buffer {
 #[cold]
 #[inline(never)]
 #[track_caller]
-const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> ! {
+const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never, NotEnoughSpace> {
     write_to_buffer! {
         args,
         buffer,
         len,
-        LEN,
+        (LEN, MAX_PANIC_MSG_LEN),
     }
 
     unsafe {
@@ -94,3 +123,6 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> ! {
         panic!("{}", str)
     }
 }
+
+struct NotEnoughSpace;
+enum Never {}
