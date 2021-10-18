@@ -69,9 +69,6 @@ macro_rules! write_panicval_to_buffer {
 
 macro_rules! write_to_buffer {
     ($args:ident, $buffer:ident, $len:ident, $wptb_args:tt $(,)*) => {
-        let mut $buffer = [0u8; LEN];
-        let mut $len = 0usize;
-
         let mut args = $args;
         'outer: while let [mut outer, ref nargs @ ..] = args {
             while let [arg, nouter @ ..] = outer {
@@ -111,6 +108,9 @@ macro_rules! write_to_buffer {
 #[inline(never)]
 #[track_caller]
 const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never, NotEnoughSpace> {
+    let mut buffer = [0u8; LEN];
+    let mut len = 0usize;
+
     write_to_buffer! {
         args,
         buffer,
@@ -124,5 +124,33 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
     }
 }
 
-struct NotEnoughSpace;
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct NotEnoughSpace;
 enum Never {}
+
+use crate::test_utils::ArrayString;
+
+#[doc(hidden)]
+#[cfg(feature = "test")]
+pub fn format_panic_message(
+    args: &[&[PanicVal<'_>]],
+    capacity: usize,
+    max_capacity: usize,
+) -> Result<ArrayString<1024>, NotEnoughSpace> {
+    let mut buffer = [0u8; 1024];
+    let mut len = 0usize;
+    {
+        // intentionally shadowed
+        let buffer = &mut buffer[..capacity];
+
+        write_to_buffer! {
+            args,
+            buffer,
+            len,
+            (capacity, max_capacity),
+        }
+    }
+
+    Ok(ArrayString { buffer, len })
+}

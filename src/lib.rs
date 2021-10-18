@@ -1,3 +1,5 @@
+#![no_std]
+
 #[macro_use]
 mod macros;
 
@@ -7,6 +9,9 @@ pub mod fmt;
 mod non_basic_utils;
 mod panic_val;
 mod utils;
+
+#[cfg(all(test, not(feature = "test")))]
+compile_error! {r##"please use cargo test --features "test""##}
 
 #[cfg(feature = "all_items")]
 mod slice_stuff;
@@ -30,4 +35,12 @@ pub mod __ {
 
     #[cfg(feature = "all_items")]
     pub use crate::non_basic_utils::{flatten_panicvals, panicvals_id};
+}
+
+#[cfg(feature = "test")]
+pub mod test_utils;
+
+#[doc(hidden)]
+pub mod for_tests {
+    pub use crate::concat_panic_::{format_panic_message, NotEnoughSpace};
 }

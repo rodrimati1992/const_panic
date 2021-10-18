@@ -11,3 +11,6 @@ description = "Basic const panic with Display-formatting, coming before Rust 1.5
 [features]
 default = ["all_items"]
 all_items = []
+
+# private feature
+test = []

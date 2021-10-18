@@ -13,6 +13,10 @@ pub(crate) struct ShortArrayVec<const LEN: usize> {
 }
 
 impl<const LEN: usize> ShortArrayVec<LEN> {
+    pub(crate) const fn len(&self) -> usize {
+        LEN - self.start as usize
+    }
+
     pub(crate) const fn get(&self) -> &[u8] {
         let mut rem = self.start;
         let mut out: &[u8] = &self.buffer;

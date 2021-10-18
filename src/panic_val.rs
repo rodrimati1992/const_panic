@@ -64,7 +64,13 @@ impl<'a> PanicVal<'a> {
 
         let (string, was_trunc) = match &self.var {
             PanicVariant::Str(str) => truncate_str(str.as_bytes(), truncate_to),
-            PanicVariant::Int(int) => truncate_str(int.0.get(), truncate_to),
+            PanicVariant::Int(int) => {
+                if int.0.len() <= truncate_to {
+                    (int.0.get(), WasTruncated::No)
+                } else {
+                    (&[] as &[u8], WasTruncated::Yes)
+                }
+            }
             #[cfg(feature = "all_items")]
             PanicVariant::Slice(_) => panic!("this method should only be called on non-slices"),
         };

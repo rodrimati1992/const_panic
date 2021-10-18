@@ -61,20 +61,20 @@ macro_rules! __concat_func{
     ($args:tt [$($prev:tt)*] [$expr:literal, $($rem:tt)* ]) => {
         $crate::__concat_func!{
             $args
-            [$($prev)* (FmtArg::DISPLAY, $expr)]
+            [$($prev)* ($crate::FmtArg::DISPLAY, $expr)]
             [$($rem)*]
         }
     };
     ($args:tt [$($prev:tt)*] [$expr:expr, $($rem:tt)* ]) => {
         $crate::__concat_func!{
             $args
-            [$($prev)* (FmtArg::DEBUG, $expr)]
+            [$($prev)* ($crate::FmtArg::DEBUG, $expr)]
             [$($rem)*]
         }
     };
     ((|$args:ident| $function_call:expr) [$(($fmt_arg:expr, $reff:expr))*] [$(,)*]) => {
         match &[
-            $( Wrapper(&$crate::to_panicvals!($fmt_arg, $reff)).deref_panic_vals(), )*
+            $( $crate::Wrapper(&$crate::to_panicvals!($fmt_arg, $reff)).deref_panic_vals(), )*
         ] {
             $args => $function_call,
         }
