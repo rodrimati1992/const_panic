@@ -11,6 +11,17 @@ macro_rules! __write_array {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __write_array_checked {
+    ($array:expr, $len:expr, $value:expr) => {
+        if $array.len() > $len {
+            $array[$len] = $value;
+            $len += 1;
+        }
+    };
+}
+
 /// Constructs a `PanicVal` from a type that has a `to_panicval` method.
 #[macro_export]
 macro_rules! panicval {
@@ -51,7 +62,7 @@ macro_rules! concat_panic {
 
 #[macro_export]
 macro_rules! __concat_func{
-    ($args:tt [$($prev:tt)*] [$keyword:ident: $expr:expr, $($rem:tt)* ]) => {
+    ($args:tt [$($prev:tt)*] [$keyword:tt: $expr:expr, $($rem:tt)* ]) => {
         $crate::__concat_func!{
             $args
             [$($prev)* ($crate::__fmtarg_from_kw!($keyword), $expr)]
@@ -87,17 +98,23 @@ macro_rules! __fmtarg_from_kw {
     (display) => {
         $crate::FmtArg::DISPLAY
     };
+    ({}) => {
+        $crate::FmtArg::DISPLAY
+    };
     (debug) => {
+        $crate::FmtArg::DEBUG
+    };
+    ({?}) => {
         $crate::FmtArg::DEBUG
     };
     ($kw:ident) => {
         compile_error!(concat!(
-            "unrecognized keyword: ",
+            "unrecognized formatting specifier: ",
             stringify!($kw),
             "\n",
             "expected one of:\n",
-            "- display\n",
-            "- debug\n",
+            "- display/{}\n",
+            "- debug/{?}\n",
         ))
     };
 }

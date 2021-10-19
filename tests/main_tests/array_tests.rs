@@ -41,6 +41,36 @@ fn overflow_truncating_integer_array_test() {
 }
 
 #[test]
+fn string_test() {
+    assert_eq!(trunc_fmt!(0; ["h\nllo", "人ö个"]), r#""#);
+    assert_eq!(trunc_fmt!(1; ["h\nllo", "人ö个"]), r#"["#);
+    assert_eq!(trunc_fmt!(2; ["h\nllo", "人ö个"]), r#"[""#);
+    assert_eq!(trunc_fmt!(3; ["h\nllo", "人ö个"]), r#"["h"#);
+    assert_eq!(trunc_fmt!(4; ["h\nllo", "人ö个"]), r#"["h"#);
+    assert_eq!(trunc_fmt!(5; ["h\nllo", "人ö个"]), r#"["h\n"#);
+    assert_eq!(trunc_fmt!(6; ["h\nllo", "人ö个"]), r#"["h\nl"#);
+    assert_eq!(trunc_fmt!(7; ["h\nllo", "人ö个"]), r#"["h\nll"#);
+    assert_eq!(trunc_fmt!(8; ["h\nllo", "人ö个"]), r#"["h\nllo"#);
+    assert_eq!(trunc_fmt!(9; ["h\nllo", "人ö个"]), r#"["h\nllo""#);
+    assert_eq!(trunc_fmt!(10; ["h\nllo", "人ö个"]), r#"["h\nllo","#);
+    assert_eq!(trunc_fmt!(11; ["h\nllo", "人ö个"]), r#"["h\nllo", "#);
+    assert_eq!(trunc_fmt!(12; ["h\nllo", "人ö个"]), r#"["h\nllo", ""#);
+    assert_eq!(trunc_fmt!(13; ["h\nllo", "人ö个"]), r#"["h\nllo", ""#);
+    assert_eq!(trunc_fmt!(14; ["h\nllo", "人ö个"]), r#"["h\nllo", ""#);
+    assert_eq!(trunc_fmt!(15; ["h\nllo", "人ö个"]), r#"["h\nllo", "人"#);
+    assert_eq!(trunc_fmt!(16; ["h\nllo", "人ö个"]), r#"["h\nllo", "人"#);
+    assert_eq!(trunc_fmt!(17; ["h\nllo", "人ö个"]), r#"["h\nllo", "人ö"#);
+    assert_eq!(trunc_fmt!(18; ["h\nllo", "人ö个"]), r#"["h\nllo", "人ö"#);
+    assert_eq!(trunc_fmt!(19; ["h\nllo", "人ö个"]), r#"["h\nllo", "人ö"#);
+    assert_eq!(trunc_fmt!(20; ["h\nllo", "人ö个"]), r#"["h\nllo", "人ö个"#);
+    assert_eq!(trunc_fmt!(21; ["h\nllo", "人ö个"]), r#"["h\nllo", "人ö个""#);
+    assert_eq!(
+        trunc_fmt!(22; ["h\nllo", "人ö个"]),
+        r#"["h\nllo", "人ö个"]"#
+    );
+}
+
+#[test]
 fn integer_test() {
     macro_rules! test_case {
         ($array:expr) => ({

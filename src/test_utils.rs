@@ -1,4 +1,7 @@
-use core::fmt::{self, Debug};
+use core::{
+    cmp::PartialEq,
+    fmt::{self, Debug},
+};
 
 pub struct ArrayString<const LEN: usize> {
     pub(crate) len: usize,
@@ -24,6 +27,17 @@ impl<const LEN: usize> Debug for ArrayString<LEN> {
                 .field("buffer", &self.buffer)
                 .finish(),
         }
+    }
+}
+
+impl<const LEN: usize> PartialEq<str> for ArrayString<LEN> {
+    fn eq(&self, str: &str) -> bool {
+        core::str::from_utf8(self.get()).map_or(false, |this| this == str)
+    }
+}
+impl<const LEN: usize> PartialEq<&str> for ArrayString<LEN> {
+    fn eq(&self, str: &&str) -> bool {
+        self == *str
     }
 }
 

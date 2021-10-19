@@ -9,4 +9,5 @@ mod main_tests {
     #[cfg(feature = "all_items")]
     mod array_tests;
     mod integer_tests;
+    mod string_tests;
 }

@@ -4,6 +4,7 @@
 mod macros;
 
 mod concat_panic_;
+mod debug_str_fmt;
 pub mod fmt;
 #[cfg(feature = "all_items")]
 mod non_basic_utils;
@@ -41,6 +42,7 @@ pub mod __ {
 pub mod test_utils;
 
 #[doc(hidden)]
+#[cfg(feature = "test")]
 pub mod for_tests {
     pub use crate::concat_panic_::{format_panic_message, NotEnoughSpace};
 }

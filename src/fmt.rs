@@ -70,15 +70,40 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 #[non_exhaustive]
 pub struct FmtArg {
     pub indentation: u8,
+    pub is_display: IsDisplay,
 }
 
 impl FmtArg {
-    pub const DISPLAY: Self = Self { indentation: 0 };
+    pub const DISPLAY: Self = Self {
+        indentation: 0,
+        is_display: IsDisplay::Yes,
+    };
 
-    pub const DEBUG: Self = Self { indentation: 0 };
+    pub const DEBUG: Self = Self {
+        indentation: 0,
+        is_display: IsDisplay::No,
+    };
 
     pub const fn add_indentation(mut self, indentation: u8) -> Self {
         self.indentation += indentation;
         self
     }
+
+    pub const fn set_display(mut self) -> Self {
+        self.is_display = IsDisplay::Yes;
+        self
+    }
+
+    pub const fn set_debug(mut self) -> Self {
+        self.is_display = IsDisplay::No;
+        self
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone)]
+pub enum IsDisplay {
+    Yes,
+    No,
 }

@@ -1,3 +1,5 @@
+use crate::debug_str_fmt::ForEscaping;
+
 pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
     if l < r {
         l
@@ -38,27 +40,85 @@ pub(crate) enum Sign {
 
 #[derive(Copy, Clone)]
 pub(crate) enum WasTruncated {
-    Yes,
+    Yes(usize),
     No,
+}
+
+impl WasTruncated {
+    pub(crate) const fn get_length(self, s: &[u8]) -> usize {
+        match self {
+            WasTruncated::Yes(x) => x,
+            WasTruncated::No => s.len(),
+        }
+    }
+}
+
+const fn is_char_boundary(b: u8) -> bool {
+    (b as i8) >= -0x40
 }
 
 // truncates a utf8-encoded string to the character before the `truncate_to` index
 //
-pub(crate) const fn truncate_str(mut bytes: &[u8], truncate_to: usize) -> (&[u8], WasTruncated) {
+pub(crate) const fn truncated_str_len(bytes: &[u8], truncate_to: usize) -> WasTruncated {
     if bytes.len() <= truncate_to {
-        (bytes, WasTruncated::No)
+        WasTruncated::No
     } else {
-        while bytes.len() > truncate_to {
-            while let [ref rem @ .., b] = *bytes {
-                bytes = rem;
+        let mut i = truncate_to;
+        while i != 0 {
+            // if it's a non-continuation byte, break
+            if is_char_boundary(bytes[i]) {
+                break;
+            }
+            i -= 1;
+        }
 
-                // if it's a non-continuation byte, break
-                if (b as i8) >= -0x40 {
-                    break;
-                }
+        WasTruncated::Yes(i)
+    }
+}
+
+pub(crate) const fn truncated_debug_str_len(bytes: &[u8], truncate_to: usize) -> WasTruncated {
+    let blen = bytes.len();
+
+    // `* 4` because the longest escape is written like `\xNN` which is 4 bytes
+    // `+ 2` for the quote characters
+    if blen * 4 + 2 <= truncate_to {
+        WasTruncated::No
+    } else if truncate_to == 0 {
+        WasTruncated::Yes(0)
+    } else {
+        let mut i = 0;
+        // = 1 for opening quote char
+        let mut fmtlen = 1;
+        loop {
+            let next_i = next_char_boundary(bytes, min_usize(i + 1, bytes.len()));
+
+            let mut j = i;
+            while j < next_i {
+                fmtlen += ForEscaping::byte_len(bytes[j]);
+                j += 1;
+            }
+
+            if fmtlen > truncate_to {
+                break;
+            } else if next_i == bytes.len() {
+                i = next_i;
+                break;
+            } else {
+                i = next_i;
             }
         }
 
-        (bytes, WasTruncated::Yes)
+        if i == blen && fmtlen < truncate_to {
+            WasTruncated::No
+        } else {
+            WasTruncated::Yes(i)
+        }
     }
+}
+
+const fn next_char_boundary(bytes: &[u8], mut i: usize) -> usize {
+    while i < bytes.len() && !is_char_boundary(bytes[i]) {
+        i += 1;
+    }
+    i
 }

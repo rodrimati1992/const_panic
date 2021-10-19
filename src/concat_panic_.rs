@@ -1,4 +1,4 @@
-use crate::{panic_val::PanicVal, utils::WasTruncated};
+use crate::{fmt::IsDisplay, panic_val::PanicVal, utils::WasTruncated};
 
 #[cold]
 #[inline(never)]
@@ -40,16 +40,45 @@ macro_rules! write_panicval_to_buffer {
     ) => {
         let rem_space = $capacity - $len;
         let arg = $panicval;
-        let (mut lpad, mut rpad, mut string, was_truncated) = arg.__string(rem_space);
+        let (mut lpad, mut rpad, string, is_display, was_truncated) = arg.__string(rem_space);
+        let trunc_len = was_truncated.get_length(string);
 
         while lpad != 0 {
             __write_array! {$buffer, $len, b' '}
             lpad -= 1;
         }
 
-        while let [byte, ref rem @ ..] = *string {
-            __write_array! {$buffer, $len, byte}
-            string = rem;
+        if let IsDisplay::Yes = is_display {
+            let mut i = 0;
+            while i < trunc_len {
+                __write_array! {$buffer, $len, string[i]}
+                i += 1;
+            }
+        } else if rem_space != 0 {
+            __write_array! {$buffer, $len, b'"'}
+            let mut i = 0;
+            while i < trunc_len {
+                use crate::debug_str_fmt::{hex_as_ascii, ForEscaping};
+
+                let c = string[i];
+                let mut written_c = c;
+                if ForEscaping::is_escaped(c) {
+                    __write_array! {$buffer, $len, b'\\'}
+                    if ForEscaping::is_backslash_escaped(c) {
+                        written_c = ForEscaping::get_backslash_escape(c);
+                    } else {
+                        __write_array! {$buffer, $len, b'x'}
+                        __write_array! {$buffer, $len, hex_as_ascii(c >> 4)}
+                        written_c = hex_as_ascii(c & 0b1111);
+                    };
+                }
+                __write_array! {$buffer, $len, written_c}
+
+                i += 1;
+            }
+            if let WasTruncated::No = was_truncated {
+                __write_array_checked! {$buffer, $len, b'"'}
+            }
         }
 
         while rpad != 0 {
@@ -57,7 +86,7 @@ macro_rules! write_panicval_to_buffer {
             rpad -= 1;
         }
 
-        if let WasTruncated::Yes = was_truncated {
+        if let WasTruncated::Yes(_) = was_truncated {
             if $capacity < $max_capacity {
                 return Err(NotEnoughSpace);
             } else {
@@ -129,6 +158,7 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
 pub struct NotEnoughSpace;
 enum Never {}
 
+#[cfg(feature = "test")]
 use crate::test_utils::ArrayString;
 
 #[doc(hidden)]
