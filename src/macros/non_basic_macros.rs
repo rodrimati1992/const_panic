@@ -1,44 +1,84 @@
 /// Calls the `to_panicvals` method on many `$reff`s
 /// then flattens them into a single array.
 ///
-/// This requires passing the type of each element to get the length of the
-/// returned array and add them.
+/// # Kinds of types
+///
+/// This takes two different kinds of types:
+/// - [primitive](#primitive): which are represented using a single [`PanicVal`],
+/// - [composite](#composite): which are represented using an array of `PanicVal`s.
+///
+/// ### Primitive
+///
+/// These have a `to_panicval` method which returns a single [`PanicVal`],
+/// and don't require their type to be passed with the `Type => value` syntax
+///
+/// These are some primitive types:
+/// - integers
+/// - `bool`
+/// - `&str`
+/// - arrays
+/// - slices
+///
+/// ### Composite
+///
+/// These have a `to_panicvals` method which returns an array of [`PanicVal`]s,
+/// and require their type to be passed with the `Type => value` syntax
+///
+#[doc = formatting_docs!()]
+///
+///
+/// # Examples
+///
+///
+///
+///
+///
+/// [`PanicVal`]: crate::PanicVal
+///
 #[macro_export]
-macro_rules! to_panicvals_flatten {
-    ($fmtargs:expr; $($args:tt)* ) => {
-        $crate::__to_pvf_inner!($fmtargs [][$($args)* ,])
-    };
+macro_rules! flatten_panicvals {
+    ($fmtargs:expr; $($args:tt)* ) => {{
+        let mut fmtargs: $crate::FmtArg = $fmtargs;
+        $crate::__to_pvf_inner!(fmtargs [][$($args)* ,])
+    }};
 }
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __to_pvf_inner {
     (
-        $fmtargs:tt
-        [$(($len:expr, $kind:ident $args:tt, $reff:expr))*]
+        $fmtargs:ident
+        [$((($len:expr, $kind:ident $args:tt), $fmt_override:tt, $reff:expr))*]
         [$(,)*]
     ) => {
         $crate::__::flatten_panicvals::<{ 0 $( + $len )* }>(&[
             $(
-                $crate::__to_pvf_kind!($fmtargs $kind $args, $reff)
+                $crate::__to_pvf_kind!($fmtargs $kind $args, $fmt_override, $reff)
             ),*
         ])
     };
-    ($fmtargs:tt [$($prev:tt)*] [$ty:ty => $reff:expr, $($rem:tt)*]) => {
+    ($fmtargs:ident [$($prev:tt)*] [_, $($rem:tt)*]) => {
         $crate::__to_pvf_inner!{
             $fmtargs
 
-            [$($prev)* (<$ty as $crate::__::PanicFmt>::PV_COUNT, many($ty), $reff)]
+            [$($prev)* ((1, single()), _, $crate::PanicVal::EMPTY)]
 
             [$($rem)*]
         }
     };
-    ($fmtargs:tt [$($prev:tt)*] [$reff:expr, $($rem:tt)*]) => {
-        $crate::__to_pvf_inner!{
+    ($fmtargs:ident $prev:tt [$ty:ty => $($rem:tt)*]) => {
+        $crate::__to_pvf_expr!{
             $fmtargs
-
-            [$($prev)* (1, single(), $reff)]
-
+            $prev
+            (<$ty as $crate::__::PanicFmt>::PV_COUNT, many($ty))
+            [$($rem)*]
+        }
+    };
+    ($fmtargs:ident $prev:tt [$($rem:tt)*]) => {
+        $crate::__to_pvf_expr!{
+            $fmtargs
+            $prev
+            (1, single())
             [$($rem)*]
         }
     };
@@ -46,20 +86,58 @@ macro_rules! __to_pvf_inner {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __to_pvf_expr {
+    ($fmtargs:ident [$($prev:tt)*] $other:tt [$kw:tt: $reff:expr, $($rem:tt)*]) => {
+        $crate::__to_pvf_inner!{
+            $fmtargs
+
+            [$($prev)* ($other, $kw, $reff)]
+
+            [$($rem)*]
+        }
+    };
+    ($fmtargs:ident [$($prev:tt)*] $other:tt [$reff:literal, $($rem:tt)*])=>{
+        $crate::__to_pvf_inner!{
+            $fmtargs
+
+            [$($prev)* ($other, display, $reff)]
+
+            [$($rem)*]
+        }
+    };
+    ($fmtargs:ident [$($prev:tt)*] $other:tt [$reff:expr, $($rem:tt)*]) => {
+        $crate::__to_pvf_inner!{
+            $fmtargs
+
+            [$($prev)* ($other, _, $reff)]
+
+            [$($rem)*]
+        }
+    };
+    ($fmtargs:ident [$($prev:tt)*] $other:tt [$($rem:tt)*]) => {
+        $crate::__::compile_error!(concat!(
+            "expected expression, found:",
+            stringify!($($rem)*)
+        ))
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __to_pvf_kind {
-    ($fmtargs:tt single (), $reff:tt) => {
+    ($fmtargs:ident single (), $fmt_override:tt, $reff:tt) => {
         &match &$reff {
             reff => [$crate::__::PanicFmt::PROOF
                 .infer(reff)
                 .coerce(reff)
-                .to_panicval($fmtargs)],
+                .to_panicval($crate::__set_fmt_from_kw!($fmt_override, $fmtargs))],
         }
     };
-    ($fmtargs:tt many ($ty:ty), $reff:tt) => {
+    ($fmtargs:ident many ($ty:ty), $fmt_override:tt, $reff:tt) => {
         $crate::__::panicvals_id::<{ <$ty as $crate::__::PanicFmt>::PV_COUNT }>(&match &$reff {
             reff => <$ty as $crate::__::PanicFmt>::PROOF
                 .coerce(reff)
-                .to_panicvals($fmtargs),
+                .to_panicvals($crate::__set_fmt_from_kw!($fmt_override, $fmtargs)),
         })
     };
 }

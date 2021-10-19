@@ -6,13 +6,13 @@ fn integer_test() {
                 let string = format!("{:?}", int);
 
                 assert_eq!(
-                    overf_fmt!(string.len(); int).unwrap().as_str(),
-                    string,
+                    overf_fmt!(string.len(); int).unwrap(),
+                    *string,
                 );
-                assert_eq!(trunc_fmt!(string.len(); int).as_str(), string);
+                assert_eq!(trunc_fmt!(string.len(); int), *string);
 
                 overf_fmt!(string.len() - 1; int).unwrap_err();
-                assert_eq!(trunc_fmt!(string.len() - 1; int).as_str(), "");
+                assert_eq!(trunc_fmt!(string.len() - 1; int), "");
             }
         })
     }

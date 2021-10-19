@@ -8,8 +8,8 @@ fn overflow_truncating_integer_array_test() {
         (&[3u8, 5, 8, 13], "[3, 5, 8, 13]"),
         (&[3u8, 5, 8, 13, 21], "[3, 5, 8, 13, 21]"),
     ] {
-        assert_eq!(overf_fmt!(20; slice).unwrap().as_str(), expected);
-        assert_eq!(trunc_fmt!(20; slice).as_str(), expected);
+        assert_eq!(overf_fmt!(20; slice).unwrap(), expected);
+        assert_eq!(trunc_fmt!(20; slice), expected);
     }
 
     // numbers shouldn't be truncated, they should just not be printed
@@ -33,7 +33,7 @@ fn overflow_truncating_integer_array_test() {
         (19, "[3, 5, 8, -3, 21, "),
         (20, "[3, 5, 8, -3, 21, 34"),
     ] {
-        assert_eq!(trunc_fmt!(len; upto34).as_str(), expected);
+        assert_eq!(trunc_fmt!(len; upto34), expected);
     }
 
     overf_fmt!(19; upto34).unwrap_err();
@@ -77,8 +77,8 @@ fn integer_test() {
             let array = $array;
 
             assert_eq!(
-                overf_fmt!(1024; array).unwrap().as_str(),
-                format!("{:?}", array),
+                overf_fmt!(1024; array).unwrap(),
+                *format!("{:?}", array),
             );
         })
     }
@@ -150,10 +150,10 @@ fn integer_test() {
 fn test_bool_arrays() {
     let empty_bool: [bool; 0] = [];
 
-    assert_eq!(trunc_fmt!(10; empty_bool).as_str(), "[]");
-    assert_eq!(trunc_fmt!(10; [false]).as_str(), "[false]");
-    assert_eq!(trunc_fmt!(10; [true]).as_str(), "[true]");
-    assert_eq!(trunc_fmt!(10; [true, true]).as_str(), "[true, tru");
-    assert_eq!(trunc_fmt!(11; [true, true]).as_str(), "[true, true");
-    assert_eq!(trunc_fmt!(12; [true, true]).as_str(), "[true, true]");
+    assert_eq!(trunc_fmt!(10; empty_bool), "[]");
+    assert_eq!(trunc_fmt!(10; [false]), "[false]");
+    assert_eq!(trunc_fmt!(10; [true]), "[true]");
+    assert_eq!(trunc_fmt!(10; [true, true]), "[true, tru");
+    assert_eq!(trunc_fmt!(11; [true, true]), "[true, true");
+    assert_eq!(trunc_fmt!(12; [true, true]), "[true, true]");
 }

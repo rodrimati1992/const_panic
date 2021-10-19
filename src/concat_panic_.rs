@@ -1,4 +1,4 @@
-use crate::{fmt::IsDisplay, panic_val::PanicVal, utils::WasTruncated};
+use crate::{fmt::FmtKind, panic_val::PanicVal, utils::WasTruncated};
 
 #[cold]
 #[inline(never)]
@@ -40,7 +40,7 @@ macro_rules! write_panicval_to_buffer {
     ) => {
         let rem_space = $capacity - $len;
         let arg = $panicval;
-        let (mut lpad, mut rpad, string, is_display, was_truncated) = arg.__string(rem_space);
+        let (mut lpad, mut rpad, string, fmt_kind, was_truncated) = arg.__string(rem_space);
         let trunc_len = was_truncated.get_length(string);
 
         while lpad != 0 {
@@ -48,7 +48,7 @@ macro_rules! write_panicval_to_buffer {
             lpad -= 1;
         }
 
-        if let IsDisplay::Yes = is_display {
+        if let FmtKind::Display = fmt_kind {
             let mut i = 0;
             while i < trunc_len {
                 __write_array! {$buffer, $len, string[i]}
@@ -102,7 +102,7 @@ macro_rules! write_to_buffer {
         'outer: while let [mut outer, ref nargs @ ..] = args {
             while let [arg, nouter @ ..] = outer {
                 match arg.var {
-                    #[cfg(feature = "all_items")]
+                    #[cfg(feature = "non_basic")]
                     crate::panic_val::PanicVariant::Slice(slice) => {
                         let mut iter = slice.iter();
 
@@ -159,16 +159,16 @@ pub struct NotEnoughSpace;
 enum Never {}
 
 #[cfg(feature = "test")]
-use crate::test_utils::ArrayString;
+use crate::test_utils::TestString;
 
 #[doc(hidden)]
 #[cfg(feature = "test")]
-pub fn format_panic_message(
+pub fn format_panic_message<const LEN: usize>(
     args: &[&[PanicVal<'_>]],
     capacity: usize,
     max_capacity: usize,
-) -> Result<ArrayString<1024>, NotEnoughSpace> {
-    let mut buffer = [0u8; 1024];
+) -> Result<TestString<LEN>, NotEnoughSpace> {
+    let mut buffer = [0u8; LEN];
     let mut len = 0usize;
     {
         // intentionally shadowed
@@ -182,5 +182,23 @@ pub fn format_panic_message(
         }
     }
 
-    Ok(ArrayString { buffer, len })
+    Ok(TestString { buffer, len })
+}
+
+#[doc(hidden)]
+#[cfg(any(doctest, feature = "array_string"))]
+pub(crate) const fn make_panic_string<const LEN: usize>(
+    args: &[&[PanicVal<'_>]],
+) -> Result<crate::ArrayString<LEN>, NotEnoughSpace> {
+    let mut buffer = [0u8; LEN];
+    let mut len = 0usize;
+
+    write_to_buffer! {
+        args,
+        buffer,
+        len,
+        (LEN, LEN),
+    }
+
+    Ok(crate::ArrayString { buffer, len })
 }

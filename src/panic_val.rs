@@ -1,5 +1,5 @@
 use crate::{
-    fmt::{FmtArg, IsDisplay},
+    fmt::{FmtArg, FmtKind},
     utils::{ShortArrayVec, Sign, WasTruncated},
 };
 
@@ -9,7 +9,7 @@ pub struct PanicVal<'a> {
     pub(crate) var: PanicVariant<'a>,
     leftpad: u8,
     rightpad: u8,
-    is_display: IsDisplay,
+    fmt_kind: FmtKind,
 }
 
 #[non_exhaustive]
@@ -17,7 +17,7 @@ pub struct PanicVal<'a> {
 pub(crate) enum PanicVariant<'a> {
     Str(&'a str),
     Int(IntVal),
-    #[cfg(feature = "all_items")]
+    #[cfg(feature = "non_basic")]
     Slice(crate::slice_stuff::Slice<'a>),
 }
 
@@ -32,7 +32,7 @@ impl<'a> PanicVal<'a> {
             var: PanicVariant::Str(string),
             leftpad: 0,
             rightpad: 0,
-            is_display: IsDisplay::Yes,
+            fmt_kind: FmtKind::Display,
         }
     }
 
@@ -50,21 +50,21 @@ impl<'a> PanicVal<'a> {
             var,
             leftpad: 0,
             rightpad: 0,
-            is_display: f.is_display,
+            fmt_kind: f.fmt_kind,
         }
     }
 
     pub(crate) const fn __string(
         &self,
         mut truncate_to: usize,
-    ) -> (usize, usize, &[u8], IsDisplay, WasTruncated) {
+    ) -> (usize, usize, &[u8], FmtKind, WasTruncated) {
         let leftpad = self.leftpad as usize;
         if leftpad > truncate_to {
             return (
                 leftpad - truncate_to,
                 0,
                 &[],
-                IsDisplay::Yes,
+                FmtKind::Display,
                 WasTruncated::Yes(0),
             );
         } else {
@@ -73,13 +73,13 @@ impl<'a> PanicVal<'a> {
 
         let string;
         let was_trunc;
-        let is_display;
+        let fmt_kind;
 
         match &self.var {
             PanicVariant::Str(str) => {
                 string = str.as_bytes();
-                is_display = self.is_display;
-                was_trunc = if let IsDisplay::Yes = self.is_display {
+                fmt_kind = self.fmt_kind;
+                was_trunc = if let FmtKind::Display = self.fmt_kind {
                     crate::utils::truncated_str_len(string, truncate_to)
                 } else {
                     crate::utils::truncated_debug_str_len(string, truncate_to)
@@ -87,21 +87,21 @@ impl<'a> PanicVal<'a> {
             }
             PanicVariant::Int(int) => {
                 string = int.0.get();
-                is_display = IsDisplay::Yes;
+                fmt_kind = FmtKind::Display;
                 was_trunc = if int.0.len() <= truncate_to {
                     WasTruncated::No
                 } else {
                     WasTruncated::Yes(0)
                 };
             }
-            #[cfg(feature = "all_items")]
+            #[cfg(feature = "non_basic")]
             PanicVariant::Slice(_) => panic!("this method should only be called on non-slices"),
         };
         truncate_to -= was_trunc.get_length(string);
 
         let rightpad = crate::utils::min_usize(self.rightpad as usize, truncate_to);
 
-        (leftpad, rightpad, string, is_display, was_trunc)
+        (leftpad, rightpad, string, fmt_kind, was_trunc)
     }
 }
 
@@ -143,5 +143,21 @@ impl IntVal {
             start: start as u8,
             buffer,
         })
+    }
+}
+
+impl crate::PanicFmt for PanicVal<'_> {
+    type This = Self;
+    type Kind = crate::fmt::IsCustomType;
+
+    const PV_COUNT: usize = 1;
+}
+
+impl<'a> PanicVal<'a> {
+    pub const fn to_panicvals(&self, _: FmtArg) -> [PanicVal<'a>; 1] {
+        [*self]
+    }
+    pub const fn to_panicval(&self, _: FmtArg) -> PanicVal<'a> {
+        *self
     }
 }

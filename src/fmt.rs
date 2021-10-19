@@ -1,15 +1,53 @@
+//! Formatting-related items
+//!
+//! For examples, [you can look at the ones for PanicFmt](PanicFmt#examples)
+//!
+
 use crate::wrapper::Wrapper;
 
 use core::marker::PhantomData;
 
 /// Marker types for types that can be formatted by const panics.
+///
+/// # Implementor
+///
+/// Implementors are expected to also define this inherent method to format the type:
+/// ```rust
+/// # use const_panic::fmt::{FmtArg, IsCustomType, PanicFmt};
+/// # use const_panic::PanicVal;
+/// # struct Foo;
+/// # impl Foo {
+/// const fn to_panicvals<'a>(&'a self, f: FmtArg) -> [PanicVal<'a>; <Self as PanicFmt>::PV_COUNT]
+/// # { loop{} }
+/// # }
+/// # impl PanicFmt for Foo {
+/// #   type This = Self;
+/// #   type Kind = IsCustomType;
+/// #   const PV_COUNT: usize = 1;
+/// # }
+/// ```
+/// The returned [`PanicVal`](crate::PanicVal) can also be `PanicVal<'static>`.
+///
+///
+///
 pub trait PanicFmt {
+    /// The type after dereferencing all references.
+    ///
+    /// User-defined should generally set this to `Self`.
     type This: ?Sized;
+    /// Whether this is a user-defined type or standard library type.
+    ///
+    /// User-defined should generally set this to [`IsCustomType`].
     type Kind;
 
-    /// The length of the array returned in `Self::to_panicvals`.
+    /// The length of the array returned in `Self::to_panicvals`
+    /// (an inherent method that formats the type for panic messages).
     const PV_COUNT: usize;
 
+    /// A marker type that proves that `Self` implements `PanicFmt`.
+    ///
+    /// Used by const_panic macros to coerce both standard library and
+    /// user-defined types into some type that has a `to_panicvals` method.
     const PROOF: IsPanicFmt<Self, Self::This, Self::Kind> = IsPanicFmt::NEW;
 }
 
@@ -19,14 +57,21 @@ impl<'a, T: PanicFmt + ?Sized> PanicFmt for &'a T {
     const PV_COUNT: usize = T::PV_COUNT;
 }
 
+/// Marker type used as the [`PanicFmt::Kind`] associated type for std types.
 pub struct IsStdType;
 
+/// Marker type used as the [`PanicFmt::Kind`] for user-defined types.
 pub struct IsCustomType;
 
+/// A marker type that proves that `S` implements
+/// [`PanicFmt<This = T, Kind = K>`](PanicFmt).
+///
+/// Used by const_panic macros to coerce both standard library and
+/// user-defined types into some type that has a `to_panicvals` method.
 pub struct IsPanicFmt<S: ?Sized, T: ?Sized, K> {
-    pub self_: PhantomData<fn() -> S>,
-    pub this: PhantomData<fn() -> T>,
-    pub kind: PhantomData<fn() -> K>,
+    self_: PhantomData<fn() -> S>,
+    this: PhantomData<fn() -> T>,
+    kind: PhantomData<fn() -> K>,
     _priv: (),
 }
 
@@ -66,44 +111,55 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// Carries all of the configuration for formatting functions.
 #[derive(Copy, Clone)]
 #[non_exhaustive]
 pub struct FmtArg {
+    /// How much indentation is needed for a field/array element.
+    ///
+    /// This is not yet used, it'll be used whenever an alternate flag is added.
     pub indentation: u8,
-    pub is_display: IsDisplay,
+    /// Whether this is intended to be `Display` or `Debug` formatted.
+    pub fmt_kind: FmtKind,
 }
 
 impl FmtArg {
+    /// A `FmtArg` with no indentation and `Display` formatting.
     pub const DISPLAY: Self = Self {
         indentation: 0,
-        is_display: IsDisplay::Yes,
+        fmt_kind: FmtKind::Display,
     };
 
+    /// A `FmtArg` with no indentation and `Debug` formatting.
     pub const DEBUG: Self = Self {
         indentation: 0,
-        is_display: IsDisplay::No,
+        fmt_kind: FmtKind::Debug,
     };
 
+    /// Increments the indentation by `indentation` spaces.
     pub const fn add_indentation(mut self, indentation: u8) -> Self {
         self.indentation += indentation;
         self
     }
 
+    /// Changes the formatting to `Display`.
     pub const fn set_display(mut self) -> Self {
-        self.is_display = IsDisplay::Yes;
+        self.fmt_kind = FmtKind::Display;
         self
     }
 
+    /// Changes the formatting to `Debug`.
     pub const fn set_debug(mut self) -> Self {
-        self.is_display = IsDisplay::No;
+        self.fmt_kind = FmtKind::Debug;
         self
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// What kind of formatting to do, either `Display` or `Debug`.
 #[derive(Copy, Clone)]
-pub enum IsDisplay {
-    Yes,
-    No,
+pub enum FmtKind {
+    Debug,
+    Display,
 }

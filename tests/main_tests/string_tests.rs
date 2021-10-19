@@ -1,4 +1,4 @@
-use const_panic::fmt::IsDisplay;
+use const_panic::fmt::FmtKind;
 
 const MAX_L: usize = 1024;
 
@@ -85,7 +85,7 @@ fn test_trunc_overflow() {
             let mut display_substr = String::new();
 
             for i in 0..display_str.len() {
-                fill_buffer(&mut display_substr, &display_vec, i, IsDisplay::Yes);
+                fill_buffer(&mut display_substr, &display_vec, i, FmtKind::Display);
                 assert_eq!(trunc_fmt!(i; display: display_str), *display_substr);
                 overf_fmt!(i; display: display_str).unwrap_err();
             }
@@ -106,7 +106,7 @@ fn test_trunc_overflow() {
             let mut debug_substr = String::new();
 
             for i in 0..debug_len {
-                fill_buffer(&mut debug_substr, &debug_vec, i, IsDisplay::No);
+                fill_buffer(&mut debug_substr, &debug_vec, i, FmtKind::Debug);
                 assert_eq!(trunc_fmt!(i; debug: display_str), *debug_substr, "i:{}", i);
                 overf_fmt!(i; debug: display_str).unwrap_err();
             }
@@ -140,7 +140,7 @@ fn test_fill_buffer() {
         (1, ""),
         (0, ""),
     ] {
-        fill_buffer(&mut buffer, &["hello", "world"], len, IsDisplay::Yes);
+        fill_buffer(&mut buffer, &["hello", "world"], len, FmtKind::Display);
         assert_eq!(buffer, expected);
     }
 
@@ -158,17 +158,17 @@ fn test_fill_buffer() {
         (1, r#"""#),
         (0, r#""#),
     ] {
-        fill_buffer(&mut buffer, &["hello", "world"], len, IsDisplay::No);
+        fill_buffer(&mut buffer, &["hello", "world"], len, FmtKind::Debug);
         assert_eq!(buffer, expected);
     }
 }
 
-fn fill_buffer(buffer: &mut String, chars: &[&str], max_len: usize, is_display: IsDisplay) {
+fn fill_buffer(buffer: &mut String, chars: &[&str], max_len: usize, fmt_kind: FmtKind) {
     buffer.clear();
     if max_len == 0 {
         return;
     }
-    if let IsDisplay::No = is_display {
+    if let FmtKind::Debug = fmt_kind {
         push_if_fits(buffer, "\"", max_len);
     }
     for char in chars.iter().copied() {
@@ -176,7 +176,7 @@ fn fill_buffer(buffer: &mut String, chars: &[&str], max_len: usize, is_display: 
             return;
         }
     }
-    if let IsDisplay::No = is_display {
+    if let FmtKind::Debug = fmt_kind {
         push_if_fits(buffer, "\"", max_len);
     }
 }

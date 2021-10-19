@@ -6,8 +6,9 @@ macro_rules! trunc_fmt {
 }
 
 mod main_tests {
-    #[cfg(feature = "all_items")]
+    #[cfg(feature = "non_basic")]
     mod array_tests;
     mod integer_tests;
+    mod panicval_macros_tests;
     mod string_tests;
 }
