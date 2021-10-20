@@ -1,5 +1,5 @@
 use crate::{
-    fmt::{FmtArg, FmtKind},
+    fmt::{FmtArg, FmtKind, IsLastField, ShortString},
     utils::{ShortArrayVec, Sign, WasTruncated},
 };
 
@@ -16,13 +16,46 @@ pub struct PanicVal<'a> {
 #[derive(Copy, Clone)]
 pub(crate) enum PanicVariant<'a> {
     Str(&'a str),
+    ShortString(ShortString),
     Int(IntVal),
     #[cfg(feature = "non_basic")]
     Slice(crate::slice_stuff::Slice<'a>),
 }
 
 impl<'a> PanicVal<'a> {
-    pub const EMPTY: Self = PanicVal::from_str("", FmtArg::DISPLAY);
+    pub const EMPTY: Self = PanicVal::write_str("");
+
+    /// How many spaces are printed before this
+    pub const fn leftpad(&self) -> u8 {
+        self.leftpad
+    }
+    /// How many spaces are printed after this
+    pub const fn rightpad(&self) -> u8 {
+        self.rightpad
+    }
+    /// Sets the amount of spaces printed before this to `f.indentation`.
+    pub const fn with_leftpad(mut self, f: FmtArg) -> Self {
+        self.leftpad = f.indentation;
+        self
+    }
+
+    /// Sets the amount of spaces printed after this to `f.indentation`.
+    pub const fn with_rightpad(mut self, f: FmtArg) -> Self {
+        self.rightpad = f.indentation;
+        self
+    }
+
+    /// Sets the amount of spaces printed before this
+    pub const fn set_leftpad(mut self, f: FmtArg) -> Self {
+        self.leftpad = f.indentation;
+        self
+    }
+
+    /// Sets the amount of spaces printed after this
+    pub const fn set_rightpad(mut self, f: FmtArg) -> Self {
+        self.rightpad = f.indentation;
+        self
+    }
 
     /// Constructs a PanicVal which outputs the contents of `string` verbatim.
     ///
@@ -36,13 +69,38 @@ impl<'a> PanicVal<'a> {
         }
     }
 
-    /// How many spaces are printed before this
-    pub const fn leftpad(&self) -> u8 {
-        self.leftpad
+    /// Constructs a PanicVal from a [`ShortString`], that's output verbatim.
+    pub const fn write_short_str(string: ShortString) -> Self {
+        Self {
+            var: PanicVariant::ShortString(string),
+            ..Self::EMPTY
+        }
     }
-    /// How many spaces are printed after this
-    pub const fn rightpad(&self) -> u8 {
-        self.rightpad
+
+    ///
+    ///
+    /// # Panics
+    ///
+    /// This may panic if `string.len()` is greater than 12.
+    ///
+    pub const fn from_element_separator(
+        separator: &str,
+        is_last_field: IsLastField,
+        f: FmtArg,
+    ) -> Self {
+        let (concat, rightpad) = match (is_last_field, f.is_alternate) {
+            (IsLastField::No, false) => (ShortString::concat(&[separator, " "]), 0),
+            (IsLastField::Yes, false) => (ShortString::new(""), 0),
+            (IsLastField::No, true) => (ShortString::concat(&[separator, "\n"]), f.indentation),
+            (IsLastField::Yes, true) => (ShortString::concat(&[separator, "\n"]), 0),
+        };
+
+        Self {
+            var: PanicVariant::ShortString(concat),
+            leftpad: 0,
+            rightpad,
+            fmt_kind: FmtKind::Display,
+        }
     }
 
     pub(crate) const fn __new(var: PanicVariant<'a>, f: FmtArg) -> Self {
@@ -77,6 +135,15 @@ impl<'a> PanicVal<'a> {
 
         match &self.var {
             PanicVariant::Str(str) => {
+                string = str.as_bytes();
+                fmt_kind = self.fmt_kind;
+                was_trunc = if let FmtKind::Display = self.fmt_kind {
+                    crate::utils::truncated_str_len(string, truncate_to)
+                } else {
+                    crate::utils::truncated_debug_str_len(string, truncate_to)
+                };
+            }
+            PanicVariant::ShortString(str) => {
                 string = str.as_bytes();
                 fmt_kind = self.fmt_kind;
                 was_trunc = if let FmtKind::Display = self.fmt_kind {

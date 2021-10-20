@@ -131,10 +131,8 @@ compile_error! {r##"please use cargo test --features "test""##}
 #[cfg(feature = "non_basic")]
 mod slice_stuff;
 
-#[cfg(any(doctest, feature = "array_string"))]
 mod array_string;
 
-#[cfg(any(doctest, feature = "array_string"))]
 pub use crate::array_string::ArrayString;
 
 mod wrapper;
@@ -145,7 +143,7 @@ mod fmt_impls {
 
 pub use crate::{
     concat_panic_::concat_panic,
-    fmt::{FmtArg, PanicFmt},
+    fmt::{Delimiter, FmtArg, PanicFmt},
     panic_val::{IntVal, PanicVal},
     wrapper::Wrapper,
 };

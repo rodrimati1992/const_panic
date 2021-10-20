@@ -50,7 +50,7 @@ macro_rules! impl_panicfmt_array {
                 pub const fn $panicval_ctor(this: &'s [$ty], f: FmtArg) -> PanicVal<'s> {
                     PanicVal::__new(
                         PanicVariant::Slice(Slice{
-                            fmtarg: f,
+                            fmtarg: f.indent(),
                             vari: SliceV::$variant(this),
                         }),
                         f
@@ -144,21 +144,26 @@ impl<'b, 's> SliceIter<'b, 's> {
                     IterState::Index(0)
                 };
 
-                [PanicVal::write_str("["), PanicVal::EMPTY]
+                [
+                    crate::fmt::OPEN_BRACKET.to_panicval(slice.fmtarg),
+                    PanicVal::EMPTY,
+                ]
             }
             IterState::Index(x) => {
-                let comma = if x + 1 >= self.arr_len {
+                let comma = if x + 1 == self.arr_len {
                     self.state = IterState::End;
-                    PanicVal::EMPTY
+                    crate::fmt::COMMA_TERM
                 } else {
                     self.state = IterState::Index(x + 1);
-                    PanicVal::write_str(", ")
-                };
+                    crate::fmt::COMMA_SEP
+                }
+                .to_panicval(slice.fmtarg);
 
                 [slice.get(x), comma]
             }
             IterState::End => {
-                return ([PanicVal::write_str("]"), PanicVal::EMPTY], None);
+                let close_brace = crate::fmt::CLOSE_BRACKET.to_panicval(slice.fmtarg.unindent());
+                return ([close_brace, PanicVal::EMPTY], None);
             }
         };
 

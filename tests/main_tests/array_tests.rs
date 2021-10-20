@@ -8,7 +8,7 @@ fn overflow_truncating_integer_array_test() {
         (&[3u8, 5, 8, 13], "[3, 5, 8, 13]"),
         (&[3u8, 5, 8, 13, 21], "[3, 5, 8, 13, 21]"),
     ] {
-        assert_eq!(overf_fmt!(20; slice).unwrap(), expected);
+        assert_eq!(dbg!(overf_fmt!(20; slice).unwrap()), expected);
         assert_eq!(trunc_fmt!(20; slice), expected);
     }
 
@@ -79,6 +79,11 @@ fn integer_test() {
             assert_eq!(
                 overf_fmt!(1024; array).unwrap(),
                 *format!("{:?}", array),
+            );
+
+            assert_eq!(
+                overf_fmt!(1024; alt_debug: array).unwrap(),
+                *format!("{:#?}", array),
             );
         })
     }

@@ -3,7 +3,7 @@
 //! For examples, [you can look at the ones for PanicFmt](PanicFmt#examples)
 //!
 
-use crate::wrapper::Wrapper;
+use crate::{wrapper::Wrapper, ArrayString, PanicVal};
 
 use core::marker::PhantomData;
 
@@ -109,16 +109,16 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
 /// Carries all of the configuration for formatting functions.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 #[non_exhaustive]
 pub struct FmtArg {
     /// How much indentation is needed for a field/array element.
     ///
-    /// This is not yet used, it'll be used whenever an alternate flag is added.
+    /// This is only used by types that call  
     pub indentation: u8,
+    /// Whether alternate formatting is being used.
+    pub is_alternate: bool,
     /// Whether this is intended to be `Display` or `Debug` formatted.
     pub fmt_kind: FmtKind,
 }
@@ -128,17 +128,37 @@ impl FmtArg {
     pub const DISPLAY: Self = Self {
         indentation: 0,
         fmt_kind: FmtKind::Display,
+        is_alternate: false,
     };
 
     /// A `FmtArg` with no indentation and `Debug` formatting.
     pub const DEBUG: Self = Self {
         indentation: 0,
+        is_alternate: false,
         fmt_kind: FmtKind::Debug,
     };
 
-    /// Increments the indentation by `indentation` spaces.
-    pub const fn add_indentation(mut self, indentation: u8) -> Self {
-        self.indentation += indentation;
+    /// A `FmtArg` with no indentation and alternate `Display` formatting.
+    pub const ALT_DISPLAY: Self = Self::DISPLAY.set_alternate(true);
+
+    /// A `FmtArg` with no indentation and alternate `Debug` formatting.
+    pub const ALT_DEBUG: Self = Self::DEBUG.set_alternate(true);
+
+    /// Increments the indentation by [`INDENTATION_STEP`] spaces.
+    pub const fn indent(mut self) -> Self {
+        self.indentation += INDENTATION_STEP;
+        self
+    }
+
+    /// Decrement the indentation by [`INDENTATION_STEP`] spaces.
+    pub const fn unindent(mut self) -> Self {
+        self.indentation = self.indentation.saturating_sub(INDENTATION_STEP);
+        self
+    }
+
+    /// Sets wether alternate formatting is enabled
+    pub const fn set_alternate(mut self, is_alternate: bool) -> Self {
+        self.is_alternate = is_alternate;
         self
     }
 
@@ -158,8 +178,175 @@ impl FmtArg {
 ////////////////////////////////////////////////////////////////////////////////
 
 /// What kind of formatting to do, either `Display` or `Debug`.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FmtKind {
     Debug,
     Display,
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// Whether a delimiter is the opening or closing one.
+#[non_exhaustive]
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum DelimSide {
+    // `(`/`[`/`{`
+    Open,
+    // `)`/`]`/`}`
+    Close,
+}
+
+/// What delimiter this is `()`/`[]`/`{}`.
+#[non_exhaustive]
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum DelimKind {
+    Paren,
+    Bracket,
+    Brace,
+}
+/// What delimiter this is.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct Delimiter {
+    pub kind: DelimKind,
+    pub side: DelimSide,
+}
+
+/// `(`
+pub const OPEN_PAREN: Delimiter = Delimiter {
+    kind: DelimKind::Paren,
+    side: DelimSide::Open,
+};
+/// `)`
+pub const CLOSE_PAREN: Delimiter = Delimiter {
+    kind: DelimKind::Paren,
+    side: DelimSide::Close,
+};
+/// `[`
+pub const OPEN_BRACKET: Delimiter = Delimiter {
+    kind: DelimKind::Bracket,
+    side: DelimSide::Open,
+};
+/// `]`
+pub const CLOSE_BRACKET: Delimiter = Delimiter {
+    kind: DelimKind::Bracket,
+    side: DelimSide::Close,
+};
+/// `{`
+pub const OPEN_BRACE: Delimiter = Delimiter {
+    kind: DelimKind::Brace,
+    side: DelimSide::Open,
+};
+/// `}`
+pub const CLOSE_BRACE: Delimiter = Delimiter {
+    kind: DelimKind::Brace,
+    side: DelimSide::Close,
+};
+
+impl Delimiter {
+    pub const fn to_panicvals(self, f: FmtArg) -> [PanicVal<'static>; 1] {
+        [self.to_panicval(f)]
+    }
+    pub const fn to_panicval(self, f: FmtArg) -> PanicVal<'static> {
+        match (self, f.is_alternate) {
+            (self::OPEN_PAREN, false) => PanicVal::write_str("("),
+            (self::CLOSE_PAREN, false) => PanicVal::write_str(")"),
+            (self::OPEN_BRACKET, false) => PanicVal::write_str("["),
+            (self::CLOSE_BRACKET, false) => PanicVal::write_str("]"),
+            (self::OPEN_BRACE, false) => PanicVal::write_str(" { "),
+            (self::CLOSE_BRACE, false) => PanicVal::write_str(" }"),
+            (self::OPEN_PAREN, true) => PanicVal::write_str("(\n").with_rightpad(f),
+            (self::CLOSE_PAREN, true) => PanicVal::write_str(")").with_leftpad(f),
+            (self::OPEN_BRACKET, true) => PanicVal::write_str("[\n").with_rightpad(f),
+            (self::CLOSE_BRACKET, true) => PanicVal::write_str("]").with_leftpad(f),
+            (self::OPEN_BRACE, true) => PanicVal::write_str(" {\n").with_rightpad(f),
+            (self::CLOSE_BRACE, true) => PanicVal::write_str("}").with_leftpad(f),
+        }
+    }
+}
+
+/*
+Foo { x: [3, 5, 8, 13], y: 21, z: (34, 55) }
+Foo {
+    x: [
+        3,
+        5,
+        8,
+        13,
+    ],
+    y: 21,
+    z: (
+        34,
+        55,
+    ),
+}
+*/
+
+impl PanicFmt for Delimiter {
+    type This = Self;
+    type Kind = IsCustomType;
+    const PV_COUNT: usize = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// How much indentation (in spaces) is added with `increment_indentation`.
+pub const INDENTATION_STEP: u8 = 4;
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// A stack allocated string type that's convetible to `PanicVal`.
+pub type ShortString = ArrayString<16>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// A comma separator for use between fields in a struct.
+pub const COMMA_SEP: FieldSeparator<'_> = FieldSeparator::new(",", IsLastField::No);
+
+/// A comma for use after the last field in a struct.
+pub const COMMA_TERM: FieldSeparator<'_> = FieldSeparator::new(",", IsLastField::Yes);
+
+/// For telling `FieldSeparator` whether it comes after the last field or not.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum IsLastField {
+    Yes,
+    No,
+}
+
+#[derive(Copy, Clone)]
+pub struct FieldSeparator<'a>(&'a str, IsLastField);
+
+impl<'a> FieldSeparator<'a> {
+    ///
+    ///
+    /// # Panics
+    ///
+    /// Panics if `string` is longer than 12 bytes.
+    ///
+    pub const fn new(string: &'a str, is_last_field: IsLastField) -> Self {
+        if string.len() > 12 {
+            crate::concat_panic(&[&[
+                PanicVal::write_str("expected a string shorter than 12 bytes,"),
+                PanicVal::write_str("actual length: "),
+                PanicVal::from_usize(string.len(), FmtArg::DISPLAY),
+                PanicVal::write_str(", string: "),
+                PanicVal::from_str(string, FmtArg::DEBUG),
+            ]])
+        }
+
+        FieldSeparator(string, is_last_field)
+    }
+
+    pub const fn to_panicvals(self, f: FmtArg) -> [PanicVal<'static>; 1] {
+        [PanicVal::from_element_separator(self.0, self.1, f)]
+    }
+
+    pub const fn to_panicval(self, f: FmtArg) -> PanicVal<'static> {
+        PanicVal::from_element_separator(self.0, self.1, f)
+    }
+}
+
+impl PanicFmt for FieldSeparator<'_> {
+    type This = Self;
+    type Kind = IsCustomType;
+    const PV_COUNT: usize = 1;
 }

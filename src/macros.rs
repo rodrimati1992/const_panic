@@ -114,17 +114,37 @@ macro_rules! __fmtarg_from_kw {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __set_fmt_from_kw {
+    (open, $fmtarg:ident) => {{
+        $fmtarg = $fmtarg.indent();
+        $fmtarg
+    }};
+    (close, $fmtarg:ident) => {{
+        $fmtarg = $fmtarg.unindent();
+        $fmtarg
+    }};
     (display, $fmtarg:ident) => {
-        $fmtarg.set_display()
+        $fmtarg.set_display().set_alternate(false)
     };
     ({}, $fmtarg:ident) => {
-        $fmtarg.set_display()
+        $fmtarg.set_display().set_alternate(false)
+    };
+    (alt_display, $fmtarg:ident) => {
+        $fmtarg.set_display().set_alternate(true)
+    };
+    ({#}, $fmtarg:ident) => {
+        $fmtarg.set_display().set_alternate(true)
     };
     (debug, $fmtarg:ident) => {
-        $fmtarg.set_debug()
+        $fmtarg.set_debug().set_alternate(false)
     };
     ({?}, $fmtarg:ident) => {
-        $fmtarg.set_debug()
+        $fmtarg.set_debug().set_alternate(false)
+    };
+    (alt_debug, $fmtarg:ident) => {
+        $fmtarg.set_debug().set_alternate(true)
+    };
+    ({#?}, $fmtarg:ident) => {
+        $fmtarg.set_debug().set_alternate(true)
     };
     (_, $fmtarg:ident) => {
         $fmtarg

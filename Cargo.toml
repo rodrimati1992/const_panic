@@ -8,14 +8,15 @@ description = "Basic const panic with Display-formatting, coming before Rust 1.5
 
 [dependencies]
 
-[dev-dependencies]
-konst = "0.2.13"
+[dev-dependencies.konst]
+version = "0.2.13"
+default-features = false
+features = ["parsing_no_proc"]
 
 
 [features]
 default = ["non_basic"]
-array_string = []
-non_basic = ["array_string"]
+non_basic = []
 
 # private feature
-test = ["array_string"]
+test = []

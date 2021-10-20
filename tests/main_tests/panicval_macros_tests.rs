@@ -90,3 +90,154 @@ fn flatten_panicvals_args_test() {
         string_debug
     );
 }
+
+#[cfg(feature = "non_basic")]
+#[test]
+fn struct_formatting() {
+    let foo = Foo {
+        x: &[3, 5, 8, 13],
+        y: 21,
+        z: Bar(false, true),
+        w: Baz {
+            h: &["hi", "hel\nlo"],
+        },
+    };
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DEBUG; Foo => foo),
+        *format!("{:?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DEBUG; Foo => foo),
+        *format!("{:#?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; Foo => foo),
+        "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true), w: Baz { h: [hi, hel\nlo] } }"
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; Foo => foo),
+        "\
+Foo {
+    x: [
+        3,
+        5,
+        8,
+        13,
+    ],
+    y: 21,
+    z: Bar(
+        false,
+        true,
+    ),
+    w: Baz {
+        h: [
+            hi,
+            hel
+lo,
+        ],
+    },
+}\
+"
+    );
+}
+
+#[cfg(feature = "non_basic")]
+#[derive(Debug)]
+struct Foo<'a> {
+    x: &'a [u8],
+    y: u8,
+    z: Bar,
+    w: Baz,
+}
+
+#[cfg(feature = "non_basic")]
+#[derive(Debug)]
+struct Bar(bool, bool);
+
+#[cfg(feature = "non_basic")]
+#[derive(Debug)]
+struct Baz {
+    h: &'static [&'static str],
+}
+
+#[cfg(feature = "non_basic")]
+const _: () = {
+    use const_panic::PanicFmt;
+
+    impl<'a> Foo<'a> {
+        const fn to_panicvals(&self, f: FmtArg) -> [const_panic::PanicVal<'a>; Foo::PV_COUNT] {
+            use const_panic::fmt;
+            const_panic::flatten_panicvals! {f;
+                "Foo",
+                open: fmt::OPEN_BRACE,
+                    "x: ", &[u8] => self.x, fmt::COMMA_SEP,
+                    "y: ", u8 => self.y, fmt::COMMA_SEP,
+                    "z: ", Bar => self.z, fmt::COMMA_SEP,
+                    "w: ", Baz => self.w, fmt::COMMA_TERM,
+                close: fmt::CLOSE_BRACE,
+            }
+        }
+    }
+
+    impl Bar {
+        const fn to_panicvals(&self, f: FmtArg) -> [const_panic::PanicVal<'static>; Bar::PV_COUNT] {
+            use const_panic::fmt;
+            const_panic::flatten_panicvals! {f;
+                "Bar",
+                open: fmt::OPEN_PAREN,
+                    self.0, fmt::COMMA_SEP,
+                    self.1, fmt::COMMA_TERM,
+                close: fmt::CLOSE_PAREN,
+            }
+        }
+    }
+
+    impl Baz {
+        const fn to_panicvals(&self, f: FmtArg) -> [const_panic::PanicVal<'static>; Baz::PV_COUNT] {
+            use const_panic::fmt;
+            const_panic::flatten_panicvals! {f;
+                "Baz",
+                open: fmt::OPEN_BRACE,
+                    "h: ", self.h, fmt::COMMA_TERM,
+                close: fmt::CLOSE_BRACE,
+            }
+        }
+    }
+
+    impl PanicFmt for Foo<'_> {
+        type This = Self;
+        type Kind = const_panic::fmt::IsCustomType;
+
+        const PV_COUNT: usize = {
+            let name = 1;
+            let open_brace = 1;
+            let close_brace = 1;
+            let field_count = 4;
+            name + open_brace
+                + close_brace
+                + 2 * field_count
+                + <&[u8]>::PV_COUNT
+                + <u8>::PV_COUNT
+                + <Bar>::PV_COUNT
+                + <Baz>::PV_COUNT
+        };
+    }
+
+    impl PanicFmt for Bar {
+        type This = Self;
+        type Kind = const_panic::fmt::IsCustomType;
+
+        const PV_COUNT: usize = 7;
+    }
+
+    impl PanicFmt for Baz {
+        type This = Self;
+        type Kind = const_panic::fmt::IsCustomType;
+
+        const PV_COUNT: usize = 6;
+    }
+};

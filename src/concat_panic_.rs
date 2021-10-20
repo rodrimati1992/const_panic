@@ -186,7 +186,6 @@ pub fn format_panic_message<const LEN: usize>(
 }
 
 #[doc(hidden)]
-#[cfg(any(doctest, feature = "array_string"))]
 pub(crate) const fn make_panic_string<const LEN: usize>(
     args: &[&[PanicVal<'_>]],
 ) -> Result<crate::ArrayString<LEN>, NotEnoughSpace> {
@@ -200,5 +199,10 @@ pub(crate) const fn make_panic_string<const LEN: usize>(
         (LEN, LEN),
     }
 
-    Ok(crate::ArrayString { buffer, len })
+    assert!(len as u32 as usize == len, "the panic message is too large");
+
+    Ok(crate::ArrayString {
+        buffer,
+        len: len as u32,
+    })
 }
