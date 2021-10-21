@@ -43,6 +43,7 @@ macro_rules! fmt_flatten {
     )
 }
 
+#[cfg(feature = "non_basic")]
 #[test]
 fn flatten_panicvals_args_test() {
     let string = "\nfoo\"\r";

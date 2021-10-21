@@ -37,9 +37,9 @@
 ///
 #[macro_export]
 macro_rules! flatten_panicvals {
-    ($fmtargs:expr; $($args:tt)* ) => {{
+    ($fmtargs:expr $(, $length:expr)?; $($args:tt)* ) => {{
         let mut fmtargs: $crate::FmtArg = $fmtargs;
-        $crate::__to_pvf_inner!(fmtargs [][$($args)* ,])
+        $crate::__to_pvf_inner!(fmtargs [$(length($length))?][$($args)* ,])
     }};
 }
 
@@ -48,15 +48,23 @@ macro_rules! flatten_panicvals {
 macro_rules! __to_pvf_inner {
     (
         $fmtargs:ident
-        [$((($len:expr, $kind:ident $args:tt), $fmt_override:tt, $reff:expr))*]
+        [
+            $(length($expected_length:expr))?
+            $((($len:expr, $kind:ident $args:tt), $fmt_override:tt, $reff:expr))*
+        ]
         [$(,)*]
-    ) => {
-        $crate::__::flatten_panicvals::<{ 0 $( + $len )* }>(&[
+    ) => ({
+        const __LEN_SDOFKE09F__: $crate::__::usize = 0 $( + $len )*;
+        $(
+            const _: () =
+                $crate::__::assert_flatten_panicvals_length($expected_length, __LEN_SDOFKE09F__);
+        )?
+        $crate::__::flatten_panicvals::<__LEN_SDOFKE09F__>(&[
             $(
                 $crate::__to_pvf_kind!($fmtargs $kind $args, $fmt_override, $reff)
             ),*
         ])
-    };
+    });
     ($fmtargs:ident [$($prev:tt)*] [_, $($rem:tt)*]) => {
         $crate::__to_pvf_inner!{
             $fmtargs
@@ -140,4 +148,20 @@ macro_rules! __to_pvf_kind {
                 .to_panicvals($crate::__set_fmt_from_kw!($fmt_override, $fmtargs)),
         })
     };
+}
+
+/// Helper macro for defining and using a `macro_rules!` macro inline.
+#[macro_export]
+macro_rules! inline_macro{
+    (
+        ($($args:tt)*),
+        ($($params:tt)*)
+        =>
+        $($code:tt)*
+    ) => {
+        macro_rules! __dummy__ {
+            ($($params)*) => {$($code)*}
+        }
+        __dummy__!{ $($args)* }
+    }
 }

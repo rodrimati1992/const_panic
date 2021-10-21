@@ -2,6 +2,14 @@
 #[macro_use]
 mod non_basic_macros;
 
+#[cfg(feature = "non_basic")]
+#[macro_use]
+mod macro_utils;
+
+#[cfg(feature = "non_basic")]
+#[macro_use]
+mod impl_panicfmt;
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __write_array {

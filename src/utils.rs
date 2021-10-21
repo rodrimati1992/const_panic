@@ -1,7 +1,14 @@
-use crate::debug_str_fmt::ForEscaping;
+use crate::{debug_str_fmt::ForEscaping, FmtArg, PanicVal};
 
 pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
     if l < r {
+        l
+    } else {
+        r
+    }
+}
+pub(crate) const fn max_usize(l: usize, r: usize) -> usize {
+    if l > r {
         l
     } else {
         r
@@ -121,4 +128,29 @@ const fn next_char_boundary(bytes: &[u8], mut i: usize) -> usize {
         i += 1;
     }
     i
+}
+
+#[doc(hidden)]
+#[track_caller]
+pub const fn assert_flatten_panicvals_length(expected_larger: usize, actual_value: usize) {
+    if actual_value > expected_larger {
+        crate::concat_panic(&[&[
+            PanicVal::write_str("length passed to flatten_panicvals macro ("),
+            PanicVal::from_usize(expected_larger, FmtArg::DISPLAY),
+            PanicVal::write_str(") is smaller than the computed length ("),
+            PanicVal::from_usize(actual_value, FmtArg::DISPLAY),
+            PanicVal::write_str(")"),
+        ]]);
+    }
+}
+
+pub const fn slice_max_usize(mut slice: &[usize]) -> usize {
+    let mut max = 0;
+
+    while let [x, ref rem @ ..] = *slice {
+        max = max_usize(max, x);
+        slice = rem;
+    }
+
+    max
 }

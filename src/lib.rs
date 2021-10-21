@@ -102,7 +102,6 @@
 //!
 //!
 //!
-//!
 
 #![no_std]
 
@@ -123,7 +122,7 @@ mod non_basic_utils;
 
 mod panic_val;
 
-mod utils;
+pub mod utils;
 
 #[cfg(all(test, not(feature = "test")))]
 compile_error! {r##"please use cargo test --features "test""##}
@@ -150,12 +149,14 @@ pub use crate::{
 
 #[doc(hidden)]
 pub mod __ {
-    pub use core::compile_error;
+    pub use core::{compile_error, concat, primitive::usize, stringify};
 
     pub use crate::fmt::{FmtArg, PanicFmt};
 
     #[cfg(feature = "non_basic")]
     pub use crate::non_basic_utils::{flatten_panicvals, panicvals_id};
+
+    pub use crate::utils::assert_flatten_panicvals_length;
 }
 
 #[cfg(feature = "test")]

@@ -299,6 +299,63 @@ pub type ShortString = ArrayString<16>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// For computing the `PV_COUNT` of a struct or enum variant,
+/// with the [`call`](PvCountForStruct::call) method.
+pub struct PvCountForStruct {
+    /// The amount of fields in the struct
+    pub field_amount: usize,
+    /// The summed up amount of `PanicVal`s that all the fields produce.
+    ///
+    /// Eg: for a struct with `Bar` and `Qux` fields, this would be
+    /// `<Bar as PanicFmt>::PV_COUNT + <Qux as PanicFmt>::PV_COUNT`,
+    ///
+    pub summed_pv_count: usize,
+    ///
+    pub delimiter: StructDelim,
+}
+
+impl PvCountForStruct {
+    pub const fn call(&self) -> usize {
+        const DELIMITER_PVCOUNT: usize = 2;
+
+        // field-less structs and variants don't output the empty delimiter
+        if self.field_amount == 0 {
+            1
+        } else {
+            1 + 2 + 2 * self.field_amount + self.summed_pv_count
+        }
+    }
+}
+
+/// The delimiter for structs and variants.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum StructDelim {
+    Tupled,
+    Braced,
+}
+
+impl StructDelim {
+    pub const fn get_open_and_close(self) -> (Delimiter, Delimiter) {
+        let open = Delimiter {
+            kind: match self {
+                Self::Tupled => DelimKind::Paren,
+                Self::Braced => DelimKind::Brace,
+            },
+            side: DelimSide::Open,
+        };
+
+        (
+            open,
+            Delimiter {
+                side: DelimSide::Close,
+                ..open
+            },
+        )
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 /// A comma separator for use between fields in a struct.
 pub const COMMA_SEP: FieldSeparator<'_> = FieldSeparator::new(",", IsLastField::No);
 
