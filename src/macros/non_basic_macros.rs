@@ -54,10 +54,16 @@ macro_rules! __to_pvf_inner {
         ]
         [$(,)*]
     ) => ({
-        const __LEN_SDOFKE09F__: $crate::__::usize = 0 $( + $len )*;
+        const __ADDED_UP_LEN_SDOFKE09F__: $crate::__::usize = 0 $( + $len )*;
+        const __LEN_SDOFKE09F__: $crate::__::usize =
+            $crate::__to_pvf_used_length!(__ADDED_UP_LEN_SDOFKE09F__, $($expected_length)?);
+
         $(
             const _: () =
-                $crate::__::assert_flatten_panicvals_length($expected_length, __LEN_SDOFKE09F__);
+                $crate::__::assert_flatten_panicvals_length(
+                    $expected_length,
+                    __ADDED_UP_LEN_SDOFKE09F__,
+                );
         )?
         $crate::__::flatten_panicvals::<__LEN_SDOFKE09F__>(&[
             $(
@@ -150,11 +156,22 @@ macro_rules! __to_pvf_kind {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __to_pvf_used_length {
+    ( $added_up:expr, $expected_length:expr ) => {
+        $crate::utils::max_usize($added_up, $expected_length)
+    };
+    ( $added_up:expr, ) => {
+        $added_up
+    };
+}
+
 /// Helper macro for defining and using a `macro_rules!` macro inline.
 #[macro_export]
 macro_rules! inline_macro{
     (
-        ($($args:tt)*),
+        $(($($args:tt)*)),* $(,)?;
         ($($params:tt)*)
         =>
         $($code:tt)*
@@ -162,6 +179,8 @@ macro_rules! inline_macro{
         macro_rules! __dummy__ {
             ($($params)*) => {$($code)*}
         }
-        __dummy__!{ $($args)* }
+        $(
+            __dummy__!{ $($args)* }
+        )*
     }
 }

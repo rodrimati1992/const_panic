@@ -80,10 +80,11 @@ enum Qux<T> {
 }
 
 const_panic::inline_macro! {
-    (u8, (); u16, (lifetime = 'static;); u32, ()),
+    (u8, ()),
+    (u16, (lifetime = 'static;)),
+    (u32, ());
 
-    ($($T:ty , ($($other:tt)*));*) =>
-    $(
+    ($T:ty , ($($other:tt)*)) =>
         const_panic::impl_panicfmt!{
             impl Qux<$T>;
 
@@ -98,5 +99,4 @@ const_panic::inline_macro! {
                 Left(u64),
             }
         }
-    )*
 }

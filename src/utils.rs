@@ -7,7 +7,8 @@ pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
         r
     }
 }
-pub(crate) const fn max_usize(l: usize, r: usize) -> usize {
+
+pub const fn max_usize(l: usize, r: usize) -> usize {
     if l > r {
         l
     } else {

@@ -242,3 +242,94 @@ const _: () = {
         const PV_COUNT: usize = 6;
     }
 };
+
+#[cfg(feature = "non_basic")]
+#[test]
+fn enum_formatting() {
+    const_panic::inline_macro! {
+        (u8 = Qux::Up),
+        (u16 = Qux::Down { x: 21, y: 34 }),
+        (u32 = Qux::Left(55));
+        ($T:ty = $val:expr) =>
+
+        let val: Qux<$T> = $val;
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::DEBUG; Qux<$T> => val),
+            *format!("{:?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_DEBUG; Qux<$T> => val),
+            *format!("{:#?}", val)
+        );
+    }
+}
+
+#[cfg(feature = "non_basic")]
+#[derive(Debug)]
+enum Qux<T> {
+    Up,
+    Down { x: T, y: T },
+    Left(u64),
+}
+
+#[cfg(feature = "non_basic")]
+const_panic::inline_macro! {
+    (u8),
+    (u16),
+    (u32);
+
+    ($T:ty) =>
+    impl const_panic::PanicFmt for Qux<$T> {
+        type This = Self;
+        type Kind = const_panic::fmt::IsCustomType;
+
+        const PV_COUNT: usize = {
+            use const_panic::fmt::{PvCountForStruct, StructDelim};
+
+            const_panic::utils::slice_max_usize(&[
+                PvCountForStruct{
+                    field_amount: 0,
+                    summed_pv_count: 0,
+                    delimiter: StructDelim::Braced,
+                }.call(),
+                PvCountForStruct{
+                    field_amount: 2,
+                    summed_pv_count: <$T>::PV_COUNT * 2,
+                    delimiter: StructDelim::Braced,
+                }.call(),
+                PvCountForStruct{
+                    field_amount: 1,
+                    summed_pv_count: <u64>::PV_COUNT,
+                    delimiter: StructDelim::Tupled,
+                }.call(),
+            ])
+        };
+    }
+
+    impl Qux<$T> {
+        const fn to_panicvals(
+            &self,
+            f: FmtArg,
+        ) -> [const_panic::PanicVal<'static>; <Qux<$T> as const_panic::PanicFmt>::PV_COUNT] {
+            use const_panic::{fmt, flatten_panicvals, PanicFmt};
+            match self {
+                Self::Up => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT; "Up"},
+                Self::Down{x, y} => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT;
+                    "Down",
+                    open: fmt::OPEN_BRACE,
+                        "x: ", x, fmt::COMMA_SEP,
+                        "y: ", y, fmt::COMMA_TERM,
+                    close: fmt::CLOSE_BRACE,
+                },
+                Self::Left(x) => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT;
+                    "Left",
+                    open: fmt::OPEN_PAREN,
+                        x, fmt::COMMA_TERM,
+                    close: fmt::CLOSE_PAREN,
+                },
+            }
+        }
+    }
+}
