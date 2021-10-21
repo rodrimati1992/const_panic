@@ -1,4 +1,4 @@
-#[doc(hidden)]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! impl_panicfmt {
     (

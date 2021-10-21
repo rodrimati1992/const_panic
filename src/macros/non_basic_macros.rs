@@ -35,6 +35,7 @@
 ///
 /// [`PanicVal`]: crate::PanicVal
 ///
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! flatten_panicvals {
     ($fmtargs:expr $(, $length:expr)?; $($args:tt)* ) => {{
@@ -168,6 +169,7 @@ macro_rules! __to_pvf_used_length {
 }
 
 /// Helper macro for defining and using a `macro_rules!` macro inline.
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! inline_macro{
     (

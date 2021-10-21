@@ -103,6 +103,7 @@ macro_rules! write_to_buffer {
             while let [arg, nouter @ ..] = outer {
                 match arg.var {
                     #[cfg(feature = "non_basic")]
+                    #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
                     crate::panic_val::PanicVariant::Slice(slice) => {
                         let mut iter = slice.iter();
 
@@ -185,6 +186,8 @@ pub fn format_panic_message<const LEN: usize>(
     Ok(TestString { buffer, len })
 }
 
+#[cfg(feature = "non_basic")]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[doc(hidden)]
 pub(crate) const fn make_panic_string<const LEN: usize>(
     args: &[&[PanicVal<'_>]],

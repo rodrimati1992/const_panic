@@ -1,6 +1,6 @@
 use crate::{
-    panic_val::{PanicVal, PanicVariant},
-    FmtArg, IntVal, PanicFmt, Wrapper,
+    panic_val::{IntVal, PanicVal, PanicVariant},
+    FmtArg, PanicFmt, Wrapper,
 };
 
 macro_rules! impl_panicfmt_panicval_array {

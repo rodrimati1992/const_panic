@@ -6,6 +6,7 @@ use core::{
 };
 
 /// For precomputing a panic message.
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[derive(Copy, Clone)]
 pub struct ArrayString<const CAP: usize> {
     pub(crate) len: u32,

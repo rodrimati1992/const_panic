@@ -17,6 +17,7 @@ features = ["parsing_no_proc"]
 [features]
 default = ["non_basic"]
 non_basic = []
+docsrs = []
 
 # private feature
 test = []

@@ -30,16 +30,13 @@ macro_rules! __write_array_checked {
     };
 }
 
-/// Calls the `to_panicvals` method on `$reff`,
+/// Coerces `$reff` to a type that has a `to_panicvals` method,
 /// which is expected to return a `[PanicVal<'_>; LEN]`.
 #[macro_export]
-macro_rules! to_panicvals {
-    ($fmtargs:expr; $reff:expr) => {
+macro_rules! coerce_fmt {
+    ($reff:expr) => {
         match &$reff {
-            reff => $crate::__::PanicFmt::PROOF
-                .infer(reff)
-                .coerce(reff)
-                .to_panicvals($fmtargs),
+            reff => $crate::__::PanicFmt::PROOF.infer(reff).coerce(reff),
         }
     };
 }
@@ -104,7 +101,12 @@ macro_rules! __concat_func {
     };
     ($fmt:ident (|$args:ident| $function_call:expr) [$(($fmt_arg:expr, $reff:expr))*] [$(,)*]) => {
         match &[
-            $( $crate::Wrapper(&$crate::to_panicvals!($fmt_arg; $reff)).deref_panic_vals(), )*
+            $(
+                $crate::Wrapper(
+                    &$crate::coerce_fmt!($reff)
+                    .to_panicvals($fmt_arg)
+                ).deref_panic_vals(),
+            )*
         ] {
             $args => $function_call,
         }

@@ -104,6 +104,7 @@
 //!
 
 #![no_std]
+#![cfg_attr(feature = "docsrs", feature(doc_cfg))]
 
 #[macro_use]
 mod doc_macros;
@@ -117,11 +118,13 @@ mod debug_str_fmt;
 
 pub mod fmt;
 
-#[cfg(feature = "non_basic")]
-mod non_basic_utils;
-
 mod panic_val;
 
+#[cfg(not(feature = "non_basic"))]
+mod utils;
+
+#[cfg(feature = "non_basic")]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub mod utils;
 
 #[cfg(all(test, not(feature = "test")))]
@@ -130,8 +133,10 @@ compile_error! {r##"please use cargo test --features "test""##}
 #[cfg(feature = "non_basic")]
 mod slice_stuff;
 
+#[cfg(feature = "non_basic")]
 mod array_string;
 
+#[cfg(feature = "non_basic")]
 pub use crate::array_string::ArrayString;
 
 mod wrapper;
@@ -142,8 +147,8 @@ mod fmt_impls {
 
 pub use crate::{
     concat_panic_::concat_panic,
-    fmt::{Delimiter, FmtArg, PanicFmt},
-    panic_val::{IntVal, PanicVal},
+    fmt::{FmtArg, IsCustomType, PanicFmt},
+    panic_val::PanicVal,
     wrapper::Wrapper,
 };
 
@@ -154,9 +159,7 @@ pub mod __ {
     pub use crate::fmt::{FmtArg, PanicFmt};
 
     #[cfg(feature = "non_basic")]
-    pub use crate::non_basic_utils::{flatten_panicvals, panicvals_id};
-
-    pub use crate::utils::assert_flatten_panicvals_length;
+    pub use crate::utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id};
 }
 
 #[cfg(feature = "test")]

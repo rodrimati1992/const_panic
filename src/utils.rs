@@ -1,4 +1,10 @@
-use crate::{debug_str_fmt::ForEscaping, FmtArg, PanicVal};
+use crate::debug_str_fmt::ForEscaping;
+
+#[cfg(feature = "non_basic")]
+mod non_basic_utils;
+
+#[cfg(feature = "non_basic")]
+pub use self::non_basic_utils::*;
 
 pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
     if l < r {
@@ -8,21 +14,22 @@ pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
     }
 }
 
-pub const fn max_usize(l: usize, r: usize) -> usize {
-    if l > r {
-        l
-    } else {
-        r
-    }
-}
-
 #[derive(Copy, Clone)]
-pub(crate) struct ShortArrayVec<const LEN: usize> {
-    pub(crate) start: u8,
-    pub(crate) buffer: [u8; LEN],
+pub(crate) struct TailShortString<const LEN: usize> {
+    start: u8,
+    buffer: [u8; LEN],
 }
 
-impl<const LEN: usize> ShortArrayVec<LEN> {
+impl<const LEN: usize> TailShortString<LEN> {
+    ///
+    /// # Safety
+    ///
+    /// `buffer` must be valid utf8 starting from the `start` index.
+    #[inline(always)]
+    pub(crate) const unsafe fn new(start: u8, buffer: [u8; LEN]) -> Self {
+        Self { start, buffer }
+    }
+
     pub(crate) const fn len(&self) -> usize {
         LEN - self.start as usize
     }
@@ -129,29 +136,4 @@ const fn next_char_boundary(bytes: &[u8], mut i: usize) -> usize {
         i += 1;
     }
     i
-}
-
-#[doc(hidden)]
-#[track_caller]
-pub const fn assert_flatten_panicvals_length(expected_larger: usize, actual_value: usize) {
-    if actual_value > expected_larger {
-        crate::concat_panic(&[&[
-            PanicVal::write_str("length passed to flatten_panicvals macro ("),
-            PanicVal::from_usize(expected_larger, FmtArg::DISPLAY),
-            PanicVal::write_str(") is smaller than the computed length ("),
-            PanicVal::from_usize(actual_value, FmtArg::DISPLAY),
-            PanicVal::write_str(")"),
-        ]]);
-    }
-}
-
-pub const fn slice_max_usize(mut slice: &[usize]) -> usize {
-    let mut max = 0;
-
-    while let [x, ref rem @ ..] = *slice {
-        max = max_usize(max, x);
-        slice = rem;
-    }
-
-    max
 }

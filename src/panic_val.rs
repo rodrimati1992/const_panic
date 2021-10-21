@@ -1,7 +1,10 @@
 use crate::{
-    fmt::{FmtArg, FmtKind, IsLastField, ShortString},
-    utils::{ShortArrayVec, Sign, WasTruncated},
+    fmt::{FmtArg, FmtKind},
+    utils::{Sign, TailShortString, WasTruncated},
 };
+
+#[cfg(feature = "non_basic")]
+use crate::fmt::{IsLastField, ShortString};
 
 #[non_exhaustive]
 #[derive(Copy, Clone)]
@@ -16,6 +19,7 @@ pub struct PanicVal<'a> {
 #[derive(Copy, Clone)]
 pub(crate) enum PanicVariant<'a> {
     Str(&'a str),
+    #[cfg(feature = "non_basic")]
     ShortString(ShortString),
     Int(IntVal),
     #[cfg(feature = "non_basic")]
@@ -70,6 +74,7 @@ impl<'a> PanicVal<'a> {
     }
 
     /// Constructs a PanicVal from a [`ShortString`], that's output verbatim.
+    #[cfg(feature = "non_basic")]
     pub const fn write_short_str(string: ShortString) -> Self {
         Self {
             var: PanicVariant::ShortString(string),
@@ -83,6 +88,7 @@ impl<'a> PanicVal<'a> {
     ///
     /// This may panic if `string.len()` is greater than 12.
     ///
+    #[cfg(feature = "non_basic")]
     pub const fn from_element_separator(
         separator: &str,
         is_last_field: IsLastField,
@@ -112,6 +118,9 @@ impl<'a> PanicVal<'a> {
         }
     }
 
+    // Gets the bytes in the string and integer variants,
+    // truncating them to `truncate_to`.
+    //
     pub(crate) const fn __string(
         &self,
         mut truncate_to: usize,
@@ -143,6 +152,7 @@ impl<'a> PanicVal<'a> {
                     crate::utils::truncated_debug_str_len(string, truncate_to)
                 };
             }
+            #[cfg(feature = "non_basic")]
             PanicVariant::ShortString(str) => {
                 string = str.as_bytes();
                 fmt_kind = self.fmt_kind;
@@ -173,7 +183,7 @@ impl<'a> PanicVal<'a> {
 }
 
 #[derive(Copy, Clone)]
-pub struct IntVal(ShortArrayVec<40>);
+pub struct IntVal(TailShortString<40>);
 
 impl IntVal {
     pub(crate) const fn from_u128(n: u128, f: FmtArg) -> Self {
@@ -206,10 +216,8 @@ impl IntVal {
             buffer[start] = b'-';
         }
 
-        Self(ShortArrayVec {
-            start: start as u8,
-            buffer,
-        })
+        // safety: buffer is only ever written ascii, so its automatically valid utf8.
+        unsafe { Self(TailShortString::new(start as u8, buffer)) }
     }
 }
 
