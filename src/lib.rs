@@ -281,7 +281,7 @@ mod fmt_impls {
 
 pub use crate::{
     concat_panic_::concat_panic,
-    fmt::{FmtArg, IsCustomType, PanicFmt},
+    fmt::{ComputePvCount, FmtArg, IsCustomType, PanicFmt, TypeDelim},
     panic_val::PanicVal,
     wrapper::Wrapper,
 };

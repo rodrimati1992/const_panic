@@ -1,11 +1,13 @@
 use crate::{FmtArg, PanicVal};
 
+/// For coercing a `&[PanicVal<'_>; LEN]` into a `&[PanicVal<'_>]`.
 pub const fn panicvals_id<'a, 'b, const LEN: usize>(
     array: &'b [PanicVal<'a>; LEN],
 ) -> &'b [PanicVal<'a>] {
     array
 }
 
+/// Flattens a `&[&[PanicVal<'a>]]` into a `[PanicVal<'a>; LEN]`.
 pub const fn flatten_panicvals<'a, const LEN: usize>(
     mut input: &[&[PanicVal<'a>]],
 ) -> [PanicVal<'a>; LEN] {
@@ -24,6 +26,7 @@ pub const fn flatten_panicvals<'a, const LEN: usize>(
     out
 }
 
+/// Gets the maximum value betweem `l` and `r`
 pub const fn max_usize(l: usize, r: usize) -> usize {
     if l > r {
         l
@@ -32,6 +35,7 @@ pub const fn max_usize(l: usize, r: usize) -> usize {
     }
 }
 
+/// Gets the maximum value in `slice`, returns `0` if the slice is empty.
 pub const fn slice_max_usize(mut slice: &[usize]) -> usize {
     let mut max = 0;
 

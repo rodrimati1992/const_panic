@@ -174,12 +174,12 @@ const _: () = {
             use const_panic::fmt;
             const_panic::flatten_panicvals! {f;
                 "Foo",
-                open: fmt::OPEN_BRACE,
+                open: fmt::OpenBrace,
                     "x: ", &[u8] => self.x, fmt::COMMA_SEP,
                     "y: ", u8 => self.y, fmt::COMMA_SEP,
                     "z: ", Bar => self.z, fmt::COMMA_SEP,
                     "w: ", Baz => self.w, fmt::COMMA_TERM,
-                close: fmt::CLOSE_BRACE,
+                close: fmt::CloseBrace,
             }
         }
     }
@@ -189,10 +189,10 @@ const _: () = {
             use const_panic::fmt;
             const_panic::flatten_panicvals! {f;
                 "Bar",
-                open: fmt::OPEN_PAREN,
+                open: fmt::OpenParen,
                     self.0, fmt::COMMA_SEP,
                     self.1, fmt::COMMA_TERM,
-                close: fmt::CLOSE_PAREN,
+                close: fmt::CloseParen,
             }
         }
     }
@@ -202,9 +202,9 @@ const _: () = {
             use const_panic::fmt;
             const_panic::flatten_panicvals! {f;
                 "Baz",
-                open: fmt::OPEN_BRACE,
+                open: fmt::OpenBrace,
                     "h: ", self.h, fmt::COMMA_TERM,
-                close: fmt::CLOSE_BRACE,
+                close: fmt::CloseBrace,
             }
         }
     }
@@ -286,23 +286,23 @@ const_panic::inline_macro! {
         type Kind = const_panic::fmt::IsCustomType;
 
         const PV_COUNT: usize = {
-            use const_panic::fmt::{PvCountForStruct, StructDelim};
+            use const_panic::fmt::{ComputePvCount, TypeDelim};
 
             const_panic::utils::slice_max_usize(&[
-                PvCountForStruct{
+                ComputePvCount{
                     field_amount: 0,
                     summed_pv_count: 0,
-                    delimiter: StructDelim::Braced,
+                    delimiter: TypeDelim::Braced,
                 }.call(),
-                PvCountForStruct{
+                ComputePvCount{
                     field_amount: 2,
                     summed_pv_count: <$T>::PV_COUNT * 2,
-                    delimiter: StructDelim::Braced,
+                    delimiter: TypeDelim::Braced,
                 }.call(),
-                PvCountForStruct{
+                ComputePvCount{
                     field_amount: 1,
                     summed_pv_count: <u64>::PV_COUNT,
-                    delimiter: StructDelim::Tupled,
+                    delimiter: TypeDelim::Tupled,
                 }.call(),
             ])
         };
@@ -318,16 +318,16 @@ const_panic::inline_macro! {
                 Self::Up => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT; "Up"},
                 Self::Down{x, y} => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT;
                     "Down",
-                    open: fmt::OPEN_BRACE,
+                    open: fmt::OpenBrace,
                         "x: ", x, fmt::COMMA_SEP,
                         "y: ", y, fmt::COMMA_TERM,
-                    close: fmt::CLOSE_BRACE,
+                    close: fmt::CloseBrace,
                 },
                 Self::Left(x) => flatten_panicvals! {f, <Qux<$T>>::PV_COUNT;
                     "Left",
-                    open: fmt::OPEN_PAREN,
+                    open: fmt::OpenParen,
                         x, fmt::COMMA_TERM,
-                    close: fmt::CLOSE_PAREN,
+                    close: fmt::CloseParen,
                 },
             }
         }

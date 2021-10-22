@@ -310,11 +310,11 @@ macro_rules! __concat_func {
 macro_rules! __set_fmt_from_kw {
     (open, $fmtarg:ident) => {{
         $fmtarg = $fmtarg.indent();
-        $fmtarg
+        $fmtarg.set_display().set_alternate(false)
     }};
     (close, $fmtarg:ident) => {{
         $fmtarg = $fmtarg.unindent();
-        $fmtarg
+        $fmtarg.set_display().set_alternate(false)
     }};
     (display, $fmtarg:ident) => {
         $fmtarg.set_display().set_alternate(false)

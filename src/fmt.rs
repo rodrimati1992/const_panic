@@ -74,6 +74,7 @@ pub struct IsCustomType;
 ///
 /// Used by const_panic macros to coerce both standard library and
 /// user-defined types into some type that has a `to_panicvals` method.
+///
 pub struct IsPanicFmt<S: ?Sized, T: ?Sized, K> {
     self_: PhantomData<fn() -> S>,
     this: PhantomData<fn() -> T>,
@@ -82,6 +83,7 @@ pub struct IsPanicFmt<S: ?Sized, T: ?Sized, K> {
 }
 
 impl<T: PanicFmt + ?Sized> IsPanicFmt<T, T::This, T::Kind> {
+    /// Constucts an `IsPanicFmt`
     pub const NEW: Self = Self {
         self_: PhantomData,
         this: PhantomData,
@@ -91,18 +93,25 @@ impl<T: PanicFmt + ?Sized> IsPanicFmt<T, T::This, T::Kind> {
 }
 
 impl<S: ?Sized, T: ?Sized, K> IsPanicFmt<S, T, K> {
+    /// Infers the `S` type parameter with the argument.
+    ///
+    /// Because the only ways to construct `IsPanicFmt`
+    /// use `IsPanicFmt<S, S::This, S::Kind>`,
+    /// the other type parameters are inferred along with `S`.
     pub const fn infer(self, _: &S) -> Self {
         self
     }
 }
 
 impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsStdType> {
+    /// For coercing `&T` to `Wrapper<&T>`.
     pub const fn coerce(self, x: &T) -> Wrapper<&T> {
         Wrapper(x)
     }
 }
 
 impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsCustomType> {
+    /// For coercing `&T` (with any amount of stacked references) to `&T`.
     pub const fn coerce(self, x: &T) -> &T {
         x
     }
@@ -116,12 +125,62 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 }
 
 /// Carries all of the configuration for formatting functions.
+///
+/// # Example
+///
+#[cfg_attr(feature = "non_basic", doc = "```rust")]
+#[cfg_attr(not(feature = "non_basic"), doc = "```ignore")]
+/// use const_panic::{ArrayString, FmtArg, Wrapper};
+///
+/// // `Wrapper` wraps references to std types to provide their `to_panicvals` methods
+/// let array = Wrapper(&["3", "foo\nbar", "\0qux"]);
+///
+/// // Debug formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///     r#"["3", "foo\nbar", "\x00qux"]"#
+/// );
+///
+/// // Alternate-Debug formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///     concat!(
+///         "[\n",
+///         "    \"3\",\n",
+///         "    \"foo\\nbar\",\n",
+///         "    \"\\x00qux\",\n",
+///         "]",
+///     )
+/// );
+///
+/// // Display formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::DISPLAY)).unwrap(),
+///     "[3, foo\nbar, \x00qux]"
+/// );
+///
+/// // Alternate-Display formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::ALT_DISPLAY)).unwrap(),
+///     concat!(
+///         "[\n",
+///         "    3,\n",
+///         "    foo\n",
+///         "bar,\n",
+///         "    \x00qux,\n",
+///         "]",
+///     )
+/// );
+///
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[non_exhaustive]
 pub struct FmtArg {
     /// How much indentation is needed for a field/array element.
     ///
-    /// This is only used by types that call  
+    /// Indentation is used by [`fmt::Delimiter`](crate::fmt::Delimiter)
+    /// and by [`fmt::Separator`](crate::fmt::Separator),
+    /// when the [`is_alternate` field](#structfield.is_alternate) flag is enabled.
     pub indentation: u8,
     /// Whether alternate formatting is being used.
     pub is_alternate: bool,
@@ -137,20 +196,20 @@ impl FmtArg {
         is_alternate: false,
     };
 
-    /// A `FmtArg` with no indentation and `Debug` formatting.
+    /// A `FmtArg` with `Debug` formatting and no indentation.
     pub const DEBUG: Self = Self {
         indentation: 0,
         is_alternate: false,
         fmt_kind: FmtKind::Debug,
     };
 
-    /// A `FmtArg` with no indentation and alternate `Display` formatting.
+    /// A `FmtArg` with alternate `Display` formatting and no indentation.
     pub const ALT_DISPLAY: Self = Self::DISPLAY.set_alternate(true);
 
-    /// A `FmtArg` with no indentation and alternate `Debug` formatting.
+    /// A `FmtArg` with alternate `Debug` formatting and no indentation.
     pub const ALT_DEBUG: Self = Self::DEBUG.set_alternate(true);
 
-    /// Sets wether alternate formatting is enabled
+    /// Sets whether alternate formatting is enabled
     pub const fn set_alternate(mut self, is_alternate: bool) -> Self {
         self.is_alternate = is_alternate;
         self
@@ -190,6 +249,8 @@ impl FmtArg {
 /// What kind of formatting to do, either `Display` or `Debug`.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FmtKind {
+    /// `Debug` formatting
     Debug,
+    /// `Display` formatting
     Display,
 }

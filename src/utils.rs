@@ -1,3 +1,5 @@
+//! Utility functions
+
 use crate::debug_str_fmt::ForEscaping;
 
 #[cfg(feature = "non_basic")]

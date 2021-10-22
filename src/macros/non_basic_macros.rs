@@ -58,10 +58,10 @@
 ///
 #[doc = formatting_docs!("
 - `open`: increments `$fmtarg`'s indentation by [`fmt::INDENTATION_STEP`]
-before formatting the argument, doesn't change formatting otherwise.
+before formatting the argument, and uses Display formatting for that argument.
 
 - `close`: decrements `$fmtarg`'s indentation by [`fmt::INDENTATION_STEP`]
-before formatting the argument, doesn't change formatting otherwise.
+before formatting the argument, and uses Display formatting for that argument.
 
 [`fmt::INDENTATION_STEP`]: crate::fmt::INDENTATION_STEP
 ")]
@@ -163,7 +163,7 @@ before formatting the argument, doesn't change formatting otherwise.
 ///
 /// ```rust
 /// use const_panic::{
-///     fmt::{self, FmtArg, PanicFmt, PvCountForStruct},
+///     fmt::{self, FmtArg, PanicFmt, ComputePvCount},
 ///     ArrayString, PanicVal,
 ///     flatten_panicvals,
 /// };
@@ -214,17 +214,17 @@ before formatting the argument, doesn't change formatting otherwise.
 ///     type This = Self;
 ///     type Kind = const_panic::fmt::IsCustomType;
 ///
-///     // `PvCountForStruct` allows computing the length of the array of `PanicVal`s
+///     // `ComputePvCount` allows computing the length of the array of `PanicVal`s
 ///     // returned by `Foo::to_panicvals` below.
 ///     //
-///     // Note that PvCountForStruct only calculates the correct number if you
+///     // Note that ComputePvCount only calculates the correct number if you
 ///     // follow the pattern in this example.
-///     const PV_COUNT: usize = PvCountForStruct{
+///     const PV_COUNT: usize = ComputePvCount{
 ///         field_amount: 3,
 ///         summed_pv_count: <&[u8]>::PV_COUNT
 ///             + <u8>::PV_COUNT
 ///             + <Bar>::PV_COUNT,
-///         delimiter: fmt::StructDelim::Braced,
+///         delimiter: fmt::TypeDelim::Braced,
 ///     }.call();
 /// }
 ///
@@ -239,14 +239,14 @@ before formatting the argument, doesn't change formatting otherwise.
 ///             // by `const_panic::fmt::INDENTATION_STEP` spaces.
 ///             // The indentation field is used by these constants when the
 ///             // `fmtarg.is_alternate` flag is enabled.
-///             open: fmt::OPEN_BRACE,
+///             open: fmt::OpenBrace,
 ///                 // fmt::COMMA_SEP must only be used between fields
 ///                 "x: ", &[u8] => self.x, fmt::COMMA_SEP,
 ///                 "y: ", u8 => self.y, fmt::COMMA_SEP,
 ///                 // fmt::COMMA_TERM must only be used after the last field
 ///                 "z: ", Bar => self.z, fmt::COMMA_TERM,
 ///             // the `close:` format override decrements the indentation.
-///             close: fmt::CLOSE_BRACE,
+///             close: fmt::CloseBrace,
 ///         }
 ///     }
 /// }
@@ -255,10 +255,10 @@ before formatting the argument, doesn't change formatting otherwise.
 ///     type This = Self;
 ///     type Kind = const_panic::fmt::IsCustomType;
 ///
-///     const PV_COUNT: usize = PvCountForStruct{
+///     const PV_COUNT: usize = ComputePvCount{
 ///         field_amount: 2,
 ///         summed_pv_count: <bool>::PV_COUNT * 2,
-///         delimiter: fmt::StructDelim::Tupled,
+///         delimiter: fmt::TypeDelim::Tupled,
 ///     }.call();
 /// }
 ///
@@ -266,12 +266,12 @@ before formatting the argument, doesn't change formatting otherwise.
 ///     const fn to_panicvals(&self, f: FmtArg) -> [PanicVal<'static>; Bar::PV_COUNT] {
 ///         flatten_panicvals! {f;
 ///             "Bar",
-///             open: fmt::OPEN_PAREN,
+///             open: fmt::OpenParen,
 ///                 // fmt::COMMA_SEP must only be used between fields
 ///                 self.0, fmt::COMMA_SEP,
 ///                 // fmt::COMMA_TERM must only be used after the last field
 ///                 self.1, fmt::COMMA_TERM,
-///             close: fmt::CLOSE_PAREN,
+///             close: fmt::CloseParen,
 ///         }
 ///     }
 /// }
@@ -283,7 +283,7 @@ before formatting the argument, doesn't change formatting otherwise.
 ///
 /// ```rust
 /// use const_panic::{
-///     fmt::{self, FmtArg, PanicFmt, PvCountForStruct},
+///     fmt::{self, FmtArg, PanicFmt, ComputePvCount},
 ///     ArrayString, PanicVal,
 ///     flatten_panicvals,
 /// };
@@ -345,26 +345,26 @@ before formatting the argument, doesn't change formatting otherwise.
 ///     type Kind = const_panic::fmt::IsCustomType;
 ///
 ///     const PV_COUNT: usize = {
-///         // `PvCountForStruct` computes the length of the array of `PanicVal`s
+///         // `ComputePvCount` computes the length of the array of `PanicVal`s
 ///         // produced by each variant.
 ///         //
 ///         // `slice_max_usize` returns the maximum usize in a slice.
 ///         // In this case, to return the longest array produced by the variants.
 ///         const_panic::utils::slice_max_usize(&[
-///             PvCountForStruct{
+///             ComputePvCount{
 ///                 field_amount: 0,
 ///                 summed_pv_count: 0,
-///                 delimiter: fmt::StructDelim::Braced,
+///                 delimiter: fmt::TypeDelim::Braced,
 ///             }.call(),
-///             PvCountForStruct{
+///             ComputePvCount{
 ///                 field_amount: 3,
 ///                 summed_pv_count: <T>::PV_COUNT * 3,
-///                 delimiter: fmt::StructDelim::Braced,
+///                 delimiter: fmt::TypeDelim::Braced,
 ///             }.call(),
-///             PvCountForStruct{
+///             ComputePvCount{
 ///                 field_amount: 1,
 ///                 summed_pv_count: <u64>::PV_COUNT,
-///                 delimiter: fmt::StructDelim::Tupled,
+///                 delimiter: fmt::TypeDelim::Tupled,
 ///             }.call(),
 ///         ])
 ///     };
@@ -409,19 +409,19 @@ before formatting the argument, doesn't change formatting otherwise.
 ///                         // by `const_panic::fmt::INDENTATION_STEP` spaces.
 ///                         // The indentation field is used by these constants when the
 ///                         // `fmtarg.is_alternate` flag is enabled.
-///                         open: fmt::OPEN_BRACE,
+///                         open: fmt::OpenBrace,
 ///                             // fmt::COMMA_SEP must only be used between fields
 ///                             "x: ", x, fmt::COMMA_SEP,
 ///                             "y: ", y, fmt::COMMA_SEP,
 ///                             // fmt::COMMA_TERM must only be used after the last field
 ///                             "z: ", z, fmt::COMMA_TERM,
-///                         close: fmt::CLOSE_BRACE,
+///                         close: fmt::CloseBrace,
 ///                     },
 ///                 Self::Left(x) => flatten_panicvals! {fmtarg, <Qux<$T>>::PV_COUNT;
 ///                     "Left",
-///                     open: fmt::OPEN_PAREN,
+///                     open: fmt::OpenParen,
 ///                         x, fmt::COMMA_TERM,
-///                     close: fmt::CLOSE_PAREN,
+///                     close: fmt::CloseParen,
 ///                 },
 ///             }
 ///         }

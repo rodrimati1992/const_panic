@@ -344,10 +344,10 @@ macro_rules!  __impl_panicfmt_step_finished {
             type Kind = $crate::fmt::IsCustomType;
             const PV_COUNT: $crate::__::usize = $crate::utils::slice_max_usize(&[
                 $(
-                    $crate::fmt::PvCountForStruct{
+                    $crate::fmt::ComputePvCount{
                         field_amount: $field_amount,
                         summed_pv_count: 0 $( + <$ty as $crate::PanicFmt>::PV_COUNT )*,
-                        delimiter: $crate::fmt::StructDelim::$delimiter
+                        delimiter: $crate::fmt::TypeDelim::$delimiter
                     }.call()
                 ),*
             ]);
@@ -394,7 +394,7 @@ macro_rules!  __ipm_fmt {
         ($count:expr) $delimiter:ident $typename:ident $fmt:ident
         ( $($is_last_field:ident ($fname:ident, $ty:ty))+ )
     ) => ({
-        let (open, close) = $crate::fmt::StructDelim::$delimiter.get_open_and_close();
+        let (open, close) = $crate::fmt::TypeDelim::$delimiter.get_open_and_close();
 
         $crate::__::flatten_panicvals::<{$count}>(&[
             &[

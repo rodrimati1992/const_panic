@@ -4,8 +4,19 @@ use crate::{
 };
 
 #[cfg(feature = "non_basic")]
-use crate::fmt::{IsLastField, ShortString};
+use crate::fmt::{IsLast, ShortString};
 
+/// An opaque enum of the values that this crate knows how to format,
+/// along with some formatting metadata.
+///
+/// This has constructor functions to make a `PanicVal` from:
+/// - `bool`
+/// - Integers
+/// - `&str`
+/// - Arrays/Slices of primitives (with the "non_basic" feature, enabled by default)
+/// - [`ShortString`](crate::fmt::ShortString)
+/// (with the "non_basic" feature, enabled by default)
+///
 #[non_exhaustive]
 #[derive(Copy, Clone)]
 pub struct PanicVal<'a> {
@@ -37,27 +48,27 @@ impl<'a> PanicVal<'a> {
     pub const fn rightpad(&self) -> u8 {
         self.rightpad
     }
-    /// Sets the amount of spaces printed before this to `f.indentation`.
-    pub const fn with_leftpad(mut self, f: FmtArg) -> Self {
-        self.leftpad = f.indentation;
+    /// Sets the amount of spaces printed before this to `fmtarg.indentation`.
+    pub const fn with_leftpad(mut self, fmtarg: FmtArg) -> Self {
+        self.leftpad = fmtarg.indentation;
         self
     }
 
-    /// Sets the amount of spaces printed after this to `f.indentation`.
-    pub const fn with_rightpad(mut self, f: FmtArg) -> Self {
-        self.rightpad = f.indentation;
+    /// Sets the amount of spaces printed after this to `fmtarg.indentation`.
+    pub const fn with_rightpad(mut self, fmtarg: FmtArg) -> Self {
+        self.rightpad = fmtarg.indentation;
         self
     }
 
     /// Sets the amount of spaces printed before this
-    pub const fn set_leftpad(mut self, f: FmtArg) -> Self {
-        self.leftpad = f.indentation;
+    pub const fn set_leftpad(mut self, fmtarg: FmtArg) -> Self {
+        self.leftpad = fmtarg.indentation;
         self
     }
 
     /// Sets the amount of spaces printed after this
-    pub const fn set_rightpad(mut self, f: FmtArg) -> Self {
-        self.rightpad = f.indentation;
+    pub const fn set_rightpad(mut self, fmtarg: FmtArg) -> Self {
+        self.rightpad = fmtarg.indentation;
         self
     }
 
@@ -91,14 +102,14 @@ impl<'a> PanicVal<'a> {
     #[cfg(feature = "non_basic")]
     pub const fn from_element_separator(
         separator: &str,
-        is_last_field: IsLastField,
-        f: FmtArg,
+        is_last_field: IsLast,
+        fmtarg: FmtArg,
     ) -> Self {
-        let (concat, rightpad) = match (is_last_field, f.is_alternate) {
-            (IsLastField::No, false) => (ShortString::concat(&[separator, " "]), 0),
-            (IsLastField::Yes, false) => (ShortString::new(""), 0),
-            (IsLastField::No, true) => (ShortString::concat(&[separator, "\n"]), f.indentation),
-            (IsLastField::Yes, true) => (ShortString::concat(&[separator, "\n"]), 0),
+        let (concat, rightpad) = match (is_last_field, fmtarg.is_alternate) {
+            (IsLast::No, false) => (ShortString::concat(&[separator, " "]), 0),
+            (IsLast::Yes, false) => (ShortString::new(""), 0),
+            (IsLast::No, true) => (ShortString::concat(&[separator, "\n"]), fmtarg.indentation),
+            (IsLast::Yes, true) => (ShortString::concat(&[separator, "\n"]), 0),
         };
 
         Self {
@@ -109,12 +120,12 @@ impl<'a> PanicVal<'a> {
         }
     }
 
-    pub(crate) const fn __new(var: PanicVariant<'a>, f: FmtArg) -> Self {
+    pub(crate) const fn __new(var: PanicVariant<'a>, fmtarg: FmtArg) -> Self {
         Self {
             var,
             leftpad: 0,
             rightpad: 0,
-            fmt_kind: f.fmt_kind,
+            fmt_kind: fmtarg.fmt_kind,
         }
     }
 

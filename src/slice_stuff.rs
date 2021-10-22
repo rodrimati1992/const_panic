@@ -158,7 +158,7 @@ impl<'b, 's> SliceIter<'b, 's> {
                 };
 
                 [
-                    crate::fmt::OPEN_BRACKET.to_panicval(slice.fmtarg),
+                    crate::fmt::OpenBracket.to_panicval(slice.fmtarg),
                     PanicVal::EMPTY,
                 ]
             }
@@ -175,7 +175,7 @@ impl<'b, 's> SliceIter<'b, 's> {
                 [slice.get(x), comma]
             }
             IterState::End => {
-                let close_brace = crate::fmt::CLOSE_BRACKET.to_panicval(slice.fmtarg.unindent());
+                let close_brace = crate::fmt::CloseBracket.to_panicval(slice.fmtarg.unindent());
                 return ([close_brace, PanicVal::EMPTY], None);
             }
         };
