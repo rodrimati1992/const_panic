@@ -45,15 +45,21 @@ macro_rules! impl_panicfmt_array {
         }
 
 
+        #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
         impl<'s> PanicVal<'s> {
             $(
-                pub const fn $panicval_ctor(this: &'s [$ty], f: FmtArg) -> PanicVal<'s> {
+                /// Constructs a `PanicVal` from a slice.
+                pub const fn $panicval_ctor(this: &'s [$ty], mut fmtarg: FmtArg) -> PanicVal<'s> {
+                    fmtarg = fmtarg.indent();
+                    if this.is_empty() {
+                        fmtarg = fmtarg.set_alternate(false);
+                    }
                     PanicVal::__new(
                         PanicVariant::Slice(Slice{
-                            fmtarg: f.indent(),
+                            fmtarg,
                             vari: SliceV::$variant(this),
                         }),
-                        f
+                        fmtarg
                     )
                 }
             )*
@@ -71,18 +77,25 @@ macro_rules! impl_panicfmt_array {
                 const PV_COUNT: usize = 1;
             }
 
+            #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
             impl<'s> Wrapper<&'s [$ty]> {
+                /// Converts the slice to a single-element `PanicVal` array.
                 pub const fn to_panicvals(self: Self, f:FmtArg) -> [PanicVal<'s>;1] {
                     [PanicVal::$panicval_ctor(self.0, f)]
                 }
+                /// Converts the slice to a `PanicVal`.
                 pub const fn to_panicval(self: Self, f:FmtArg) -> PanicVal<'s> {
                     PanicVal::$panicval_ctor(self.0, f)
                 }
             }
+
+            #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
             impl<'s, const LEN: usize> Wrapper<&'s [$ty; LEN]> {
+                /// Converts the array to a single-element `PanicVal` array.
                 pub const fn to_panicvals(self: Self, f:FmtArg) -> [PanicVal<'s>;1] {
                     [PanicVal::$panicval_ctor(self.0, f)]
                 }
+                /// Converts the array to a `PanicVal`.
                 pub const fn to_panicval(self: Self, f:FmtArg) -> PanicVal<'s> {
                     PanicVal::$panicval_ctor(self.0, f)
                 }

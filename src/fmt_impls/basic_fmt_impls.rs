@@ -17,6 +17,7 @@ macro_rules! impl_panicfmt_panicval_array {
         }
 
         impl<'s, $($impl)*> Wrapper<&'s $ty> {
+            ///
             pub const fn to_panicvals($self: Self) -> $ret {
                 $($content)*
             }
@@ -36,7 +37,7 @@ macro_rules! impl_panicfmt_panicarg {
 
     )=>{
         impl PanicVal<'_> {
-            pub const fn $panic_arg_ctor<$($impl)*>($this: $ty, $f:FmtArg) -> PanicVal<$pa_lt>
+            pub const fn $panic_arg_ctor<$($impl)*>($this: $ty, $f: FmtArg) -> PanicVal<$pa_lt>
             $panic_args
         }
 
@@ -61,6 +62,7 @@ macro_rules! impl_panicfmt_panicarg {
 macro_rules! impl_panicfmt_int {
     ($panic_arg_ctor:ident, $intarg_contructor:ident, $ty:ty) => {
         impl PanicVal<'_> {
+            /// Constructs this `PanicVal` from an integer.
             pub const fn $panic_arg_ctor(this: $ty, f: FmtArg) -> PanicVal<'static> {
                 PanicVal::__new(
                     PanicVariant::Int(IntVal::$intarg_contructor(this as _, f)),
@@ -77,9 +79,11 @@ macro_rules! impl_panicfmt_int {
         }
 
         impl<'s> Wrapper<&'s $ty> {
+            /// Converts this integer to a single-element `PanicVal` array.
             pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'static>; 1] {
                 [PanicVal::$panic_arg_ctor(*self.0, f)]
             }
+            /// Converts this integer to a `PanicVal`.
             pub const fn to_panicval(self: Self, f: FmtArg) -> PanicVal<'static> {
                 PanicVal::$panic_arg_ctor(*self.0, f)
             }
@@ -107,45 +111,24 @@ impl_panicfmt_panicarg! {
     }
 }
 
-macro_rules! impl_panicfmt_panicarg_unsized {
-    (
-        fn $panic_arg_ctor:ident[$($impl:tt)*](
-            $this:ident:
-            $ty:ty,
-            $f:ident
-        ) -> PanicVal<$pa_lt:lifetime>
-        $panic_args:block
-
-
-    )=>{
-        impl PanicVal<'_> {
-            pub const fn $panic_arg_ctor<$pa_lt, $($impl)*>(
-                $this: &$pa_lt $ty,
-                $f: FmtArg,
-            ) -> PanicVal<$pa_lt>
-            $panic_args
-        }
-
-        impl<$($impl)*> PanicFmt for $ty {
-            type This = Self;
-            type Kind = crate::fmt::IsStdType;
-            const PV_COUNT: usize = 1;
-        }
-
-        impl<$pa_lt,     $($impl)*> Wrapper<&$pa_lt $ty> {
-            pub const fn to_panicvals(self: Self, $f:FmtArg) -> [PanicVal<$pa_lt>;1] {
-                [PanicVal::$panic_arg_ctor(self.0, $f)]
-            }
-            pub const fn to_panicval(self: Self, $f:FmtArg) -> PanicVal<$pa_lt> {
-                PanicVal::$panic_arg_ctor(self.0, $f)
-            }
-        }
+impl<'a> PanicVal<'a> {
+    pub const fn from_str(this: &'a str, f: FmtArg) -> PanicVal<'a> {
+        PanicVal::__new(PanicVariant::Str(this), f)
     }
 }
 
-impl_panicfmt_panicarg_unsized! {
-    fn from_str[](this: str, f) -> PanicVal<'s> {
-        PanicVal::__new(PanicVariant::Str(this), f)
+impl PanicFmt for str {
+    type This = Self;
+    type Kind = crate::fmt::IsStdType;
+    const PV_COUNT: usize = 1;
+}
+
+impl<'a> Wrapper<&'a str> {
+    pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'a>; 1] {
+        [PanicVal::__new(PanicVariant::Str(self.0), f)]
+    }
+    pub const fn to_panicval(self: Self, f: FmtArg) -> PanicVal<'a> {
+        PanicVal::__new(PanicVariant::Str(self.0), f)
     }
 }
 

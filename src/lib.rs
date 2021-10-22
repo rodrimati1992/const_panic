@@ -70,8 +70,8 @@
 //!     };
 //!
 //!     const_panic::concat_panic!{
-//!         // using `display:` to override the default formatter (Debug)
-//!         // for non-literals.
+//!         // using `display:` to override the default formatter for
+//!         // non-literals (Debug).
 //!         display: start,
 //!         // literals are Display formatted by default.
 //!         " at byte ",
@@ -99,12 +99,146 @@
 //!
 //! ```
 //!
+//! ### Custom types
+//!
+//! You can also panic with custom types by implementing the [`PanicFmt`] trait.
+//!
+//! One way to implement panic formatting for custom types is with the
+//! [`impl_panicfmt`] macro:
+//!
+//! ```compile_fail
+//! use const_panic::concat_panic;
+//!
+//! const LAST: u8 = {
+//!     foo_pop(Foo{
+//!         x: &[],
+//!         y: Bar(false, true),
+//!         z: Qux::Left(23),
+//!     }).1
+//! };
 //!
 //!
+//! /// Pops the last element in `foo.x`
+//! ///
+//! /// # Panics
+//! ///
+//! /// Panics if `foo.x` is empty
+//! #[track_caller]
+//! const fn foo_pop(mut foo: Foo<'_>) -> (Foo<'_>, u8) {
+//!     if let [rem @ .., last] = foo.x {
+//!         foo.x = rem;
+//!         (foo, *last)
+//!     } else {
+//!         concat_panic!(
+//!             "\nexpected a non-empty Foo, found: \n",
+//!             // uses alternative Debug formatting for `foo`,
+//!             // otherwise this would use regular Debug formatting.
+//!             alt_debug: foo
+//!         )
+//!     }
+//! }
 //!
-
+//! #[derive(Debug)]
+//! struct Foo<'a> {
+//!     x: &'a [u8],
+//!     y: Bar,
+//!     z: Qux,
+//! }
+//!
+//! // You need to replace non-static lifetimes with `'_` here.
+//! const_panic::impl_panicfmt! {
+//!     impl Foo<'_>;
+//!
+//!     struct Foo {
+//!         x: &[u8],
+//!         y: Bar,
+//!         z: Qux,
+//!     }
+//! }
+//!
+//! #[derive(Debug)]
+//! struct Bar(bool, bool);
+//!
+//! const_panic::impl_panicfmt! {
+//!     impl Bar;
+//!
+//!     struct Bar(bool, bool);
+//! }
+//!
+//! #[derive(Debug)]
+//! enum Qux {
+//!     Up,
+//!     Down { x: u32, y: u32 },
+//!     Left(u64),
+//! }
+//!
+//! const_panic::impl_panicfmt!{
+//!     impl Qux;
+//!
+//!     enum Qux {
+//!         Up,
+//!         Down { x: u32, y: u32 },
+//!         Left(u64),
+//!     }
+//! }
+//! ```
+//! The above code fails to compile with this error:
+//! ```text
+//! error[E0080]: evaluation of constant value failed
+//!   --> src/lib.rs:112:5
+//!    |
+//! 7  | /     foo_pop(Foo{
+//! 8  | |         x: &[],
+//! 9  | |         y: Bar(false, true),
+//! 10 | |         z: Qux::Left(23),
+//! 11 | |     }).1
+//!    | |______^ the evaluated program panicked at '
+//! expected a non-empty Foo, found:
+//! Foo {
+//!     x: [],
+//!     y: Bar(
+//!         false,
+//!         true,
+//!     ),
+//!     z: Left(
+//!         23,
+//!     ),
+//! }', src/lib.rs:7:5
+//!
+//! ```
+//!
+//! # Limitations
+#![doc = crate::doc_macros::limitation_docs!()]
+//!
+//! # Cargo features
+//!
+//! - `"non_basic"`(enabled by default):
+//! Enables support for formatting user-defined types and arrays.
+//! <br>
+//! Without this feature, you can effectively only format primitive types
+//! (custom types can manually implement formatting with more difficulty).
+//!
+//! # Plans
+//!
+//! Adding a derive macro, under an opt-in "derive" feature.
+//!
+//! # No-std support
+//!
+//! `const_panic` is `#![no_std]`, it can be used anywhere Rust can be used.
+//!
+//! # Minimum Supported Rust Version
+//!
+//! This requires Rust 1.57.0, because it uses the `panic` macro in a const context.
+//!
+//!
+//! [`PanicFmt`]: crate::PanicFmt
+//! [`impl_panicfmt`]: crate::impl_panicfmt
 #![no_std]
 #![cfg_attr(feature = "docsrs", feature(doc_cfg))]
+#![warn(missing_docs)]
+#![deny(clippy::missing_safety_doc)]
+#![deny(clippy::shadow_unrelated)]
+#![deny(clippy::wildcard_imports)]
 
 #[macro_use]
 mod doc_macros;

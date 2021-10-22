@@ -1,5 +1,42 @@
 use crate::{fmt::FmtKind, panic_val::PanicVal, utils::WasTruncated};
 
+/// Panics by concatenating the argument slice.
+///
+/// This is the function that the [`concat_panic`](macro@concat_panic) macro calls to panic,
+/// which is more ergonomic to use.
+///
+/// # Example
+///
+/// Here's how to panic with formatting without using any macros:
+///
+/// ```compile_fail
+/// use const_panic::{FmtArg, PanicVal, concat_panic};
+///
+/// const _: () = concat_panic(&[&[
+///     PanicVal::write_str("\nthe error was "),
+///     PanicVal::from_u8(100, FmtArg::DISPLAY),
+///     PanicVal::write_str(" and "),
+///     PanicVal::from_str("\nHello\tworld", FmtArg::DEBUG),
+/// ]]);
+///
+///
+/// ```
+/// That fails to compile with this error message:
+/// ```text
+/// error[E0080]: evaluation of constant value failed
+///   --> src/concat_panic_.rs:13:15
+///    |
+/// 6  |   const _: () = concat_panic(&[&[
+///    |  _______________^
+/// 7  | |     PanicVal::write_str("\nthe error was "),
+/// 8  | |     PanicVal::from_u8(100, FmtArg::DISPLAY),
+/// 9  | |     PanicVal::write_str(" and "),
+/// 10 | |     PanicVal::from_str("\nHello\tworld", FmtArg::DEBUG),
+/// 11 | | ]]);
+///    | |___^ the evaluated program panicked at '
+/// the error was 100 and "\nHello\tworld"', src/concat_panic_.rs:6:15
+/// ```
+///
 #[cold]
 #[inline(never)]
 #[track_caller]
