@@ -1,5 +1,5 @@
-macro_rules! formatting_docs {() => {
-"
+macro_rules! formatting_docs {($($additional_fmt_overrides:expr)?) => {
+concat!("
 # Formatting
 
 Literals are Display formatted by default, so that you can pass string literals 
@@ -9,14 +9,15 @@ Expressions are formatted as determined by the `$fmtarg` argument.
 
 ### Formatting overrides
 
-You can override how an argument is formatted by prefixing the argument with 
+You can override how an argument is formatted by prefixing the argument expression with 
 any of the options below:
 - `debug:` or `{?}:`: `Debug` formats the argument.
 - `alt_debug:` or `{#?}:`: alternate-`Debug` formats the argument.
 - `display:` or `{}:`: `Display` formats the argument.
 - `alt_display:` or `{#}:`: alternate-`Display` formats the argument.
-"
-}}
+",
+$($additional_fmt_overrides,)?
+)}}
 
 macro_rules! limitation_docs {() => {
 "

@@ -236,7 +236,7 @@ pub(crate) const fn make_panic_string<const LEN: usize>(
         args,
         buffer,
         len,
-        (LEN, LEN),
+        (LEN, LEN + 1),
     }
 
     assert!(len as u32 as usize == len, "the panic message is too large");
