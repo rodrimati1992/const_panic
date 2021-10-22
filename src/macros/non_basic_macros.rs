@@ -201,16 +201,12 @@ before formatting the argument, doesn't change formatting otherwise.
 ///
 ///
 ///
-/// #[cfg(feature = "non_basic")]
-/// #[derive(Debug)]
 /// struct Foo<'a> {
 ///     x: &'a [u8],
 ///     y: u8,
 ///     z: Bar,
 /// }
 ///
-/// #[cfg(feature = "non_basic")]
-/// #[derive(Debug)]
 /// struct Bar(bool, bool);
 ///
 ///
@@ -337,8 +333,6 @@ before formatting the argument, doesn't change formatting otherwise.
 ///     );
 /// }
 ///
-/// #[cfg(feature = "non_basic")]
-/// #[derive(Debug)]
 /// enum Qux<T> {
 ///     Up,
 ///     Down { x: T, y: T, z: T },
@@ -378,7 +372,7 @@ before formatting the argument, doesn't change formatting otherwise.
 ///
 /// // Because of limitations of stable const evaluation,
 /// // you have to use macros to implement the `to_panicvals` method
-/// // for more than one concrete type.
+/// // for more than one concrete type (ignoring lifetimes).
 /// //
 /// // This macro implements panic formatting for
 /// // - `Qux<u8>`

@@ -1,3 +1,169 @@
+/// Implements the [`PanicFmt`](crate::PanicFmt)
+/// trait and the `to_panicvals` method it requires.
+///
+/// This macro only accepts concrete types, and types with `'_` lifetime arguments,
+/// because it uses them in places where generic types don't yet work.
+///
+/// # Examples
+///
+/// ### Struct formatting
+///
+/// ```rust
+/// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
+///
+/// fn main(){
+///     let foo = Foo {
+///         x: &[3, 5, 8, 13],
+///         y: 21,
+///         z: Bar(false, true),
+///     };
+///     
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&foo.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true) }",
+///     );
+///     assert_eq!(
+///         ArrayString::<200>::from_panicvals(&foo.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         concat!(
+///             "Foo {\n",
+///             "    x: [\n",
+///             "        3,\n",
+///             "        5,\n",
+///             "        8,\n",
+///             "        13,\n",
+///             "    ],\n",
+///             "    y: 21,\n",
+///             "    z: Bar(\n",
+///             "        false,\n",
+///             "        true,\n",
+///             "    ),\n",
+///             "}",
+///         ),
+///     );
+/// }
+///
+///
+/// struct Foo<'a> {
+///     x: &'a [u8],
+///     y: u8,
+///     z: Bar,
+/// }
+///
+/// // Implementing `PanicFmt` and the `to_panicvals` method for
+/// // `Foo<'a>` (with any lifetime).
+/// //
+/// // Only `Foo<'_>` or `Foo<'static>` can work here, due to what the macro expands into.
+/// impl_panicfmt!{
+///     impl Foo<'_>;
+///     
+///     struct Foo {
+///         // removing all lifetimes in fields (or replacing them with `'_`) is required
+///         x: &[u8],
+///         y: u8,
+///         z: Bar,
+///     }
+/// }
+///
+///
+/// struct Bar(bool, bool);
+///
+/// impl_panicfmt!{
+///     impl Bar;
+///     
+///     struct Bar(bool, bool)
+/// }
+///
+/// ```
+///
+/// ### Enum Formatting
+///
+/// ```rust
+/// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
+///
+/// fn main() {
+///     let up: Qux<u8> = Qux::Up;
+///     // Debug formatting the Up variant
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&up.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         "Up",
+///     );
+///
+///
+///     let down: Qux<u16> = Qux::Down { x: 21, y: 34, z: 55 };
+///     // Debug formatting the Down variant
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&down.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         "Down { x: 21, y: 34, z: 55 }",
+///     );
+///     // Alternate-Debug formatting the Down variant
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&down.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         concat!(
+///             "Down {\n",
+///             "    x: 21,\n",
+///             "    y: 34,\n",
+///             "    z: 55,\n",
+///             "}",
+///         )
+///     );
+///
+///
+///     let left: Qux<u32> = Qux::Left(89);
+///     // Debug formatting the Left variant
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&left.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         "Left(89)",
+///     );
+///     // Alternate-Debug formatting the Left variant
+///     assert_eq!(
+///         ArrayString::<100>::from_panicvals(&left.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         concat!(
+///             "Left(\n",
+///             "    89,\n",
+///             ")",
+///         )
+///     );
+/// }
+///
+/// enum Qux<T> {
+///     Up,
+///     Down { x: T, y: T, z: T },
+///     Left(u64),
+/// }
+///
+///
+/// // Because of limitations of stable const evaluation,
+/// // you have to use macros to invoke the `impl_panicfmt` macro
+/// // for more than one concrete type.
+/// //
+/// // This macro invocation implements panic formatting for
+/// // - `Qux<u8>`
+/// // - `Qux<u16>`
+/// // - `Qux<u32>`
+/// const_panic::inline_macro! {
+///     (u8),
+///     (u16),
+///     (u32);
+///
+///     ($T:ty) =>
+///
+///     impl_panicfmt!{
+///         impl Qux<$T>;
+///         
+///         // causes the returned `PanicVal`s from `Qux::to_panicvals`
+///         // to be `PanicVal<'static>` instead of `PanicVal<'_>`
+///         // (the default is that it borrows from the `self` argument)
+///         lifetime = 'static;
+///         
+///         enum Qux {
+///             Up,
+///             Down { x: $T, y: $T, z: $T },
+///             Left(u64),
+///         }
+///     }
+/// }
+/// ```
+///
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! impl_panicfmt {
