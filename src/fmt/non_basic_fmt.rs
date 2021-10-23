@@ -397,7 +397,9 @@ pub const COMMA_TERM: Separator<'_> = Separator::new(",", IsLast::Yes);
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub enum IsLast {
+    ///
     Yes,
+    ///
     No,
 }
 

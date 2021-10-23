@@ -42,7 +42,7 @@ fn concat_and_from_panicvals_test() {
         assert_eq!(
             ArrayString::<10>::from_panicvals(&[left, right].map(PanicVal::write_str))
                 .as_ref()
-                .map(|s| s.get()),
+                .map(|s| s.to_str()),
             expected,
         );
         assert_eq!(
@@ -51,7 +51,7 @@ fn concat_and_from_panicvals_test() {
                 &[PanicVal::write_str(right)],
             ])
             .as_ref()
-            .map(|s| s.get()),
+            .map(|s| s.to_str()),
             expected,
         );
     }

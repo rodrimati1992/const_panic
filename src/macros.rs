@@ -294,7 +294,7 @@ macro_rules! __concat_func {
     ($fmt:ident (|$args:ident| $function_call:expr) [$(($fmt_arg:expr, $reff:expr))*] [$(,)*]) => {
         match &[
             $(
-                $crate::Wrapper(
+                $crate::StdWrapper(
                     &$crate::coerce_fmt!($reff)
                     .to_panicvals($fmt_arg)
                 ).deref_panic_vals(),

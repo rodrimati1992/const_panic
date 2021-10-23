@@ -26,6 +26,7 @@
 /// `$arg_to_fmt` are the formatted arguments,
 /// which must implement the [`PanicFmt`](crate::fmt::PanicFmt) trait.
 ///
+///
 /// If the `$Type =>` syntax is used, this calls the `to_panicvals`
 /// method on `$arg_to_fmt`.<br>
 /// If the `$Type =>` syntax is *not* used, this calls the `to_panicval`
@@ -55,6 +56,16 @@
 /// #   { loop{} }
 /// # }
 /// ```
+///
+/// ### Parsing limitation
+///
+/// Because of limitations of `macro_rules!` macros,
+/// you'll sometimes need to wrap `$arg_to_fmt` arguments in parentheses to fix
+/// this error:
+/// ```text
+/// error: expected type, found `foo`
+/// ```
+///
 ///
 #[doc = formatting_docs!("
 - `open`: increments `$fmtarg`'s indentation by [`fmt::INDENTATION_STEP`]
@@ -469,17 +480,9 @@ macro_rules! __to_pvf_inner {
             ),*
         ])
     });
-    ($fmtargs:ident [$($prev:tt)*] [_, $($rem:tt)*]) => {
-        $crate::__to_pvf_inner!{
-            $fmtargs
 
-            [$($prev)* ((1, single()), _, $crate::PanicVal::EMPTY)]
-
-            [$($rem)*]
-        }
-    };
-    // Had to add this to work around `()`/`[]`-delimited expressions getting
-    // stuck being parsed as a type in the next branch.
+    // Had to add these workarounds
+    // to avoid getting stuck being parsed as a type in the `$ty:ty =>` branch.
     ($fmtargs:ident $prev:tt [$tt:tt, $($rem:tt)*]) => {
         $crate::__to_pvf_expr!{
             $fmtargs
@@ -488,6 +491,15 @@ macro_rules! __to_pvf_inner {
             [$tt, $($rem)*]
         }
     };
+    ($fmtargs:ident $prev:tt [&$tt:tt, $($rem:tt)*]) => {
+        $crate::__to_pvf_expr!{
+            $fmtargs
+            $prev
+            (1, single())
+            [&$tt, $($rem)*]
+        }
+    };
+
     ($fmtargs:ident $prev:tt [$ty:ty => $($rem:tt)*]) => {
         $crate::__to_pvf_expr!{
             $fmtargs

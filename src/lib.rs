@@ -276,10 +276,14 @@ mod fmt_impls {
     mod basic_fmt_impls;
 }
 
-pub use crate::{concat_panic_::concat_panic, panic_val::PanicVal, wrapper::Wrapper};
+pub use crate::{concat_panic_::concat_panic, panic_val::PanicVal, wrapper::StdWrapper};
 
 #[doc(no_inline)]
-pub use crate::fmt::{ComputePvCount, FmtArg, IsCustomType, PanicFmt, TypeDelim};
+pub use crate::fmt::{FmtArg, IsCustomType, PanicFmt};
+
+#[cfg(feature = "non_basic")]
+#[doc(no_inline)]
+pub use crate::fmt::{ComputePvCount, TypeDelim};
 
 #[doc(hidden)]
 pub mod __ {

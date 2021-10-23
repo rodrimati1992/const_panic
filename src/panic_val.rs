@@ -38,6 +38,7 @@ pub(crate) enum PanicVariant<'a> {
 }
 
 impl<'a> PanicVal<'a> {
+    /// A `PanicVal` that formats to nothing.
     pub const EMPTY: Self = PanicVal::write_str("");
 
     /// How many spaces are printed before this
@@ -240,9 +241,11 @@ impl crate::PanicFmt for PanicVal<'_> {
 }
 
 impl<'a> PanicVal<'a> {
+    /// Wraps this `PanicVal` in a single-element array.
     pub const fn to_panicvals(&self, _: FmtArg) -> [PanicVal<'a>; 1] {
         [*self]
     }
+    /// Returns a copy of this `PanicVal`.
     pub const fn to_panicval(&self, _: FmtArg) -> PanicVal<'a> {
         *self
     }

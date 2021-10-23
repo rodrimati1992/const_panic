@@ -9,11 +9,11 @@ mod non_basic_fmt;
 #[cfg(feature = "non_basic")]
 pub use self::non_basic_fmt::*;
 
-use crate::wrapper::Wrapper;
+use crate::wrapper::StdWrapper;
 
 use core::marker::PhantomData;
 
-/// Marker types for types that can be formatted by const panics.
+/// Trait for types that can be formatted by const panics.
 ///
 /// # Implementor
 ///
@@ -104,9 +104,9 @@ impl<S: ?Sized, T: ?Sized, K> IsPanicFmt<S, T, K> {
 }
 
 impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsStdType> {
-    /// For coercing `&T` to `Wrapper<&T>`.
-    pub const fn coerce(self, x: &T) -> Wrapper<&T> {
-        Wrapper(x)
+    /// For coercing `&T` to `StdWrapper<&T>`.
+    pub const fn coerce(self, x: &T) -> StdWrapper<&T> {
+        StdWrapper(x)
     }
 }
 
@@ -130,10 +130,10 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 ///
 #[cfg_attr(feature = "non_basic", doc = "```rust")]
 #[cfg_attr(not(feature = "non_basic"), doc = "```ignore")]
-/// use const_panic::{ArrayString, FmtArg, Wrapper};
+/// use const_panic::{ArrayString, FmtArg, StdWrapper};
 ///
-/// // `Wrapper` wraps references to std types to provide their `to_panicvals` methods
-/// let array = Wrapper(&["3", "foo\nbar", "\0qux"]);
+/// // `StdWrapper` wraps references to std types to provide their `to_panicvals` methods
+/// let array = StdWrapper(&["3", "foo\nbar", "\0qux"]);
 ///
 /// // Debug formatting
 /// assert_eq!(

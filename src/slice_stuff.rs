@@ -1,7 +1,7 @@
 use crate::{
     fmt::{FmtArg, PanicFmt},
     panic_val::{PanicVal, PanicVariant},
-    Wrapper,
+    StdWrapper,
 };
 
 macro_rules! impl_panicfmt_array {
@@ -37,7 +37,7 @@ macro_rules! impl_panicfmt_array {
                     $(
                         SliceV::$variant(arr) => {
                             let elem: &'s <$ty as PanicFmt>::This = &arr[index];
-                            Wrapper(elem).to_panicval(self.fmtarg)
+                            StdWrapper(elem).to_panicval(self.fmtarg)
                         },
                     )*
                 }
@@ -78,7 +78,7 @@ macro_rules! impl_panicfmt_array {
             }
 
             #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
-            impl<'s> Wrapper<&'s [$ty]> {
+            impl<'s> StdWrapper<&'s [$ty]> {
                 /// Converts the slice to a single-element `PanicVal` array.
                 pub const fn to_panicvals(self: Self, f:FmtArg) -> [PanicVal<'s>;1] {
                     [PanicVal::$panicval_ctor(self.0, f)]
@@ -90,7 +90,7 @@ macro_rules! impl_panicfmt_array {
             }
 
             #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
-            impl<'s, const LEN: usize> Wrapper<&'s [$ty; LEN]> {
+            impl<'s, const LEN: usize> StdWrapper<&'s [$ty; LEN]> {
                 /// Converts the array to a single-element `PanicVal` array.
                 pub const fn to_panicvals(self: Self, f:FmtArg) -> [PanicVal<'s>;1] {
                     [PanicVal::$panicval_ctor(self.0, f)]

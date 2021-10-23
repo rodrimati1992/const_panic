@@ -47,19 +47,30 @@ macro_rules! fmt_flatten {
 // rather than getting stuck being parsed as `$Type:ty => `
 #[cfg(feature = "non_basic")]
 #[test]
-fn flatten_panicvals_token_tree_expr_test() {
+fn flatten_panicvals_expr_not_type_test() {
     let string = "10";
     let str_debug = r#""10""#;
     let array_debug = r#"["10"]"#;
 
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; string), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; (string)), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &(string)), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &&(string)), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; {string}), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; [string]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &[string]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &&[string]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &&&[string]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; "10"), "10");
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; ("10")), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &("10")), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; {"10"}), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; ["10"]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; &["10"]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; (&["10"][0])), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; ("10")), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; {"10"}), str_debug);
     assert_eq!(fmt_flatten!(FmtArg::DEBUG; ["10"]), array_debug);
-    assert_eq!(fmt_flatten!(FmtArg::DEBUG; "10"), "10");
 }
 
 #[cfg(feature = "non_basic")]

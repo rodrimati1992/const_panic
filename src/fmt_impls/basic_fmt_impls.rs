@@ -1,6 +1,6 @@
 use crate::{
     panic_val::{IntVal, PanicVal, PanicVariant},
-    FmtArg, PanicFmt, Wrapper,
+    FmtArg, PanicFmt, StdWrapper,
 };
 
 macro_rules! impl_panicfmt_panicval_array {
@@ -16,7 +16,7 @@ macro_rules! impl_panicfmt_panicval_array {
             const PV_COUNT: usize = $pv_len;
         }
 
-        impl<'s, $($impl)*> Wrapper<&'s $ty> {
+        impl<'s, $($impl)*> StdWrapper<&'s $ty> {
             ///
             pub const fn to_panicvals($self: Self) -> $ret {
                 $($content)*
@@ -48,7 +48,7 @@ macro_rules! impl_panicfmt_panicarg {
             const PV_COUNT: usize = 1;
         }
 
-        impl<'s, $($impl)*> Wrapper<&'s $ty> {
+        impl<'s, $($impl)*> StdWrapper<&'s $ty> {
             pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<$pa_lt>;1] {
                 [PanicVal::$panic_arg_ctor(*self.0, f)]
             }
@@ -78,7 +78,7 @@ macro_rules! impl_panicfmt_int {
             const PV_COUNT: usize = 1;
         }
 
-        impl<'s> Wrapper<&'s $ty> {
+        impl<'s> StdWrapper<&'s $ty> {
             /// Converts this integer to a single-element `PanicVal` array.
             pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'static>; 1] {
                 [PanicVal::$panic_arg_ctor(*self.0, f)]
@@ -123,7 +123,7 @@ impl PanicFmt for str {
     const PV_COUNT: usize = 1;
 }
 
-impl<'a> Wrapper<&'a str> {
+impl<'a> StdWrapper<&'a str> {
     pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'a>; 1] {
         [PanicVal::__new(PanicVariant::Str(self.0), f)]
     }
@@ -146,17 +146,17 @@ impl_panicfmt_panicval_array! {
     }
 }
 
-impl<'a, 'b> Wrapper<&'a &'b [PanicVal<'b>]> {
+impl<'a, 'b> StdWrapper<&'a &'b [PanicVal<'b>]> {
     pub const fn deref_panic_vals(self) -> &'b [PanicVal<'b>] {
         *self.0
     }
 }
-impl<'a, 'b, const N: usize> Wrapper<&'a &'b [PanicVal<'b>; N]> {
+impl<'a, 'b, const N: usize> StdWrapper<&'a &'b [PanicVal<'b>; N]> {
     pub const fn deref_panic_vals(self) -> &'b [PanicVal<'b>] {
         *self.0
     }
 }
-impl<'b, const N: usize> Wrapper<&'b [PanicVal<'b>; N]> {
+impl<'b, const N: usize> StdWrapper<&'b [PanicVal<'b>; N]> {
     pub const fn deref_panic_vals(self) -> &'b [PanicVal<'b>] {
         self.0
     }
