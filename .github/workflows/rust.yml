@@ -1,0 +1,30 @@
+name: Rust
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      max-parallel: 2
+      matrix:
+        rust: [beta, nightly]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: ci-all-versions
+      run: |
+        rustup override set ${{ matrix.rust }}
+        cargo update
+          
+        cd "${{github.workspace}}/"
+        cargo build --no-default-features
+        cargo build
+        cargo test 
+        cargo test --no-default-features --features "test "
+        cargo test --no-default-features --features "test non_basic"
+
