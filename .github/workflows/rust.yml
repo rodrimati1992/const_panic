@@ -24,7 +24,7 @@ jobs:
         cd "${{github.workspace}}/"
         cargo build --no-default-features
         cargo build
-        cargo test 
+        cargo test --features "test"
         cargo test --no-default-features --features "test "
         cargo test --no-default-features --features "test non_basic"
 
