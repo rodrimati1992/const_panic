@@ -17,7 +17,7 @@ All of the types that implement the [`PanicFmt`] trait can be formatted in panic
 
 ### Basic
 
-```compile_fail
+```rust,compile_fail
 use const_panic::concat_panic;
 
 const FOO: u32 = 10;
@@ -47,41 +47,44 @@ bar: 0', src/lib.rs:8:15
 
 Panic formatting for custom types can be done in these ways
 (in increasing order of verbosity):
-- Using the [`impl_panicfmt`] macro (requires the default-enabled `"non_basic"` feature)
-- Using the [`flatten_panicvals`] macro (requires the default-enabled `"non_basic"` feature)
+- Using the [`impl_panicfmt`] macro
+(requires the default-enabled `"non_basic"` feature)
+- Using the [`flatten_panicvals`] macro
+(requires the default-enabled `"non_basic"` feature)
 - Manually implementing the [`PanicFmt`] trait as described in its docs.
 
 This example uses the [`impl_panicfmt`] approach.
 
-```compile_fail
+```rust,compile_fail
 use const_panic::concat_panic;
 
 const LAST: u8 = {
-    foo_pop(Foo{
+    Foo{
         x: &[],
         y: Bar(false, true),
         z: Qux::Left(23),
-    }).1
+    }.pop().1
 };
 
-
-/// Pops the last element in `foo.x`
-///
-/// # Panics
-///
-/// Panics if `foo.x` is empty
-#[track_caller]
-const fn foo_pop(mut foo: Foo<'_>) -> (Foo<'_>, u8) {
-    if let [rem @ .., last] = foo.x {
-        foo.x = rem;
-        (foo, *last)
-    } else {
-        concat_panic!(
-            "\nexpected a non-empty Foo, found: \n",
-            // uses alternative Debug formatting for `foo`,
-            // otherwise this would use regular Debug formatting.
-            alt_debug: foo
-        )
+impl Foo<'_> {
+    /// Pops the last element
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.x` is empty
+    #[track_caller]
+    const fn pop(mut self) -> (Self, u8) {
+        if let [rem @ .., last] = self.x {
+            self.x = rem;
+            (self, *last)
+        } else {
+            concat_panic!(
+                "\nexpected a non-empty Foo, found: \n",
+                // uses alternative Debug formatting for `self`,
+                // otherwise this would use regular Debug formatting.
+                alt_debug: self
+            )
+        }
     }
 }
 
@@ -129,15 +132,15 @@ const_panic::impl_panicfmt!{
 The above code fails to compile with this error:
 ```text
 error[E0080]: evaluation of constant value failed
-  --> src/lib.rs:112:5
+  --> src/lib.rs:57:5
    |
-7  | /     foo_pop(Foo{
+7  | /     Foo{
 8  | |         x: &[],
 9  | |         y: Bar(false, true),
 10 | |         z: Qux::Left(23),
-11 | |     }).1
-   | |______^ the evaluated program panicked at '
-expected a non-empty Foo, found:
+11 | |     }.pop().1
+   | |___________^ the evaluated program panicked at '
+expected a non-empty Foo, found: 
 Foo {
     x: [],
     y: Bar(
@@ -147,12 +150,17 @@ Foo {
     z: Left(
         23,
     ),
-}', src/lib.rs:7:5
+}', src/lib.rs:11:7
 
 ```
 
 # Limitations
-#![doc = crate::doc_macros::limitation_docs!()]
+
+Arguments to the formatting/panicking macros must have a fully inferred concrete type, 
+because `const_panic` macros use duck typing to call methods on those arguments.
+
+One effect of that limitation is that you will have to pass suffixed 
+integer literals (eg: `100u8`) when those integers aren't inferred to be a concrete type.
 
 # Cargo features
 

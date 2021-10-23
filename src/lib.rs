@@ -54,31 +54,32 @@
 //! use const_panic::concat_panic;
 //!
 //! const LAST: u8 = {
-//!     foo_pop(Foo{
+//!     Foo{
 //!         x: &[],
 //!         y: Bar(false, true),
 //!         z: Qux::Left(23),
-//!     }).1
+//!     }.pop().1
 //! };
 //!
-//!
-//! /// Pops the last element in `foo.x`
-//! ///
-//! /// # Panics
-//! ///
-//! /// Panics if `foo.x` is empty
-//! #[track_caller]
-//! const fn foo_pop(mut foo: Foo<'_>) -> (Foo<'_>, u8) {
-//!     if let [rem @ .., last] = foo.x {
-//!         foo.x = rem;
-//!         (foo, *last)
-//!     } else {
-//!         concat_panic!(
-//!             "\nexpected a non-empty Foo, found: \n",
-//!             // uses alternative Debug formatting for `foo`,
-//!             // otherwise this would use regular Debug formatting.
-//!             alt_debug: foo
-//!         )
+//! impl Foo<'_> {
+//!     /// Pops the last element
+//!     ///
+//!     /// # Panics
+//!     ///
+//!     /// Panics if `self.x` is empty
+//!     #[track_caller]
+//!     const fn pop(mut self) -> (Self, u8) {
+//!         if let [rem @ .., last] = self.x {
+//!             self.x = rem;
+//!             (self, *last)
+//!         } else {
+//!             concat_panic!(
+//!                 "\nexpected a non-empty Foo, found: \n",
+//!                 // uses alternative Debug formatting for `self`,
+//!                 // otherwise this would use regular Debug formatting.
+//!                 alt_debug: self
+//!             )
+//!         }
 //!     }
 //! }
 //!
@@ -126,14 +127,14 @@
 //! The above code fails to compile with this error:
 //! ```text
 //! error[E0080]: evaluation of constant value failed
-//!   --> src/lib.rs:112:5
+//!   --> src/lib.rs:57:5
 //!    |
-//! 7  | /     foo_pop(Foo{
+//! 7  | /     Foo{
 //! 8  | |         x: &[],
 //! 9  | |         y: Bar(false, true),
 //! 10 | |         z: Qux::Left(23),
-//! 11 | |     }).1
-//!    | |______^ the evaluated program panicked at '
+//! 11 | |     }.pop().1
+//!    | |___________^ the evaluated program panicked at '
 //! expected a non-empty Foo, found:
 //! Foo {
 //!     x: [],
@@ -144,7 +145,8 @@
 //!     z: Left(
 //!         23,
 //!     ),
-//! }', src/lib.rs:7:5
+//! }', src/lib.rs:11:7
+//!
 //!
 //! ```
 //!
@@ -240,6 +242,7 @@ pub mod __ {
     pub use crate::utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id};
 }
 
+#[doc(hidden)]
 #[cfg(feature = "test")]
 pub mod test_utils;
 

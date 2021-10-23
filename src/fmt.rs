@@ -1,7 +1,12 @@
 //! Formatting-related items
 //!
-//! For examples, [you can look at the ones for PanicFmt](PanicFmt#examples)
-//!
+//! Panic formatting for custom types can be done in these ways
+//! (in increasing order of verbosity):
+//! - Using the [`impl_panicfmt`] macro
+//! (requires the default-enabled `"non_basic"` feature)
+//! - Using the [`flatten_panicvals`] macro
+//! (requires the default-enabled `"non_basic"` feature)
+//! - Manually implementing the [`PanicFmt`] trait as described in its docs.
 
 #[cfg(feature = "non_basic")]
 mod non_basic_fmt;
@@ -78,7 +83,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// impl Foo {
-///     pub const fn to_panicvals(self, _: FmtArg) -> [PanicVal<'static>; 1] {
+///     pub const fn to_panicvals(self, _: FmtArg) -> [PanicVal<'static>; Foo::PV_COUNT] {
 ///         match self {
 ///             Self::Bar => [PanicVal::write_str("Bar")],
 ///             Self::Baz => [PanicVal::write_str("Baz")],

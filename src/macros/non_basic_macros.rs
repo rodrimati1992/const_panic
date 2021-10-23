@@ -11,7 +11,7 @@
 /// flatten_panicvals!(
 ///     $fmtarg:expr;
 ///     $(
-///         $($Type:ty => )? $($fmt_override:tt :)? $arg_to_fmt:expr
+///         $($Type:ty => )? $($format_override:tt :)? $arg_to_fmt:expr
 ///     ),*
 ///     $()?
 /// )
@@ -588,6 +588,73 @@ macro_rules! __to_pvf_used_length {
 }
 
 /// Helper macro for defining and using a `macro_rules!` macro inline.
+///
+/// The reason this was defined is to work around a limitation in stable const-eval,
+/// where you can't call methods on generic types.
+///
+/// # Example
+///
+/// Implementing panic formatting for a generic struct.
+///
+/// ```rust
+/// use const_panic::{ArrayString, FmtArg, impl_panicfmt, inline_macro};
+///
+/// // Debug formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(
+///         &Foo(10, 20).to_panicvals(FmtArg::DEBUG)
+///     ).unwrap(),
+///     "Foo(10, 20)"
+/// );
+///
+/// // Alternate-Debug formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(
+///         &Foo(false, true).to_panicvals(FmtArg::ALT_DEBUG)
+///     ).unwrap(),
+///     concat!(
+///         "Foo(\n",
+///         "    false,\n",
+///         "    true,\n",
+///         ")",
+///     ),
+/// );
+///
+/// // Display formatting
+/// assert_eq!(
+///     ArrayString::<99>::from_panicvals(
+///         &Foo("hmm", "what?").to_panicvals(FmtArg::DISPLAY)
+///     ).unwrap(),
+///     "Foo(hmm, what?)"
+/// );
+///
+///
+///
+///
+/// struct Foo<T>(T, T);
+///
+/// // Because of limitations of stable const evaluation,
+/// // you have to use macros to implement panic formatting
+/// // for more than one concrete type (ignoring lifetimes).
+/// //
+/// // This macro implements panic formatting for
+/// // - `Foo<bool>`
+/// // - `Foo<u8>`
+/// // - `Foo<&str>`
+/// inline_macro! {
+///     (bool),
+///     (u8),
+///     // Types with lifetimes must either elide the lifetime, use `'_` or `'static`.
+///     (&str);
+///
+///     ($T:ty) =>
+///     impl_panicfmt!{
+///         impl Foo<$T>;
+///         struct Foo($T, $T)
+///     }
+/// }
+///
+/// ```
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! inline_macro{
