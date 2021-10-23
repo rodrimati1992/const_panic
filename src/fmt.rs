@@ -34,8 +34,60 @@ use core::marker::PhantomData;
 /// ```
 /// The returned [`PanicVal`](crate::PanicVal) can also be `PanicVal<'static>`.
 ///
+/// # Implementation examples
+///
+/// This trait can be implemented in these ways (in increasing order of verbosity):
+/// - Using the [`impl_panicfmt`](impl_panicfmt#examples) macro
+/// (requires the default-enabled `"non_basic"` feature)
+/// - Using the [`flatten_panicvals`](flatten_panicvals#examples) macro
+/// (requires the default-enabled `"non_basic"` feature)
+/// - Using no macros at all
+///
+/// ### Macro-less impl
+///
+/// Implementing this trait for a simple enum without using macros.
+///
+#[cfg_attr(feature = "non_basic", doc = "```rust")]
+#[cfg_attr(not(feature = "non_basic"), doc = "```ignore")]
+/// use const_panic::{ArrayString, FmtArg, PanicFmt, PanicVal};
+///
+/// // `ArrayString` requires the "non_basic" crate feature (enabled by default),
+/// // everything else in this example works with no enabled crate features.
+/// assert_eq!(
+///     ArrayString::<99>::concat_panicvals(&[
+///         &Foo::Bar.to_panicvals(FmtArg::DEBUG),
+///         &[PanicVal::write_str(",")],
+///         &Foo::Baz.to_panicvals(FmtArg::DEBUG),
+///         &[PanicVal::write_str(",")],
+///         &Foo::Qux.to_panicvals(FmtArg::DEBUG),
+///     ]).unwrap(),
+///     "Bar,Baz,Qux",
+/// );
 ///
 ///
+/// enum Foo {
+///     Bar,
+///     Baz,
+///     Qux,
+/// }
+///
+/// impl PanicFmt for Foo {
+///     type This = Self;
+///     type Kind = const_panic::IsCustomType;
+///     const PV_COUNT: usize = 1;
+/// }
+///
+/// impl Foo {
+///     pub const fn to_panicvals(self, _: FmtArg) -> [PanicVal<'static>; 1] {
+///         match self {
+///             Self::Bar => [PanicVal::write_str("Bar")],
+///             Self::Baz => [PanicVal::write_str("Baz")],
+///             Self::Qux => [PanicVal::write_str("Qux")],
+///         }
+///     }
+/// }
+///
+/// ```
 pub trait PanicFmt {
     /// The type after dereferencing all references.
     ///

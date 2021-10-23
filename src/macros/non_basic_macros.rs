@@ -32,14 +32,14 @@
 /// If the `$Type =>` syntax is *not* used, this calls the `to_panicval`
 /// method on `$arg_to_fmt`.
 ///
-/// These is the signature of those methods:
+/// These are the signatures of those methods:
 /// ```rust
 /// # use const_panic::{FmtArg, PanicFmt, PanicVal};
 /// # struct Foo;
 /// #
 /// # impl PanicFmt for Foo {
 /// #    type This = Self;
-/// #    type Kind = const_panic::fmt::IsCustomType;
+/// #    type Kind = const_panic::IsCustomType;
 /// #    const PV_COUNT: usize = 1;
 /// # }
 /// # impl Foo {
@@ -170,7 +170,7 @@ before formatting the argument, and uses Display formatting for that argument.
 ///
 /// ### Struct formatting
 ///
-/// Implementing this trait for braced and tuple structs.
+/// Implementing panic formatting for braced and tuple structs.
 ///
 /// ```rust
 /// use const_panic::{
@@ -223,7 +223,7 @@ before formatting the argument, and uses Display formatting for that argument.
 ///
 /// impl PanicFmt for Foo<'_> {
 ///     type This = Self;
-///     type Kind = const_panic::fmt::IsCustomType;
+///     type Kind = const_panic::IsCustomType;
 ///
 ///     // `ComputePvCount` allows computing the length of the array of `PanicVal`s
 ///     // returned by `Foo::to_panicvals` below.
@@ -264,7 +264,7 @@ before formatting the argument, and uses Display formatting for that argument.
 ///
 /// impl PanicFmt for Bar {
 ///     type This = Self;
-///     type Kind = const_panic::fmt::IsCustomType;
+///     type Kind = const_panic::IsCustomType;
 ///
 ///     const PV_COUNT: usize = ComputePvCount{
 ///         field_amount: 2,
@@ -353,7 +353,7 @@ before formatting the argument, and uses Display formatting for that argument.
 ///
 /// impl<T: PanicFmt> PanicFmt for Qux<T> {
 ///     type This = Self;
-///     type Kind = const_panic::fmt::IsCustomType;
+///     type Kind = const_panic::IsCustomType;
 ///
 ///     const PV_COUNT: usize = {
 ///         // `ComputePvCount` computes the length of the array of `PanicVal`s

@@ -8,6 +8,13 @@ pub const fn panicvals_id<'a, 'b, const LEN: usize>(
 }
 
 /// Flattens a `&[&[PanicVal<'a>]]` into a `[PanicVal<'a>; LEN]`.
+///
+/// If `LEN` is greater than the amount of `PanicVal`s in the slices,
+/// this fills the remaining array with [`PanicVal::EMPTY`].
+///
+/// # Panics
+///
+/// Panics if the amount of `PanicVal`s in the slices is greater than `LEN`.
 pub const fn flatten_panicvals<'a, const LEN: usize>(
     mut input: &[&[PanicVal<'a>]],
 ) -> [PanicVal<'a>; LEN] {

@@ -2,8 +2,7 @@ use crate::{fmt::FmtKind, panic_val::PanicVal, utils::WasTruncated};
 
 /// Panics by concatenating the argument slice.
 ///
-/// This is the function that the [`concat_panic`](macro@concat_panic) macro calls to panic,
-/// which is more ergonomic to use.
+/// This is the function that the [`concat_panic`](macro@concat_panic) macro calls to panic.
 ///
 /// # Example
 ///

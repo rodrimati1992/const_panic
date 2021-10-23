@@ -7,6 +7,9 @@
 //!
 //! # Examples
 //!
+//! - [Basic](#basic)
+//! - [Custom Types](#custom-types)
+//!
 //! ### Basic
 //!
 //! ```compile_fail
@@ -35,76 +38,17 @@
 //! bar: 0', src/lib.rs:8:15
 //! ```
 //!
-//! ### Parser
-//!
-//! Implementing a basic parser, using the `konst` crate
-//! (version "0.2.13", which doesn't depend on `const_panic`)
-//!
-//! ```compile_fail
-//! use konst::{
-//!     parsing::{Parser, ErrorKind, ParseError},
-//!     result,
-//!     try_,
-//! };
-//!
-//! const FOO: [u32; 2] = result::unwrap_or_else!(parse(",100"), |e| panic_(e));
-//! const BAR: [u32; 2] = result::unwrap_or_else!(parse("100"), |e| panic_(e));
-//!
-//!
-//! const fn parse(text: &str) -> Result<[u32; 2], ParseError> {
-//!     let parser = Parser::from_str(text);
-//!     
-//!     let (first, parser) = try_!(parser.parse_u32());
-//!     let parser = try_!(parser.strip_prefix_u8(b','));
-//!     let (second, parser) = try_!(parser.parse_u32());
-//!
-//!     Ok([first, second])
-//! }
-//!
-//! #[track_caller]
-//! const fn panic_(err: ParseError) -> ! {
-//!     let start = match err.kind() {
-//!         ErrorKind::ParseInteger => "\ncould not parse integer",
-//!         ErrorKind::Strip => "\nthere was no comma",
-//!         _ => "error while parsing"
-//!     };
-//!
-//!     const_panic::concat_panic!{
-//!         // using `display:` to override the default formatter for
-//!         // non-literals (Debug).
-//!         display: start,
-//!         // literals are Display formatted by default.
-//!         " at byte ",
-//!         err.offset(),
-//!     }
-//! }
-//!
-//! ```
-//! The above code fails to compile with these errors:
-//! ```text
-//! error[E0080]: evaluation of constant value failed
-//!   --> src/lib.rs:19:66
-//!    |
-//! 10 | const FOO: [u32; 2] = result::unwrap_or_else!(parse(",100"), |e| panic_(e));
-//!    |                                                                  ^^^^^^^^^ the evaluated program panicked at '
-//! could not parse integer at byte 0', src/lib.rs:10:66
-//!
-//! error[E0080]: evaluation of constant value failed
-//!   --> src/lib.rs:20:65
-//!    |
-//! 11 | const BAR: [u32; 2] = result::unwrap_or_else!(parse("100"), |e| panic_(e));
-//!    |                                                                 ^^^^^^^^^ the evaluated program panicked at '
-//! there was no comma at byte 3', src/lib.rs:11:65
-//!
-//!
-//! ```
-//!
 //! ### Custom types
 //!
-//! You can also panic with custom types by implementing the [`PanicFmt`] trait.
+//! Panic formatting for custom types can be done in these ways
+//! (in increasing order of verbosity):
+//! - Using the [`impl_panicfmt`] macro
+//! (requires the default-enabled `"non_basic"` feature)
+//! - Using the [`flatten_panicvals`] macro
+//! (requires the default-enabled `"non_basic"` feature)
+//! - Manually implementing the [`PanicFmt`] trait as described in its docs.
 //!
-//! One way to implement panic formatting for custom types is with the
-//! [`impl_panicfmt`] macro:
+//! This example uses the [`impl_panicfmt`] approach.
 //!
 //! ```compile_fail
 //! use const_panic::concat_panic;
@@ -210,7 +154,7 @@
 //! # Cargo features
 //!
 //! - `"non_basic"`(enabled by default):
-//! Enables support for formatting user-defined types and arrays.
+//! Enables support for formatting structs, enums, and arrays.
 //! <br>
 //! Without this feature, you can effectively only format primitive types
 //! (custom types can manually implement formatting with more difficulty).
@@ -230,6 +174,7 @@
 //!
 //! [`PanicFmt`]: crate::PanicFmt
 //! [`impl_panicfmt`]: crate::impl_panicfmt
+//! [`flatten_panicvals`]: crate::flatten_panicvals
 #![no_std]
 #![cfg_attr(feature = "docsrs", feature(doc_cfg))]
 #![warn(missing_docs)]

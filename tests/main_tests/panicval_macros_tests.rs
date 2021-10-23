@@ -241,7 +241,7 @@ const _: () = {
 
     impl PanicFmt for Foo<'_> {
         type This = Self;
-        type Kind = const_panic::fmt::IsCustomType;
+        type Kind = const_panic::IsCustomType;
 
         const PV_COUNT: usize = {
             let name = 1;
@@ -260,14 +260,14 @@ const _: () = {
 
     impl PanicFmt for Bar {
         type This = Self;
-        type Kind = const_panic::fmt::IsCustomType;
+        type Kind = const_panic::IsCustomType;
 
         const PV_COUNT: usize = 7;
     }
 
     impl PanicFmt for Baz {
         type This = Self;
-        type Kind = const_panic::fmt::IsCustomType;
+        type Kind = const_panic::IsCustomType;
 
         const PV_COUNT: usize = 6;
     }
@@ -313,7 +313,7 @@ const_panic::inline_macro! {
     ($T:ty) =>
     impl const_panic::PanicFmt for Qux<$T> {
         type This = Self;
-        type Kind = const_panic::fmt::IsCustomType;
+        type Kind = const_panic::IsCustomType;
 
         const PV_COUNT: usize = {
             use const_panic::fmt::{ComputePvCount, TypeDelim};

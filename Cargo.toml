@@ -1,19 +1,23 @@
 [package]
 name = "const_panic"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
-description = "Basic const panic with Display-formatting, coming before Rust 1.57.0."
+description = "const panic with formatting"
 rust-version = "1.57"
+readme="./README.md"
+keywords = ["no-std", "format", "const", "panic"]
+categories = ["no-std"]
+repository = "https://github.com/rodrimati1992/const_panic/"
+include = [
+    "Cargo.toml", 
+    "src/**/*.rs", 
+    "./README.md",
+    "LICENSE-ZLIB.md", 
+]
 
 [dependencies]
-
-[dev-dependencies.konst]
-version = "0.2.13"
-default-features = false
-features = ["parsing_no_proc"]
-
 
 [features]
 default = ["non_basic"]
@@ -22,3 +26,6 @@ docsrs = []
 
 # private feature
 test = []
+
+[package.metadata.docs.rs]
+features = ["non_basic", "docsrs"]
