@@ -143,7 +143,22 @@ pub const INDENTATION_STEP: u8 = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A stack allocated string type that's convetible to `PanicVal`.
+/// A stack allocated string type that's convetible into [`PanicVal`].
+///
+/// # Example
+///
+/// ```rust
+/// use const_panic::{
+///     fmt::ShortString,
+///     ArrayString, PanicVal,
+/// };
+///
+/// let pv: PanicVal<'static> =
+///     PanicVal::write_short_str(ShortString::new("3,13,21,34,55,89"));
+///
+/// assert_eq!(ArrayString::<20>::from_panicvals(&[pv]).unwrap(), "3,13,21,34,55,89")
+///
+/// ```
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub type ShortString = ArrayString<16>;
 

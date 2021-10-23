@@ -211,9 +211,12 @@ impl<const CAP: usize> ArrayString<CAP> {
         unsafe { core::str::from_utf8_unchecked(self.as_bytes()) }
     }
 
+    /// Creates a single element `PanicVal` borrowing from this string.
     pub const fn to_panicvals(&self, f: FmtArg) -> [PanicVal<'_>; 1] {
         [PanicVal::from_str(self.to_str(), f)]
     }
+
+    /// Creates a `PanicVal` borrowing from this string.
     pub const fn to_panicval(&self, f: FmtArg) -> PanicVal<'_> {
         PanicVal::from_str(self.to_str(), f)
     }
