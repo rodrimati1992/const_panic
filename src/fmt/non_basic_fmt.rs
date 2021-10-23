@@ -31,7 +31,7 @@ use super::{FmtArg, IsCustomType, PanicFmt};
 ///             close: "",
 ///         )
 ///     ).unwrap(),
-///     "100, false, [], \"really\""
+///     " 100, false, [], \"really\""
 /// );
 ///
 ///
@@ -111,7 +111,7 @@ impl Delimiter {
             (Self::CloseBracket, false) => PanicVal::write_str("]"),
             (Self::OpenBrace, false) => PanicVal::write_str(" { "),
             (Self::CloseBrace, false) => PanicVal::write_str(" }"),
-            (Self::Empty, false) => PanicVal::EMPTY,
+            (Self::Empty, false) => PanicVal::write_str(" "),
             (Self::OpenParen, true) => PanicVal::write_str("(\n").with_rightpad(f),
             (Self::CloseParen, true) => PanicVal::write_str(")").with_leftpad(f),
             (Self::OpenBracket, true) => PanicVal::write_str("[\n").with_rightpad(f),

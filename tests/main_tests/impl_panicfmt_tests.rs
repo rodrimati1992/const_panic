@@ -100,3 +100,67 @@ const_panic::inline_macro! {
             }
         }
 }
+
+#[test]
+fn to_panicvals_lifetime_test() {
+    use const_panic::PanicVal;
+
+    let u32_ = 5;
+    let u8_ = 3;
+
+    let _: &[PanicVal<'static>] = &StaticStruct(8).to_panicvals(FmtArg::DEBUG);
+
+    let _: &[PanicVal<'static>] = &StaticEnum::Foo.to_panicvals(FmtArg::DEBUG);
+
+    let _: &[PanicVal<'_>] = &NonStaticStruct(&u32_).to_panicvals(FmtArg::DEBUG);
+
+    let _: &[PanicVal<'_>] = &NonStaticEnum::Bar(&u8_).to_panicvals(FmtArg::DEBUG);
+}
+
+struct StaticStruct(u32);
+
+const_panic::impl_panicfmt! {
+    impl StaticStruct;
+
+    lifetime = 'static;
+
+    struct StaticStruct(u32);
+}
+
+enum StaticEnum {
+    Foo,
+    #[allow(dead_code)]
+    Bar,
+}
+
+const_panic::impl_panicfmt! {
+    impl StaticEnum;
+
+    lifetime = 'static;
+
+    enum StaticEnum {Foo, Bar}
+}
+
+struct NonStaticStruct<'a>(&'a u32);
+
+const_panic::impl_panicfmt! {
+    impl NonStaticStruct<'_>;
+
+    lifetime = '_;
+
+    struct NonStaticStruct(&u32);
+}
+
+enum NonStaticEnum<'a> {
+    #[allow(dead_code)]
+    Foo,
+    Bar(&'a u8),
+}
+
+const_panic::impl_panicfmt! {
+    impl NonStaticEnum<'_>;
+
+    lifetime = '_;
+
+    enum NonStaticEnum {Foo, Bar(&u8)}
+}

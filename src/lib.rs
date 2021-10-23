@@ -138,7 +138,6 @@
 //!     }
 //! }
 //!
-//! #[derive(Debug)]
 //! struct Foo<'a> {
 //!     x: &'a [u8],
 //!     y: Bar,
@@ -156,7 +155,6 @@
 //!     }
 //! }
 //!
-//! #[derive(Debug)]
 //! struct Bar(bool, bool);
 //!
 //! const_panic::impl_panicfmt! {
@@ -165,7 +163,6 @@
 //!     struct Bar(bool, bool);
 //! }
 //!
-//! #[derive(Debug)]
 //! enum Qux {
 //!     Up,
 //!     Down { x: u32, y: u32 },
@@ -279,12 +276,10 @@ mod fmt_impls {
     mod basic_fmt_impls;
 }
 
-pub use crate::{
-    concat_panic_::concat_panic,
-    fmt::{ComputePvCount, FmtArg, IsCustomType, PanicFmt, TypeDelim},
-    panic_val::PanicVal,
-    wrapper::Wrapper,
-};
+pub use crate::{concat_panic_::concat_panic, panic_val::PanicVal, wrapper::Wrapper};
+
+#[doc(no_inline)]
+pub use crate::fmt::{ComputePvCount, FmtArg, IsCustomType, PanicFmt, TypeDelim};
 
 #[doc(hidden)]
 pub mod __ {

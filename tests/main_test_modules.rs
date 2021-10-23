@@ -15,5 +15,6 @@ mod main_tests {
     mod integer_tests;
     mod misc_macros_tests;
     mod panicval_macros_tests;
+    mod pvcount_tests;
     mod string_tests;
 }

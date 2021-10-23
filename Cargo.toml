@@ -5,6 +5,7 @@ authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
 description = "Basic const panic with Display-formatting, coming before Rust 1.57.0."
+rust-version = "1.57"
 
 [dependencies]
 

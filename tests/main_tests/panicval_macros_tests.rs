@@ -43,6 +43,25 @@ macro_rules! fmt_flatten {
     )
 }
 
+// making sure that all single-token tree expressions parse as expressions,
+// rather than getting stuck being parsed as `$Type:ty => `
+#[cfg(feature = "non_basic")]
+#[test]
+fn flatten_panicvals_token_tree_expr_test() {
+    let string = "10";
+    let str_debug = r#""10""#;
+    let array_debug = r#"["10"]"#;
+
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; string), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; (string)), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; {string}), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; [string]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; ("10")), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; {"10"}), str_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; ["10"]), array_debug);
+    assert_eq!(fmt_flatten!(FmtArg::DEBUG; "10"), "10");
+}
+
 #[cfg(feature = "non_basic")]
 #[test]
 fn flatten_panicvals_args_test() {
@@ -331,5 +350,51 @@ const_panic::inline_macro! {
                 },
             }
         }
+    }
+}
+
+#[cfg(feature = "non_basic")]
+#[test]
+fn empty_delim_test() {
+    use const_panic::fmt;
+
+    for (fmt, expected) in [
+        (FmtArg::DEBUG, "Down x: \"hello\\n\", y: [3, 5]"),
+        (
+            FmtArg::ALT_DEBUG,
+            concat!(
+                "Down\n",
+                "    x: \"hello\\n\",\n",
+                "    y: [\n",
+                "        3,\n",
+                "        5,\n",
+                "    ],\n",
+            ),
+        ),
+        (FmtArg::DISPLAY, "Down x: hello\n, y: [3, 5]"),
+        (
+            FmtArg::ALT_DISPLAY,
+            concat!(
+                "Down\n",
+                "    x: hello\n,\n",
+                "    y: [\n",
+                "        3,\n",
+                "        5,\n",
+                "    ],\n",
+            ),
+        ),
+    ] {
+        assert_eq!(
+            fmt_flatten! {fmt;
+                "Down",
+                open: fmt::EmptyDelimiter,
+                    "x: ", ("hello\n"), fmt::COMMA_SEP,
+                    "y: ", [3u8, 5], fmt::COMMA_TERM,
+                close: "",
+            },
+            expected,
+            "{:?}",
+            fmt
+        );
     }
 }
