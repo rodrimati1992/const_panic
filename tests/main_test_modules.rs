@@ -15,6 +15,9 @@ mod main_tests {
     #[cfg(feature = "non_basic")]
     mod impl_panicfmt_tests;
 
+    #[cfg(feature = "non_basic")]
+    mod option_fmt_tests;
+
     mod integer_tests;
     mod misc_macros_tests;
     mod panicval_macros_tests;

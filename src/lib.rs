@@ -38,6 +38,29 @@
 //! bar: 0', src/lib.rs:8:15
 //! ```
 //!
+//! When called at runtime
+//! ```should_panic
+//! use const_panic::concat_panic;
+//!
+//! assert_non_zero(10, 0);
+//!
+//! #[track_caller]
+//! const fn assert_non_zero(foo: u32, bar: u32) {
+//!     if foo == 0 || bar == 0 {
+//!         concat_panic!("\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar)
+//!     }
+//! }
+//! ```
+//! it prints this:
+//! ```text
+//! thread 'main' panicked at '
+//! neither foo nor bar can be zero!
+//! foo: 10
+//! bar: 0', src/lib.rs:6:1
+//! note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+//!
+//! ```
+//!
 //! ### Custom types
 //!
 //! Panic formatting for custom types can be done in these ways
@@ -153,6 +176,11 @@
 //! # Limitations
 #![doc = crate::doc_macros::limitation_docs!()]
 //!
+//! ### Panic message length
+//!
+//! The panic message can only be up to [`MAX_PANIC_MSG_LEN`] long,
+//! after which it is truncated.
+//!
 //! # Cargo features
 //!
 //! - `"non_basic"`(enabled by default):
@@ -221,9 +249,15 @@ mod wrapper;
 
 mod fmt_impls {
     mod basic_fmt_impls;
+    #[cfg(feature = "non_basic")]
+    mod option_fmt_impls;
 }
 
-pub use crate::{concat_panic_::concat_panic, panic_val::PanicVal, wrapper::StdWrapper};
+pub use crate::{
+    concat_panic_::{concat_panic, MAX_PANIC_MSG_LEN},
+    panic_val::PanicVal,
+    wrapper::StdWrapper,
+};
 
 #[doc(no_inline)]
 pub use crate::fmt::{FmtArg, IsCustomType, PanicFmt};
@@ -236,10 +270,20 @@ pub use crate::fmt::{ComputePvCount, TypeDelim};
 pub mod __ {
     pub use core::{compile_error, concat, primitive::usize, stringify};
 
-    pub use crate::fmt::{FmtArg, PanicFmt};
+    pub use crate::*;
 
     #[cfg(feature = "non_basic")]
+    pub use crate::reexported_non_basic::*;
+}
+
+#[cfg(feature = "non_basic")]
+#[doc(hidden)]
+mod reexported_non_basic {
+    pub use core::option::Option::{self, None, Some};
+
     pub use crate::utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id};
+
+    pub const EPV: crate::PanicVal<'_> = crate::PanicVal::EMPTY;
 }
 
 #[doc(hidden)]

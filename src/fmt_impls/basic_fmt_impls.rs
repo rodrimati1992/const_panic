@@ -18,7 +18,7 @@ macro_rules! impl_panicfmt_panicval_array {
 
         impl<'s, $($impl)*> StdWrapper<&'s $ty> {
             ///
-            pub const fn to_panicvals($self: Self) -> $ret {
+            pub const fn to_panicvals($self: Self, _: FmtArg) -> $ret {
                 $($content)*
             }
         }
