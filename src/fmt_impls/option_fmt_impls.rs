@@ -1,6 +1,4 @@
-use crate::{fmt, FmtArg, PanicFmt, PanicVal, StdWrapper};
-
-const EPV: PanicVal<'_> = PanicVal::EMPTY;
+use crate::{FmtArg, PanicFmt, PanicVal, StdWrapper};
 
 /// Note: there is only `to_panicvals` methods for `Option`s of standard library types
 /// for now.
@@ -20,11 +18,17 @@ macro_rules! impl_for_option {
     ) => (
         $(
             impl<'s, $($generics)*> StdWrapper<&'s Option<$ty>> {
-                ///
+                #[doc = concat!(
+                    "Converts this `Option<",
+                    stringify!($ty),
+                    ">` to a `PanicVal` array."
+                )]
                 pub const fn to_panicvals(
                     self: Self,
                     mut fmtarg: FmtArg,
                 ) -> [PanicVal<$lt>; 5] {
+                    use crate::{PanicVal, StdWrapper, __::EPV, fmt};
+
                     match self.0 {
                         Some(x) => [
                             PanicVal::write_str("Some"),

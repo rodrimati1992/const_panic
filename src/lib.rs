@@ -249,8 +249,13 @@ mod wrapper;
 
 mod fmt_impls {
     mod basic_fmt_impls;
+
+    #[macro_use]
     #[cfg(feature = "non_basic")]
     mod option_fmt_impls;
+
+    #[cfg(feature = "non_basic")]
+    mod nonzero_impls;
 }
 
 pub use crate::{

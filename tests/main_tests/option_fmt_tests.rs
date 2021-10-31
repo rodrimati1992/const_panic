@@ -1,16 +1,14 @@
 use const_panic::FmtArg;
 
+use core::num::{
+    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+};
+
 #[test]
 fn test_option_fmt() {
     macro_rules! test_case {
         ($expr:expr, $fmt:expr, $expected:expr) => {
-            assert_eq!(
-                trunc_fmt!(
-                    1024;
-                    const_panic::fmt_option!($fmt, $expr)
-                ),
-                $expected,
-            );
             assert_eq!(trunc_fmt!(1024; $fmt; $expr), $expected);
         };
     }
@@ -29,6 +27,19 @@ fn test_option_fmt() {
     test_case! {Some(3i64), FmtArg::DEBUG, "Some(3)"}
     test_case! {Some(3i128), FmtArg::DEBUG, "Some(3)"}
     test_case! {Some(3isize), FmtArg::DEBUG, "Some(3)"}
+
+    test_case! {NonZeroU8::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroI8::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroU16::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroI16::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroU32::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroI32::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroU64::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroI64::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroU128::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroI128::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroUsize::new(5), FmtArg::DEBUG, "Some(5)"}
+    test_case! {NonZeroIsize::new(5), FmtArg::DEBUG, "Some(5)"}
 
     test_case! {Some([3u8, 5, 8]), FmtArg::DEBUG, "Some([3, 5, 8])"}
     test_case! {Some(&[3u16, 5, 8]), FmtArg::DEBUG, "Some([3, 5, 8])"}
