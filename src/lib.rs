@@ -260,6 +260,9 @@ mod fmt_impls {
 
     #[cfg(feature = "non_basic")]
     mod other_impls;
+
+    #[cfg(feature = "non_basic")]
+    mod fmt_range;
 }
 
 pub use crate::{

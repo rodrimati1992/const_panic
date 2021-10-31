@@ -16,6 +16,13 @@ macro_rules! test_val {
     })
 }
 
+macro_rules! test_vals {
+    ($value:expr, $expected:expr) => ({
+        let val = $value;
+        assert_eq!(trunc_fmt!(1024; StdWrapper(&val)), $expected);
+    })
+}
+
 #[test]
 fn fmt_pointer() {
     test_val! {&3u8 as *const u8, "<pointer>"}
@@ -50,4 +57,14 @@ fn fmt_orderings() {
     test_val! {AtomicOrdering::Acquire, "Acquire"}
     test_val! {AtomicOrdering::AcqRel, "AcqRel"}
     test_val! {AtomicOrdering::SeqCst, "SeqCst"}
+}
+
+#[test]
+fn fmt_range() {
+    test_vals! {3..5, "3..5"}
+    test_vals! {3.., "3.."}
+    test_vals! {.., ".."}
+    test_vals! {3..=5, "3..=5"}
+    test_vals! {..5, "..5"}
+    test_vals! {..=5, "..=5"}
 }
