@@ -1,3 +1,5 @@
+use crate::PanicFmt;
+
 /// A wrapper type used to define methods for std types.
 ///
 /// Std types are coerced to this type through the approach used in the
@@ -30,3 +32,13 @@
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct StdWrapper<T>(pub T);
+
+impl<T> PanicFmt for StdWrapper<T>
+where
+    T: PanicFmt,
+{
+    type This = Self;
+    type Kind = crate::fmt::IsCustomType;
+
+    const PV_COUNT: usize = T::PV_COUNT;
+}

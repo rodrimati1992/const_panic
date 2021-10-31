@@ -1,8 +1,11 @@
 use const_panic::FmtArg;
 
-use core::num::{
-    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
-    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+use core::{
+    cmp::Ordering,
+    num::{
+        NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
+        NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    },
 };
 
 #[test]
@@ -40,6 +43,10 @@ fn test_option_fmt() {
     test_case! {NonZeroI128::new(5), FmtArg::DEBUG, "Some(5)"}
     test_case! {NonZeroUsize::new(5), FmtArg::DEBUG, "Some(5)"}
     test_case! {NonZeroIsize::new(5), FmtArg::DEBUG, "Some(5)"}
+
+    test_case! {Some(Ordering::Less), FmtArg::DEBUG, "Some(Less)"}
+    test_case! {Some(Ordering::Equal), FmtArg::DEBUG, "Some(Equal)"}
+    test_case! {Some(Ordering::Greater), FmtArg::DEBUG, "Some(Greater)"}
 
     test_case! {Some([3u8, 5, 8]), FmtArg::DEBUG, "Some([3, 5, 8])"}
     test_case! {Some(&[3u16, 5, 8]), FmtArg::DEBUG, "Some([3, 5, 8])"}

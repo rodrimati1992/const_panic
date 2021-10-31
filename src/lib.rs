@@ -248,6 +248,7 @@ pub use crate::array_string::ArrayString;
 mod wrapper;
 
 mod fmt_impls {
+    #[macro_use]
     mod basic_fmt_impls;
 
     #[macro_use]
@@ -256,6 +257,9 @@ mod fmt_impls {
 
     #[cfg(feature = "non_basic")]
     mod nonzero_impls;
+
+    #[cfg(feature = "non_basic")]
+    mod other_impls;
 }
 
 pub use crate::{

@@ -1,4 +1,4 @@
-use crate::{FmtArg, PanicFmt, PanicVal, StdWrapper};
+use crate::{FmtArg, PanicFmt, PanicVal};
 
 /// Note: there is only `to_panicvals` methods for `Option`s of standard library types
 /// for now.
@@ -17,7 +17,7 @@ macro_rules! impl_for_option {
         $((for[$($generics:tt)*],$lt:lifetime, $ty:ty, $unref:ty))*
     ) => (
         $(
-            impl<'s, $($generics)*> StdWrapper<&'s Option<$ty>> {
+            impl<'s, $($generics)*> crate::StdWrapper<&'s Option<$ty>> {
                 #[doc = concat!(
                     "Converts this `Option<",
                     stringify!($ty),

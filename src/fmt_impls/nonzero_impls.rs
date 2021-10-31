@@ -1,4 +1,4 @@
-use crate::{FmtArg, PanicFmt, PanicVal, StdWrapper};
+use crate::{FmtArg, PanicFmt, PanicVal};
 
 use core::num::{
     NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
@@ -8,24 +8,8 @@ use core::num::{
 macro_rules! nonzero_impls {
     ($(($int_ctor:ident, $ty:ty))*) => (
         $(
-            impl PanicFmt for $ty {
-                type This = Self;
-                type Kind = crate::fmt::IsStdType;
-                const PV_COUNT: usize = 1;
-            }
-
-            impl StdWrapper<&$ty> {
-                #[doc = concat!(
-                    "Converts this `", stringify!($ty), "` to a `PanicVal` array."
-                )]
-                pub const fn to_panicvals(self, fmtarg: FmtArg) -> [PanicVal<'static>; 1] {
-                    [PanicVal::$int_ctor(self.0.get(), fmtarg)]
-                }
-
-                #[doc = concat!(
-                    "Converts this `", stringify!($ty), "` to a `PanicVal`."
-                )]
-                pub const fn to_panicval(self, fmtarg: FmtArg) -> PanicVal<'static> {
+            primitive_static_panicfmt!{
+                fn[](&self: $ty, fmtarg) {
                     PanicVal::$int_ctor(self.0.get(), fmtarg)
                 }
             }

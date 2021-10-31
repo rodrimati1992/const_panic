@@ -3,6 +3,38 @@ use crate::{
     FmtArg, PanicFmt, StdWrapper,
 };
 
+macro_rules! primitive_static_panicfmt {
+    (
+        fn[$($impl:tt)*](&$self:ident: $ty:ty, $f:ident) {
+            $($content:tt)*
+        }
+    ) => {
+        impl<$($impl)*> PanicFmt for $ty {
+            type This = Self;
+            type Kind = crate::fmt::IsStdType;
+            const PV_COUNT: usize = 1;
+        }
+
+        impl<$($impl)*> crate::StdWrapper<&$ty> {
+            #[doc = concat!(
+                "Converts this `", stringify!($ty), "` to a single-element `PanicVal` array."
+            )]
+            pub const fn to_panicvals($self, $f: FmtArg) -> [PanicVal<'static>; 1] {
+                [{
+                    $($content)*
+                }]
+            }
+
+            #[doc = concat!(
+                "Converts this `", stringify!($ty), "` to a `PanicVal`."
+            )]
+            pub const fn to_panicval($self, $f: FmtArg) -> PanicVal<'static> {
+                $($content)*
+            }
+        }
+    }
+}
+
 macro_rules! impl_panicfmt_panicval_array {
     (
         PV_COUNT = $pv_len:expr;
@@ -77,20 +109,8 @@ macro_rules! impl_panicfmt_int {
             }
         }
 
-        impl PanicFmt for $ty {
-            type This = Self;
-            type Kind = crate::fmt::IsStdType;
-
-            const PV_COUNT: usize = 1;
-        }
-
-        impl<'s> StdWrapper<&'s $ty> {
-            /// Converts this integer to a single-element `PanicVal` array.
-            pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'static>; 1] {
-                [PanicVal::$panic_arg_ctor(*self.0, f)]
-            }
-            /// Converts this integer to a `PanicVal`.
-            pub const fn to_panicval(self: Self, f: FmtArg) -> PanicVal<'static> {
+        primitive_static_panicfmt! {
+            fn[](&self: $ty, f) {
                 PanicVal::$panic_arg_ctor(*self.0, f)
             }
         }
