@@ -10,6 +10,9 @@ mod macro_utils;
 #[macro_use]
 mod impl_panicfmt;
 
+#[macro_use]
+mod unwrapping;
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __write_array {

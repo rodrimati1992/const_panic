@@ -280,7 +280,13 @@ pub use crate::fmt::{ComputePvCount, TypeDelim};
 
 #[doc(hidden)]
 pub mod __ {
-    pub use core::{compile_error, concat, primitive::usize, stringify};
+    pub use core::{
+        compile_error, concat,
+        option::Option::{None, Some},
+        primitive::usize,
+        result::Result::{Err, Ok},
+        stringify,
+    };
 
     pub use crate::*;
 

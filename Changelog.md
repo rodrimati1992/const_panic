@@ -18,6 +18,11 @@ Added `PanicFmt`-based formatting for these types(all of which require the `"non
 - `std::marker::PhantomPinned`
 - `StdWrapper`
 
+Added these macros:
+- `unwrap_ok`
+- `unwrap_err`
+- `unwrap_some`
+
 Fixed signature of to_panicvals for arrays and slices of PanicVals, by adding a `FmtArg` parameter.
 
 
