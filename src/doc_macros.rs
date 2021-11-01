@@ -23,7 +23,7 @@ $($additional_fmt_overrides,)?
 r##"
 ### String formatting
 
-Strings are debug-formatted like this:
+String expressions are debug-formatted like this:
 - Prepending and appending the double quote character (`"`).
 - Escaping the `'\t'`,`'\n'`,`'\r'`,`'\\'`, `'\''`, and`'\"'` characters.
 - Escaping control characters with `\xYY`, 
