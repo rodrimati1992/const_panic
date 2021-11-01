@@ -1,11 +1,14 @@
 macro_rules! formatting_docs {($($additional_fmt_overrides:expr)?) => {
-concat!("
+concat!(r##"
 # Formatting
 
 Literals are Display formatted by default, so that you can pass string literals 
 without worrying about what the current formatting settings are.
 
 Expressions are formatted as determined by the `$fmtarg` argument.
+
+Note that literals inside parentheses (eg: `(100)`) are considered expressions
+by this macro.
 
 ### Formatting overrides
 
@@ -15,8 +18,18 @@ any of the options below:
 - `alt_debug:` or `{#?}:`: alternate-`Debug` formats the argument.
 - `display:` or `{}:`: `Display` formats the argument.
 - `alt_display:` or `{#}:`: alternate-`Display` formats the argument.
-",
+"##,
 $($additional_fmt_overrides,)?
+r##"
+### String formatting
+
+Strings are debug-formatted like this:
+- Prepending and appending the double quote character (`"`).
+- Escaping the `'\t'`,`'\n'`,`'\r'`,`'\\'`, `'\''`, and`'\"'` characters.
+- Escaping control characters with `\xYY`, 
+where `YY` is the hexadecimal value of the control character.
+
+"##
 )}}
 
 macro_rules! limitation_docs {() => {

@@ -23,6 +23,10 @@ ptr_impls! {*mut T}
 
 ptr_impls! {NonNull<T>}
 
+impl_for_option! {
+    (for[T], 'static, NonNull<T>, NonNull<T>)
+}
+
 primitive_static_panicfmt! {
     fn[T: ?Sized](&self: PhantomData<T>, _f) {
         PanicVal::write_str("PhantomData")

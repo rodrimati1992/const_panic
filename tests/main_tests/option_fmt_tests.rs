@@ -6,6 +6,7 @@ use core::{
         NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
         NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
     },
+    ptr::NonNull,
 };
 
 #[test]
@@ -30,6 +31,8 @@ fn test_option_fmt() {
     test_case! {Some(3i64), FmtArg::DEBUG, "Some(3)"}
     test_case! {Some(3i128), FmtArg::DEBUG, "Some(3)"}
     test_case! {Some(3isize), FmtArg::DEBUG, "Some(3)"}
+
+    test_case! {NonNull::new(&mut 100), FmtArg::DEBUG, "Some(<pointer>)"}
 
     test_case! {NonZeroU8::new(5), FmtArg::DEBUG, "Some(5)"}
     test_case! {NonZeroI8::new(5), FmtArg::DEBUG, "Some(5)"}
