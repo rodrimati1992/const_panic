@@ -42,6 +42,28 @@ neither foo nor bar can be zero!
 foo: 10
 bar: 0', src/lib.rs:8:15
 ```
+When called at runtime
+```should_panic
+use const_panic::concat_panic;
+
+assert_non_zero(10, 0);
+
+#[track_caller]
+const fn assert_non_zero(foo: u32, bar: u32) {
+    if foo == 0 || bar == 0 {
+        concat_panic!("\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar)
+    }
+}
+```
+it prints this:
+```text
+thread 'main' panicked at '
+neither foo nor bar can be zero!
+foo: 10
+bar: 0', src/lib.rs:6:1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+```
 
 ### Custom types
 

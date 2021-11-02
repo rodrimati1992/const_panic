@@ -1,22 +1,28 @@
+#[cfg(feature = "non_basic")]
+use core::num::{
+    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+};
+
+macro_rules! test_case {
+    ($($nums:expr),* $(,)*)=> ({
+        for int in [$($nums),*] {
+            let string = format!("{:?}", int);
+
+            assert_eq!(
+                overf_fmt!(string.len(); int).unwrap(),
+                *string,
+            );
+            assert_eq!(trunc_fmt!(string.len(); int), *string);
+
+            overf_fmt!(string.len() - 1; int).unwrap_err();
+            assert_eq!(trunc_fmt!(string.len() - 1; int), "");
+        }
+    })
+}
+
 #[test]
 fn integer_test() {
-    macro_rules! test_case {
-        ($($nums:expr),* $(,)*)=> ({
-            for int in [$($nums),*] {
-                let string = format!("{:?}", int);
-
-                assert_eq!(
-                    overf_fmt!(string.len(); int).unwrap(),
-                    *string,
-                );
-                assert_eq!(trunc_fmt!(string.len(); int), *string);
-
-                overf_fmt!(string.len() - 1; int).unwrap_err();
-                assert_eq!(trunc_fmt!(string.len() - 1; int), "");
-            }
-        })
-    }
-
     test_case!(0u8, 1, 2, u8::MAX / 2, u8::MAX);
     test_case!(0u16, 1, 2, u16::MAX / 2, u16::MAX);
     test_case!(0u32, 1, 2, u32::MAX / 2, u32::MAX);
@@ -90,4 +96,22 @@ fn integer_test() {
         isize::MAX / 2,
         isize::MAX
     );
+}
+
+// Tests aren't so thorough, since NonZero integers just delegate to the built-in ones.
+#[cfg(feature = "non_basic")]
+#[test]
+fn nonzero_integer_test() {
+    test_case! {NonZeroU8::new(5).unwrap()}
+    test_case! {NonZeroI8::new(-5).unwrap()}
+    test_case! {NonZeroU16::new(8).unwrap()}
+    test_case! {NonZeroI16::new(-8).unwrap()}
+    test_case! {NonZeroU32::new(13).unwrap()}
+    test_case! {NonZeroI32::new(-13).unwrap()}
+    test_case! {NonZeroU64::new(21).unwrap()}
+    test_case! {NonZeroI64::new(-21).unwrap()}
+    test_case! {NonZeroU128::new(34).unwrap()}
+    test_case! {NonZeroI128::new(-34).unwrap()}
+    test_case! {NonZeroUsize::new(55).unwrap()}
+    test_case! {NonZeroIsize::new(-55).unwrap()}
 }
