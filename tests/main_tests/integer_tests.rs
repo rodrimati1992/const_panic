@@ -1,3 +1,4 @@
+#[cfg(feature = "non_basic")]
 use core::num::{
     NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
     NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
@@ -98,6 +99,7 @@ fn integer_test() {
 }
 
 // Tests aren't so thorough, since NonZero integers just delegate to the built-in ones.
+#[cfg(feature = "non_basic")]
 #[test]
 fn nonzero_integer_test() {
     test_case! {NonZeroU8::new(5).unwrap()}
