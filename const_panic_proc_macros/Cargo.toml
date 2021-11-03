@@ -1,0 +1,31 @@
+[package]
+name = "const_panic_proc_macros"
+version = "0.1.2"
+authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
+edition = "2021"
+license = "Zlib"
+description = "Implementation detail of the `const_panic` crate"
+keywords = []
+categories = []
+repository = "https://github.com/rodrimati1992/const_panic/"
+include = [
+    "Cargo.toml", 
+    "src/**/*.rs", 
+    "../README.md",
+    "LICENSE-ZLIB.md", 
+]
+
+[badges]
+travis-ci = { repository =  "rodrimati1992/const_format_crates/" }
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0.7"
+proc-macro2 = "1.0.19"
+unicode-xid = "0.2"
+
+[dependencies.syn]
+version = "1.0.38"
+
