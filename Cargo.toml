@@ -1,6 +1,6 @@
 [package]
 name = "const_panic"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
@@ -17,12 +17,16 @@ include = [
     "LICENSE-ZLIB.md", 
 ]
 
-[dependencies]
+[dependencies.const_panic_proc_macros]
+version = "=0.1.2"
+path = "./const_panic_proc_macros/"
+optional = true
 
 [features]
 default = ["non_basic"]
 non_basic = []
 docsrs = []
+derive = ["const_panic_proc_macros"]
 
 # private feature
 test = []

@@ -65,16 +65,18 @@
 //!
 //! Panic formatting for custom types can be done in these ways
 //! (in increasing order of verbosity):
+//! - Using the [`PanicFmt` derive] macro
+//! (requires the opt-in `"derive"` feature)
 //! - Using the [`impl_panicfmt`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Using the [`flatten_panicvals`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Manually implementing the [`PanicFmt`] trait as described in its docs.
 //!
-//! This example uses the [`impl_panicfmt`] approach.
+//! This example uses the [`PanicFmt` derive] approach.
 //!
-//! ```compile_fail
-//! use const_panic::concat_panic;
+//! ```rust
+//! use const_panic::{PanicFmt, concat_panic};
 //!
 //! const LAST: u8 = {
 //!     Foo{
@@ -106,46 +108,23 @@
 //!     }
 //! }
 //!
+//! #[derive(PanicFmt)]
 //! struct Foo<'a> {
 //!     x: &'a [u8],
 //!     y: Bar,
 //!     z: Qux,
 //! }
 //!
-//! // You need to replace non-static lifetimes with `'_` here.
-//! const_panic::impl_panicfmt! {
-//!     impl Foo<'_>;
-//!
-//!     struct Foo {
-//!         x: &[u8],
-//!         y: Bar,
-//!         z: Qux,
-//!     }
-//! }
-//!
+//! #[derive(PanicFmt)]
 //! struct Bar(bool, bool);
 //!
-//! const_panic::impl_panicfmt! {
-//!     impl Bar;
-//!
-//!     struct Bar(bool, bool);
-//! }
-//!
+//! #[derive(PanicFmt)]
 //! enum Qux {
 //!     Up,
 //!     Down { x: u32, y: u32 },
 //!     Left(u64),
 //! }
 //!
-//! const_panic::impl_panicfmt!{
-//!     impl Qux;
-//!
-//!     enum Qux {
-//!         Up,
-//!         Down { x: u32, y: u32 },
-//!         Left(u64),
-//!     }
-//! }
 //! ```
 //! The above code fails to compile with this error:
 //! ```text
@@ -202,7 +181,8 @@
 //! This requires Rust 1.57.0, because it uses the `panic` macro in a const context.
 //!
 //!
-//! [`PanicFmt`]: crate::PanicFmt
+//! [`PanicFmt` derive]: derive@crate::PanicFmt
+//! [`PanicFmt`]: trait@crate::PanicFmt
 //! [`impl_panicfmt`]: crate::impl_panicfmt
 //! [`flatten_panicvals`]: crate::flatten_panicvals
 #![no_std]
@@ -211,6 +191,8 @@
 #![deny(clippy::missing_safety_doc)]
 #![deny(clippy::shadow_unrelated)]
 #![deny(clippy::wildcard_imports)]
+
+extern crate self as const_panic;
 
 #[macro_use]
 mod doc_macros;
@@ -303,6 +285,9 @@ mod reexported_non_basic {
 
     pub const EPV: crate::PanicVal<'_> = crate::PanicVal::EMPTY;
 }
+
+#[cfg(feature = "derive")]
+include! {"./proc_macro_reexports/panicfmt_derive.rs"}
 
 #[doc(hidden)]
 #[cfg(feature = "test")]

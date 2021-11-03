@@ -76,15 +76,7 @@ macro_rules! __write_array_checked {
 ///
 /// enum IsReal{Yes, No}
 ///
-/// // Manually implementing panic formatting for a field-less enum
-/// //
-/// // All the code below is equivalent to this `impl_panicfmt` invocation:
-/// // ```
-/// // impl_panicfmt!{
-/// //      impl IsReal;
-/// //      enum IsReal { Yes, No }
-/// // }
-/// // ```
+/// // All the code below manually implements panic formatting for a field-less enum
 /// impl PanicFmt for IsReal {
 ///     type This = Self;
 ///     type Kind = IsCustomType;

@@ -2,11 +2,18 @@
 //!
 //! Panic formatting for custom types can be done in these ways
 //! (in increasing order of verbosity):
+//! - Using the [`PanicFmt` derive] macro
+//! (requires the opt-in `"derive"` feature)
 //! - Using the [`impl_panicfmt`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Using the [`flatten_panicvals`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Manually implementing the [`PanicFmt`] trait as described in its docs.
+//!
+//! [`PanicFmt` derive]: derive@crate::PanicFmt
+//! [`PanicFmt`]: trait@crate::PanicFmt
+//! [`impl_panicfmt`]: crate::impl_panicfmt
+//! [`flatten_panicvals`]: crate::flatten_panicvals
 
 #[cfg(feature = "non_basic")]
 mod non_basic_fmt;
@@ -42,6 +49,8 @@ use core::marker::PhantomData;
 /// # Implementation examples
 ///
 /// This trait can be implemented in these ways (in increasing order of verbosity):
+/// - Using the [`PanicFmt` derive] macro
+/// (requires the opt-in `"derive"` feature)
 /// - Using the [`impl_panicfmt`](impl_panicfmt#examples) macro
 /// (requires the default-enabled `"non_basic"` feature)
 /// - Using the [`flatten_panicvals`](flatten_panicvals#examples) macro
@@ -93,6 +102,10 @@ use core::marker::PhantomData;
 /// }
 ///
 /// ```
+/// [`PanicFmt` derive]: derive@crate::PanicFmt
+/// [`PanicFmt`]: trait@crate::PanicFmt
+/// [`impl_panicfmt`]: crate::impl_panicfmt
+/// [`flatten_panicvals`]: crate::flatten_panicvals
 pub trait PanicFmt {
     /// The type after dereferencing all references.
     ///
