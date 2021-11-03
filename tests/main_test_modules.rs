@@ -21,6 +21,9 @@ mod main_tests {
     #[cfg(feature = "non_basic")]
     mod other_fmt_tests;
 
+    #[cfg(feature = "derive")]
+    mod derive_tests;
+
     mod integer_tests;
 
     mod misc_macros_tests;
