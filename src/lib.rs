@@ -75,7 +75,7 @@
 //!
 //! This example uses the [`PanicFmt` derive] approach.
 //!
-//! ```rust
+//! ```compile_fail
 //! use const_panic::{PanicFmt, concat_panic};
 //!
 //! const LAST: u8 = {
@@ -208,6 +208,9 @@ pub mod fmt;
 
 mod panic_val;
 
+#[cfg(feature = "non_basic")]
+mod const_default;
+
 #[cfg(not(feature = "non_basic"))]
 mod utils;
 
@@ -281,7 +284,10 @@ pub mod __ {
 mod reexported_non_basic {
     pub use core::option::Option::{self, None, Some};
 
-    pub use crate::utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id};
+    pub use crate::{
+        const_default::ConstDefault,
+        utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id},
+    };
 
     pub const EPV: crate::PanicVal<'_> = crate::PanicVal::EMPTY;
 }
