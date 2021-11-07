@@ -26,6 +26,9 @@ pub struct DataStructure<'a> {
     /// Whether this is a struct/union/enum.
     pub data_variant: DataVariant,
 
+    // the amount of lifetime parameters in the type
+    pub lifetime_count: usize,
+
     /// The variants in the type definition.
     ///
     /// If it is a struct or a union this only has 1 element.
@@ -89,6 +92,7 @@ impl<'a> DataStructure<'a> {
             attrs: &ast.attrs,
             generics: &ast.generics,
             data_variant,
+            lifetime_count: ast.generics.lifetimes().count(),
             variants,
         }
     }
@@ -274,4 +278,13 @@ impl<'a> FieldIdent<'a> {
     fn new_index(index: usize) -> Self {
         FieldIdent::Index(index)
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone, PartialEq)]
+pub(super) enum GenParamKind {
+    Lifetime,
+    Type,
+    Const,
 }
