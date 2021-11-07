@@ -2,7 +2,6 @@ use syn::parse::{Parse, ParseBuffer, Peek};
 
 use quote::TokenStreamExt;
 
-
 pub struct Empty(pub proc_macro2::Span);
 
 impl quote::ToTokens for Empty {
@@ -11,12 +10,11 @@ impl quote::ToTokens for Empty {
     }
 }
 
-
 pub(crate) trait SynResultExt {
     fn combine_err<T>(&mut self, res: syn::Result<T>);
 }
 
-impl<T> SynResultExt for syn::Result<T>{
+impl<T> SynResultExt for syn::Result<T> {
     fn combine_err<T2>(&mut self, res: syn::Result<T2>) {
         if let Err(err) = res {
             match self {
@@ -47,4 +45,3 @@ impl ParseBufferExt for ParseBuffer<'_> {
         }
     }
 }
-

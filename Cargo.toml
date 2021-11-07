@@ -17,6 +17,8 @@ include = [
     "LICENSE-ZLIB.md", 
 ]
 
+[workspace]
+
 [dependencies.const_panic_proc_macros]
 version = "=0.1.2"
 path = "./const_panic_proc_macros/"
