@@ -101,9 +101,8 @@ macro_rules! unwrap_some {
 ///     number: u8,
 /// }
 ///
+/// // You can also use `#]derive(PanicFmt))]` with the "derive" feature
 /// const_panic::impl_panicfmt!{
-///     impl OddError;
-///
 ///     struct OddError {
 ///         at: usize,
 ///         number: u8,

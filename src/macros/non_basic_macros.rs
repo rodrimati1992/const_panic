@@ -151,8 +151,7 @@ before formatting the argument, and uses Display formatting for that argument.
 /// struct Foo(u32, &'static str);
 ///
 /// const_panic::impl_panicfmt!{
-///     impl Foo;
-///     struct Foo(u32, &'static str)
+///     struct Foo(u32, &'static str);
 /// }
 ///
 /// struct Bar {
@@ -160,7 +159,6 @@ before formatting the argument, and uses Display formatting for that argument.
 /// }
 ///
 /// const_panic::impl_panicfmt!{
-///     impl Bar;
 ///     struct Bar {
 ///         x: &'static str,
 ///     }
@@ -597,7 +595,7 @@ macro_rules! __to_pvf_used_length {
 /// Implementing panic formatting for a generic struct.
 ///
 /// ```rust
-/// use const_panic::{ArrayString, FmtArg, impl_panicfmt, inline_macro};
+/// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
 ///
 /// // Debug formatting
 /// assert_eq!(
@@ -634,24 +632,16 @@ macro_rules! __to_pvf_used_length {
 /// struct Foo<T>(T, T);
 ///
 /// // Because of limitations of stable const evaluation,
-/// // you have to use macros to implement panic formatting
-/// // for more than one concrete type (ignoring lifetimes).
-/// //
-/// // This macro implements panic formatting for
+/// // this macro only implements panic formatting for
 /// // - `Foo<bool>`
 /// // - `Foo<u8>`
 /// // - `Foo<&str>`
-/// inline_macro! {
-///     (bool),
-///     (u8),
-///     // Types with lifetimes must either elide the lifetime, use `'_` or `'static`.
-///     (&str);
+/// impl_panicfmt!{
+///     struct Foo<T>(T, T);
 ///
-///     ($T:ty) =>
-///     impl_panicfmt!{
-///         impl Foo<$T>;
-///         struct Foo($T, $T)
-///     }
+///     (impl Foo<bool>)
+///     (impl Foo<u8>)
+///     (impl Foo<&str>)
 /// }
 ///
 /// ```

@@ -14,7 +14,7 @@ mod sealed {
 macro_rules! impl_constdefault {
     ($($ty:ty = $val:expr),* $(,)?) => (
         $(
-            impl ConstDefault for sealed::Sealed {}
+            impl sealed::Sealed for $ty {}
 
             impl ConstDefault for $ty {
                 const DEFAULT: Self = $val;
