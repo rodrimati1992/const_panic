@@ -1,3 +1,6 @@
+#[macro_use]
+mod concat_assert;
+
 #[cfg(feature = "non_basic")]
 #[macro_use]
 mod non_basic_macros;

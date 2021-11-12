@@ -12,6 +12,8 @@ mod main_tests {
     #[cfg(feature = "non_basic")]
     mod arraystring_tests;
 
+    mod assert_tests;
+
     #[cfg(feature = "non_basic")]
     mod impl_panicfmt_tests;
 
