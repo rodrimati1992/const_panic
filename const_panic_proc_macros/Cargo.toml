@@ -1,6 +1,6 @@
 [package]
 name = "const_panic_proc_macros"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"

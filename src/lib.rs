@@ -206,6 +206,9 @@ mod debug_str_fmt;
 
 pub mod fmt;
 
+#[cfg(all(doctest, feature = "non_basic"))]
+pub mod doctests;
+
 mod panic_val;
 
 #[cfg(feature = "non_basic")]
