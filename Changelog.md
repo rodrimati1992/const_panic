@@ -1,5 +1,19 @@
 This changelog is a summary of the changes made in each release.
 
+# 0.2
+
+### 0.2.0
+
+Added `concat_assert` macro.
+
+Made breaking change to `impl_panicfmt` to allow generic implementations with type and const parameters.
+
+Added `PanicFmt` derive macro.
+
+Added `"derive"` crate feature, to enable the `PanicFmt` derive.
+
+Declared `const_panic_proc_macros`, depended by `const_panic` when the `"derive"` feature is enabled.
+
 # 0.1
 
 ### 0.1.1

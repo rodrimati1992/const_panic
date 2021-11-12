@@ -34,4 +34,4 @@ derive = ["const_panic_proc_macros"]
 test = []
 
 [package.metadata.docs.rs]
-features = ["non_basic", "docsrs"]
+features = ["derive", "docsrs"]

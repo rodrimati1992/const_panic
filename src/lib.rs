@@ -189,6 +189,7 @@
 //! [`PanicFmt`]: trait@crate::PanicFmt
 //! [`impl_panicfmt`]: crate::impl_panicfmt
 //! [`flatten_panicvals`]: crate::flatten_panicvals
+//! [`MAX_PANIC_MSG_LEN`]: crate::MAX_PANIC_MSG_LEN
 #![no_std]
 #![cfg_attr(feature = "docsrs", feature(doc_cfg))]
 #![warn(missing_docs)]
