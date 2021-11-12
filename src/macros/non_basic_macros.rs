@@ -1,7 +1,7 @@
 /// Formats multiple values into an array of `PanicVal`s.
 ///
 /// The `flatten`ing part comes from the fact that each argument
-/// is potentially converted to an array of `PanicVal`,
+/// is converted to an array of `PanicVal`,
 /// which are then concatenated into a single array.
 ///
 /// # Arguments
@@ -9,7 +9,7 @@
 /// The syntax for this macro is
 /// ```text
 /// flatten_panicvals!(
-///     $fmtarg:expr;
+///     $fmtarg:expr $(, $pv_count:expr)?;
 ///     $(
 ///         $($Type:ty => )? $($format_override:tt :)? $arg_to_fmt:expr
 ///     ),*
@@ -19,6 +19,12 @@
 ///
 /// `$fmtarg` is a [`FmtArg`](crate::FmtArg) argument
 /// which determines how non-literal `$arg_to_fmt` arguments are formatted.
+///
+/// `$pv_count` is an optional argument which overrides the length of the array
+/// that this returns.
+/// <br>If this argument is smaller than the flattened arrays would create,
+/// it produces a compile-time error.
+/// If this is larger, this fills the trailing elements with `PanicVal::EMPTY`.
 ///
 /// [`$format_override`](#formatting-overrides) overrides the `$fmtarg` argument,
 /// changing how that `$arg_to_fmt` argument is formatted.
@@ -592,10 +598,13 @@ macro_rules! __to_pvf_used_length {
 ///
 /// # Example
 ///
-/// Implementing panic formatting for a generic struct.
+/// Implementing panic formatting for a generic struct with [`flatten_panicvals`].
 ///
 /// ```rust
-/// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
+/// use const_panic::{
+///     fmt::{self, ComputePvCount, FmtArg},
+///     ArrayString, PanicFmt, PanicVal, flatten_panicvals, inline_macro,
+/// };
 ///
 /// // Debug formatting
 /// assert_eq!(
@@ -631,17 +640,39 @@ macro_rules! __to_pvf_used_length {
 ///
 /// struct Foo<T>(T, T);
 ///
+/// impl<T> PanicFmt for Foo<T>
+/// where
+///     T: PanicFmt,
+/// {
+///     type This = Self;
+///     type Kind = const_panic::IsCustomType;
+///
+///     const PV_COUNT: usize = ComputePvCount{
+///         field_amount: 2,
+///         summed_pv_count: T::PV_COUNT * 2,
+///         delimiter: fmt::TypeDelim::Tupled,
+///     }.call();
+/// }
+///
 /// // Because of limitations of stable const evaluation,
 /// // this macro only implements panic formatting for
 /// // - `Foo<bool>`
 /// // - `Foo<u8>`
 /// // - `Foo<&str>`
-/// impl_panicfmt!{
-///     struct Foo<T>(T, T);
-///
-///     (impl Foo<bool>)
-///     (impl Foo<u8>)
-///     (impl Foo<&str>)
+/// inline_macro!{
+///     (bool), (u8), (&str);
+///     ($T:ty)=>
+///     impl Foo<$T> {
+///         const fn to_panicvals(&self, fmtarg: FmtArg) -> [PanicVal<'_>; Foo::<$T>::PV_COUNT] {
+///             flatten_panicvals! {fmtarg;
+///                 "Foo",
+///                 open: fmt::OpenParen,
+///                     $T => self.0, fmt::COMMA_SEP,
+///                     $T => self.1, fmt::COMMA_TERM,
+///                 close: fmt::CloseParen,
+///             }
+///         }
+///     }
 /// }
 ///
 /// ```

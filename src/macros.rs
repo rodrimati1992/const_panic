@@ -79,7 +79,8 @@ macro_rules! __write_array_checked {
 ///
 /// enum IsReal{Yes, No}
 ///
-/// // All the code below manually implements panic formatting for a field-less enum
+/// // All the code below manually implements panic formatting for a field-less enum.
+/// // This can be written concisely with the `PanicFmt` derive or `impl_panicfmt` macro.
 /// impl PanicFmt for IsReal {
 ///     type This = Self;
 ///     type Kind = IsCustomType;
@@ -148,7 +149,7 @@ macro_rules! coerce_fmt {
 ///
 /// const _: () = concat_panic!{
 ///     // the optional `$fmtarg` parameter.
-///     // If this argument wasn't passed, it'd be `FmtArg::DEBUG`
+///     // If this argument isn't passed, it defaults to `FmtArg::DEBUG`
 ///     FmtArg::ALT_DEBUG;
 ///
 ///     "\n\nshowing off literals:\n",

@@ -13,7 +13,7 @@
 //! ### Basic
 //!
 //! ```compile_fail
-//! use const_panic::concat_panic;
+//! use const_panic::concat_assert;
 //!
 //! const FOO: u32 = 10;
 //! const BAR: u32 = 0;
@@ -21,15 +21,16 @@
 //!
 //! #[track_caller]
 //! const fn assert_non_zero(foo: u32, bar: u32) {
-//!     if foo == 0 || bar == 0 {
-//!         concat_panic!("\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar)
+//!     concat_assert!{
+//!         foo != 0 && bar != 0,
+//!         "\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar
 //!     }
 //! }
 //! ```
 //! The above code fails to compile with this error:
 //! ```text
 //! error[E0080]: evaluation of constant value failed
-//!  --> src/lib.rs:17:15
+//!  --> src/lib.rs:20:15
 //!   |
 //! 8 | const _: () = assert_non_zero(FOO, BAR);
 //!   |               ^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at '
@@ -168,9 +169,12 @@
 //! Without this feature, you can effectively only format primitive types
 //! (custom types can manually implement formatting with more difficulty).
 //!
+//! - `"derive"`(disabled by default):
+//! Enables the [`PanicFmt`](derive@crate::PanicFmt) derive macro.
+//!
 //! # Plans
 //!
-//! Adding a derive macro, under an opt-in "derive" feature.
+//! None for now
 //!
 //! # No-std support
 //!

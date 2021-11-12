@@ -88,6 +88,8 @@ impl<const CAP: usize> ArrayString<CAP> {
 
     /// Constructs this string from a `&[&[PanicVal<'_>]]`.
     ///
+    /// Returns `None` if the formatted args would be larger than `CAP`.
+    ///
     /// # Example
     ///
     /// ```rust
@@ -118,6 +120,8 @@ impl<const CAP: usize> ArrayString<CAP> {
     }
 
     /// Constructs this string from a `&[PanicVal<'_>]`.
+    ///
+    /// Returns `None` if the formatted args would be larger than `CAP`.
     ///
     /// # Example
     ///

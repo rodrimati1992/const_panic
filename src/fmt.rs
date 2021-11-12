@@ -109,11 +109,11 @@ use core::marker::PhantomData;
 pub trait PanicFmt {
     /// The type after dereferencing all references.
     ///
-    /// User-defined should generally set this to `Self`.
+    /// User-defined types should generally set this to `Self`.
     type This: ?Sized;
     /// Whether this is a user-defined type or standard library type.
     ///
-    /// User-defined should generally set this to [`IsCustomType`].
+    /// User-defined types should generally set this to [`IsCustomType`].
     type Kind;
 
     /// The length of the array returned in `Self::to_panicvals`
@@ -273,10 +273,10 @@ impl FmtArg {
         fmt_kind: FmtKind::Debug,
     };
 
-    /// A `FmtArg` with alternate `Display` formatting and no indentation.
+    /// A `FmtArg` with alternate `Display` formatting, starting with no indentation.
     pub const ALT_DISPLAY: Self = Self::DISPLAY.set_alternate(true);
 
-    /// A `FmtArg` with alternate `Debug` formatting and no indentation.
+    /// A `FmtArg` with alternate `Debug` formatting, starting with no indentation.
     pub const ALT_DEBUG: Self = Self::DEBUG.set_alternate(true);
 
     /// Sets whether alternate formatting is enabled

@@ -85,7 +85,7 @@ impl<'a> PanicVal<'a> {
         }
     }
 
-    /// Constructs a PanicVal from a [`ShortString`], that's output verbatim.
+    /// Constructs a PanicVal from a [`ShortString`], which outputs the string verbatim.
     #[cfg(feature = "non_basic")]
     pub const fn write_short_str(string: ShortString) -> Self {
         Self {
@@ -94,12 +94,17 @@ impl<'a> PanicVal<'a> {
         }
     }
 
+    /// Constructs a `PanicVal` usable as a separator between fields or elements.
     ///
+    /// This is sensitive to te [`fmtarg.is_alternate`] flag,
+    /// for more details on that you can look at the docs for
+    /// [`Separator::to_panicval`](crate::fmt::Separator#method.to_panicval)
     ///
     /// # Panics
     ///
     /// This may panic if `string.len()` is greater than 12.
     ///
+    /// [`fmtarg.is_alternate`]: crate::FmtArg#structfield.is_alternate
     #[cfg(feature = "non_basic")]
     pub const fn from_element_separator(
         separator: &str,
