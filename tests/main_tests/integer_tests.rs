@@ -99,6 +99,7 @@ fn integer_test() {
 
 // Tests aren't so thorough, since NonZero integers just delegate to the built-in ones.
 #[test]
+#[cfg(feature = "non_basic")]
 fn nonzero_integer_test() {
     test_case! {NonZeroU8::new(5).unwrap()}
     test_case! {NonZeroI8::new(-5).unwrap()}
