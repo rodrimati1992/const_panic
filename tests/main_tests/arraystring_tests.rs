@@ -1,6 +1,6 @@
 use const_panic::{
     fmt::{ShortString, SHORT_STRING_CAP},
-    ArrayString, PanicVal,
+    ArrayString, FmtArg, PanicVal,
 };
 
 #[test]
@@ -119,9 +119,17 @@ fn fmt_arraystring_test() {
 
     for string in strings_iter(SHORT_STRING_CAP, &mut rng).take(100) {
         let string = &*string;
+        let string_dbg = &*format!("{:?}", string);
+
         let short = PanicVal::write_short_str(ShortString::new(string));
         assert_eq!(trunc_fmt!(200; short), string);
         assert_eq!(trunc_fmt!(200; debug: short), string);
         assert_eq!(trunc_fmt!(200; display: short), string);
+
+        let short_dbg = PanicVal::from_short_str(ShortString::new(string), FmtArg::DEBUG);
+        let short_disp = PanicVal::from_short_str(ShortString::new(string), FmtArg::DISPLAY);
+        assert_eq!(trunc_fmt!(200; short_dbg), string_dbg);
+        assert_eq!(trunc_fmt!(200; debug: short_dbg), string_dbg);
+        assert_eq!(trunc_fmt!(200; display: short_disp), string);
     }
 }

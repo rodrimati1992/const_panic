@@ -153,19 +153,36 @@ pub const INDENTATION_STEP: u8 = 4;
 /// ```rust
 /// use const_panic::{
 ///     fmt::ShortString,
-///     ArrayString, PanicVal,
+///     ArrayString, FmtArg, PanicVal,
 /// };
 ///
 /// let pv: PanicVal<'static> =
 ///     PanicVal::write_short_str(ShortString::new("3,13,21,34,55,89"));
 ///
-/// assert_eq!(ArrayString::<20>::from_panicvals(&[pv]).unwrap(), "3,13,21,34,55,89")
+/// assert_eq!(ArrayString::<20>::from_panicvals(&[pv]).unwrap(), "3,13,21,34,55,89");
+///
+///
+/// let pv_debug: PanicVal<'static> =
+///     PanicVal::from_short_str(ShortString::new("foo\n\0bar"), FmtArg::DEBUG);
+///
+/// assert_eq!(
+///     ArrayString::<20>::from_panicvals(&[pv_debug]).unwrap(),
+///     "\"foo\\n\\x00bar\"",
+/// );
 ///
 /// ```
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub type ShortString = ArrayString<SHORT_STRING_CAP>;
 
 pub use crate::utils::string_cap::TINY as SHORT_STRING_CAP;
+
+impl<'a> PanicVal<'a> {
+    /// Constructs a `PanicVal` from a `ShortString`.
+    pub const fn from_short_str(this: ShortString, f: FmtArg) -> PanicVal<'a> {
+        use crate::panic_val::{PanicVariant, StrFmt};
+        PanicVal::__new(PanicVariant::ShortString(StrFmt::new(f), this.to_compact()))
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
