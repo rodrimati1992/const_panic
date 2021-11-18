@@ -97,6 +97,7 @@ macro_rules! write_panicval {
                     $lout.ranged()
                 }
             }
+            #[cfg(feature = "non_basic")]
             PanicClass::Slice(_) => unreachable!(),
         };
 

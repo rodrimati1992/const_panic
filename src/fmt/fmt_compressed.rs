@@ -12,6 +12,8 @@ const FMT_KIND_OFFSET: u8 = 1;
 const NUMBER_FMT_OFFSET: u8 = FMT_KIND_OFFSET + FmtKind::BITS;
 
 impl FmtArg {
+    /// Converts this `FmtArg` into a `PackedFmtArg`,
+    /// which is smaller but can only be converted back into a `FmtArg`.
     #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
     pub const fn pack(self) -> PackedFmtArg {
         let Self {
@@ -31,6 +33,7 @@ impl FmtArg {
 }
 
 impl PackedFmtArg {
+    /// Converts this `PackedFmtArg` back into a `FmtArg`,
     pub const fn unpack(self) -> FmtArg {
         let indentation = self.indentation;
         let is_alternate = (self.bitfields & 1) != 0;

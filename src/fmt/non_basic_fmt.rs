@@ -145,7 +145,8 @@ pub const INDENTATION_STEP: u8 = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A stack allocated string type that's convetible into [`PanicVal`].
+/// A stack allocated string type that's convertible into [`PanicVal`],
+/// with [`SHORT_STRING_CAP`] capacity.
 ///
 /// # Example
 ///
@@ -164,8 +165,7 @@ pub const INDENTATION_STEP: u8 = 4;
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub type ShortString = ArrayString<SHORT_STRING_CAP>;
 
-/// The capacity of a [`ShortString`].
-pub const SHORT_STRING_CAP: usize = crate::utils::string_cap::TINY;
+pub use crate::utils::string_cap::TINY as SHORT_STRING_CAP;
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -25,8 +25,9 @@ pub(crate) struct TailShortString<const LEN: usize> {
 pub(crate) type PreFmtString = TailShortString<{ string_cap::PREFMT }>;
 
 pub(crate) mod string_cap {
-    // the ArrayString that's stored in PanicVal
-    pub(crate) const TINY: usize = 16;
+    /// The capacity of a [`ShortString`](crate::fmt::ShortString).
+    #[cfg(feature = "non_basic")]
+    pub const TINY: usize = 16;
 
     // the TailShortString that's stored in PanicVal
     pub(crate) const PREFMT: usize = 21;

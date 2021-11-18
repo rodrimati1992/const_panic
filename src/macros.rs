@@ -181,6 +181,26 @@ macro_rules! coerce_fmt {
 ///     // `{#}:` is The same as `alt_display:`
 ///     {#}: ["bbb", "ccc"],
 ///
+///     "\n\nbinary formatted:\n",
+///     bin: [3u8, 5, 8, 13],
+///     // `{b}:` is The same as `bin:`
+///     {b}: [3u8, 5, 8, 13],
+///
+///     "\n\nalternate-binary formatted:\n",
+///     alt_bin: [21u8, 34, 55, 89],
+///     // `{#b}:` is The same as `alt_bin:`
+///     {#b}: [21u8, 34, 55, 89],
+///
+///     "\n\nhexadecimal formatted:\n",
+///     hex: [3u8, 5, 8, 13],
+///     // `{X}:` is The same as `hex:`
+///     {X}: [3u8, 5, 8, 13],
+///
+///     "\n\nalternate-hexadecimal formatted:\n",
+///     alt_hex: [21u8, 34, 55, 89],
+///     // `{#X}:` is The same as `alt_hex:`
+///     {#X}: [21u8, 34, 55, 89],
+///
 ///     "\n\n",
 /// };
 ///
@@ -188,16 +208,16 @@ macro_rules! coerce_fmt {
 /// The above code produces this compile-time error:
 /// ```text
 /// error[E0080]: evaluation of constant value failed
-///   --> src/macros.rs:94:15
+///   --> src/macros.rs:186:15
 ///    |
 /// 6  |   const _: () = concat_panic!{
 ///    |  _______________^
 /// 7  | |     // the optional `$fmtarg` parameter.
-/// 8  | |     // If this argument wasn't passed, it'd be `FmtArg::DEBUG`
+/// 8  | |     // If this argument isn't passed, it defaults to `FmtArg::DEBUG`
 /// 9  | |     FmtArg::ALT_DEBUG;
 /// ...  |
-/// 40 | |     "\n\n",
-/// 41 | | };
+/// 60 | |     "\n\n",
+/// 61 | | };
 ///    | |_^ the evaluated program panicked at '
 ///
 /// showing off literals:
@@ -228,7 +248,43 @@ macro_rules! coerce_fmt {
 ///     ccc,
 /// ]
 ///
+/// binary formatted:
+/// [11, 101, 1000, 1101][11, 101, 1000, 1101]
+///
+/// alternate-binary formatted:
+/// [
+///     0b10101,
+///     0b100010,
+///     0b110111,
+///     0b1011001,
+/// ][
+///     0b10101,
+///     0b100010,
+///     0b110111,
+///     0b1011001,
+/// ]
+///
+/// hexadecimal formatted:
+/// [3, 5, 8, D][3, 5, 8, D]
+///
+/// alternate-hexadecimal formatted:
+/// [
+///     0x15,
+///     0x22,
+///     0x37,
+///     0x59,
+/// ][
+///     0x15,
+///     0x22,
+///     0x37,
+///     0x59,
+/// ]
+///
 /// ', src/macros.rs:6:15
+///    |
+///    = note: this error originates in the macro `concat_panic` (in Nightly builds, run with -Z macro-backtrace for more info)
+///
+/// error: aborting due to previous error
 ///
 /// ```
 ///

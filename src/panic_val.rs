@@ -1,11 +1,13 @@
 use crate::{
-    array_string::TinyString,
     fmt::{FmtArg, FmtKind, NumberFmt},
     utils::{string_cap, Packed, PreFmtString, RangedBytes, Sign, TailShortString, WasTruncated},
 };
 
 #[cfg(feature = "non_basic")]
-use crate::fmt::{IsLast, ShortString};
+use crate::{
+    array_string::TinyString,
+    fmt::{IsLast, ShortString},
+};
 
 /// An opaque enum of the values that this crate knows how to format,
 /// along with some formatting metadata.
@@ -72,20 +74,22 @@ impl<'a> PanicVal<'a> {
     pub const fn leftpad(&self) -> u8 {
         use self::PanicVariant as PV;
 
-        if let PV::Str(strfmt, ..) | PV::ShortString(strfmt, ..) = self.var {
-            strfmt.leftpad
-        } else {
-            0
+        match self.var {
+            PV::Str(strfmt, ..) => strfmt.leftpad,
+            #[cfg(feature = "non_basic")]
+            PV::ShortString(strfmt, ..) => strfmt.leftpad,
+            _ => 0,
         }
     }
     /// How many spaces are printed after this
     pub const fn rightpad(&self) -> u8 {
         use self::PanicVariant as PV;
 
-        if let PV::Str(strfmt, ..) | PV::ShortString(strfmt, ..) = self.var {
-            strfmt.rightpad
-        } else {
-            0
+        match self.var {
+            PV::Str(strfmt, ..) => strfmt.rightpad,
+            #[cfg(feature = "non_basic")]
+            PV::ShortString(strfmt, ..) => strfmt.rightpad,
+            _ => 0,
         }
     }
 }
@@ -99,6 +103,7 @@ macro_rules! mutate_strfmt {
                     var: PanicVariant::Str($strfmt, str),
                 }
             }
+            #[cfg(feature = "non_basic")]
             PanicVariant::ShortString(mut $strfmt, str) => {
                 $mutator;
                 PanicVal {
@@ -112,11 +117,15 @@ macro_rules! mutate_strfmt {
 
 impl<'a> PanicVal<'a> {
     /// Sets the amount of spaces printed before this to `fmtarg.indentation`.
+    ///
+    /// Note that only strings can be padded.
     pub const fn with_leftpad(self, fmtarg: FmtArg) -> Self {
         mutate_strfmt! {self, |strfmt| strfmt.leftpad = fmtarg.indentation}
     }
 
     /// Sets the amount of spaces printed after this to `fmtarg.indentation`.
+    ///
+    /// Note that only strings can be padded.
     pub const fn with_rightpad(self, fmtarg: FmtArg) -> Self {
         mutate_strfmt! {self, |strfmt| strfmt.rightpad = fmtarg.indentation}
     }

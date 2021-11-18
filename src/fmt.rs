@@ -361,7 +361,10 @@ pub enum FmtKind {
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum NumberFmt {
+    /// Formatted as decimal.
     Decimal = 0,
+    /// Formatted as binary, eg: `101`, `0b110`.
     Binary = 1,
+    /// Formatted as hexadecimal, eg: `FAD`, `0xDE`.
     Hexadecimal = 2,
 }
