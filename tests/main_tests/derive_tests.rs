@@ -32,6 +32,16 @@ fn struct_formatting() {
     );
 
     assert_eq!(
+        fmt_flatten!(FmtArg::HEX; Foo => foo),
+        *format!("{:X?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_HEX; Foo => foo),
+        *format!("{:#X?}", foo)
+    );
+
+    assert_eq!(
         fmt_flatten!(FmtArg::DISPLAY; Foo => foo),
         "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true), w: Baz { h: [hi, hel\nlo] } }"
     );

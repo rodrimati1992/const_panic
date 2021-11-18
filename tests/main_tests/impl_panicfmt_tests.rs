@@ -23,6 +23,13 @@ fn struct_formatting() {
         *format!("{:#?}", foo)
     );
 
+    assert_eq!(trunc_fmt!(999;FmtArg::HEX; foo), *format!("{:X?}", foo));
+
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::ALT_HEX; foo),
+        *format!("{:#X?}", foo)
+    );
+
     let _: [const_panic::PanicVal<'_>; 1] = foo.w.to_panicvals(FmtArg::DEBUG);
 
     let _: [const_panic::PanicVal<'_>; <Qux<u8> as const_panic::PanicFmt>::PV_COUNT] =

@@ -32,6 +32,12 @@ fn test_option_fmt() {
     test_case! {Some(3i128), FmtArg::DEBUG, "Some(3)"}
     test_case! {Some(3isize), FmtArg::DEBUG, "Some(3)"}
 
+    test_case! {Some(-1i8), FmtArg::DEBUG, "Some(-1)"}
+    test_case! {Some(-2i8), FmtArg::HEX, "Some(FE)"}
+    test_case! {Some(-3i8), FmtArg::ALT_HEX, "Some(\n    0xFD,\n)"}
+    test_case! {Some(-4i8), FmtArg::BIN, "Some(11111100)"}
+    test_case! {Some(-5i8), FmtArg::ALT_BIN, "Some(\n    0b11111011,\n)"}
+
     test_case! {NonNull::new(&mut 100), FmtArg::DEBUG, "Some(<pointer>)"}
 
     test_case! {NonZeroU8::new(5), FmtArg::DEBUG, "Some(5)"}

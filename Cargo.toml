@@ -24,6 +24,11 @@ version = "=0.2.0"
 path = "./const_panic_proc_macros/"
 optional = true
 
+[dev-dependencies.rand]
+version = "0.8.4"
+default_features = false
+features = ["small_rng"]
+
 [features]
 default = ["non_basic"]
 non_basic = []
