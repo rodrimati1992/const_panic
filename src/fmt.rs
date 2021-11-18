@@ -19,7 +19,10 @@
 mod non_basic_fmt;
 
 #[cfg(feature = "non_basic")]
-pub use self::non_basic_fmt::*;
+mod fmt_compressed;
+
+#[cfg(feature = "non_basic")]
+pub use self::{fmt_compressed::PackedFmtArg, non_basic_fmt::*};
 
 use crate::wrapper::StdWrapper;
 
@@ -244,7 +247,6 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 ///
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
-#[non_exhaustive]
 pub struct FmtArg {
     /// How much indentation is needed for a field/array element.
     ///
@@ -256,6 +258,8 @@ pub struct FmtArg {
     pub is_alternate: bool,
     /// Whether this is intended to be `Display` or `Debug` formatted.
     pub fmt_kind: FmtKind,
+    ///
+    pub number_fmt: NumberFmt,
 }
 
 impl FmtArg {
@@ -264,20 +268,31 @@ impl FmtArg {
         indentation: 0,
         fmt_kind: FmtKind::Display,
         is_alternate: false,
-    };
-
-    /// A `FmtArg` with `Debug` formatting and no indentation.
-    pub const DEBUG: Self = Self {
-        indentation: 0,
-        is_alternate: false,
-        fmt_kind: FmtKind::Debug,
+        number_fmt: NumberFmt::Decimal,
     };
 
     /// A `FmtArg` with alternate `Display` formatting, starting with no indentation.
     pub const ALT_DISPLAY: Self = Self::DISPLAY.set_alternate(true);
 
+    /// A `FmtArg` with `Debug` formatting and no indentation.
+    pub const DEBUG: Self = Self::DISPLAY.set_debug();
+
     /// A `FmtArg` with alternate `Debug` formatting, starting with no indentation.
     pub const ALT_DEBUG: Self = Self::DEBUG.set_alternate(true);
+
+    /// A `FmtArg` with `Debug` and `Binary` formatting and no indentation.
+    pub const BIN: Self = Self::DISPLAY.set_bin();
+
+    /// A `FmtArg` with alternate `Debug` and `Binary` formatting,
+    /// starting with no indentation.
+    pub const ALT_BIN: Self = Self::BIN.set_alternate(true);
+
+    /// A `FmtArg` with `Debug` and `Hexadecimal` formatting and no indentation.
+    pub const HEX: Self = Self::DISPLAY.set_hex();
+
+    /// A `FmtArg` with alternate `Debug` and `Hexadecimal` formatting,
+    /// starting with no indentation.
+    pub const ALT_HEX: Self = Self::HEX.set_alternate(true);
 
     /// Sets whether alternate formatting is enabled
     pub const fn set_alternate(mut self, is_alternate: bool) -> Self {
@@ -294,6 +309,20 @@ impl FmtArg {
     /// Changes the formatting to `Debug`.
     pub const fn set_debug(mut self) -> Self {
         self.fmt_kind = FmtKind::Debug;
+        self
+    }
+
+    /// Changes the formatting to `Debug`, and number formatting to `Hexadecimal`.
+    pub const fn set_hex(mut self) -> Self {
+        self.fmt_kind = FmtKind::Debug;
+        self.number_fmt = NumberFmt::Hexadecimal;
+        self
+    }
+
+    /// Changes the formatting to `Debug`, and number formatting to `Binary`.
+    pub const fn set_bin(mut self) -> Self {
+        self.fmt_kind = FmtKind::Debug;
+        self.number_fmt = NumberFmt::Binary;
         self
     }
 }
@@ -317,10 +346,22 @@ impl FmtArg {
 ////////////////////////////////////////////////////////////////////////////////
 
 /// What kind of formatting to do, either `Display` or `Debug`.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FmtKind {
     /// `Debug` formatting
-    Debug,
+    Debug = 0,
     /// `Display` formatting
-    Display,
+    Display = 1,
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// What integers are formatted as.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum NumberFmt {
+    Decimal = 0,
+    Binary = 1,
+    Hexadecimal = 2,
 }

@@ -162,7 +162,10 @@ pub const INDENTATION_STEP: u8 = 4;
 ///
 /// ```
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
-pub type ShortString = ArrayString<16>;
+pub type ShortString = ArrayString<SHORT_STRING_CAP>;
+
+/// The capacity of a [`ShortString`].
+pub const SHORT_STRING_CAP: usize = crate::utils::string_cap::TINY;
 
 ////////////////////////////////////////////////////////////////////////////////
 
