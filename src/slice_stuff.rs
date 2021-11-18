@@ -1,6 +1,7 @@
 use crate::{
-    fmt::{FmtArg, PanicFmt},
+    fmt::{FmtArg, PackedFmtArg, PanicFmt},
     panic_val::{PanicVal, PanicVariant},
+    utils::Packed,
     StdWrapper,
 };
 
@@ -8,17 +9,17 @@ macro_rules! impl_panicfmt_array {
     ($(($variant:ident, $panicval_ctor:ident, $ty:ty)),* $(,)*) => {
 
         #[derive(Copy, Clone)]
-        #[non_exhaustive]
+        #[repr(packed)]
         pub(crate) struct Slice<'s> {
-            pub(crate) fmtarg: FmtArg,
+            pub(crate) fmtarg: PackedFmtArg,
             pub(crate) vari: SliceV<'s>,
         }
 
+        #[repr(u8)]
         #[derive(Copy, Clone)]
-        #[non_exhaustive]
         pub(crate) enum SliceV<'s> {
             $(
-                $variant(&'s [$ty]),
+                $variant(Packed<&'s [$ty]>),
             )*
         }
 
@@ -28,22 +29,24 @@ macro_rules! impl_panicfmt_array {
             pub(crate) const fn arr_len(self) -> usize {
                 match self.vari {
                     $(
-                        SliceV::$variant(arr) => arr.len(),
-                    )*
-                }
-            }
-            pub(crate) const fn get(self, index: usize) -> PanicVal<'s> {
-                match self.vari {
-                    $(
-                        SliceV::$variant(arr) => {
-                            let elem: &'s <$ty as PanicFmt>::This = &arr[index];
-                            StdWrapper(elem).to_panicval(self.fmtarg)
-                        },
+                        SliceV::$variant(Packed(arr)) => arr.len(),
                     )*
                 }
             }
         }
 
+        impl<'s> SliceV<'s> {
+            const fn get(self, index: usize, fmtarg: FmtArg) -> PanicVal<'s> {
+                match self {
+                    $(
+                        SliceV::$variant(Packed(arr)) => {
+                            let elem: &'s <$ty as PanicFmt>::This = &arr[index];
+                            StdWrapper(elem).to_panicval(fmtarg)
+                        },
+                    )*
+                }
+            }
+        }
 
         #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
         impl<'s> PanicVal<'s> {
@@ -56,10 +59,9 @@ macro_rules! impl_panicfmt_array {
                     }
                     PanicVal::__new(
                         PanicVariant::Slice(Slice{
-                            fmtarg,
-                            vari: SliceV::$variant(this),
-                        }),
-                        fmtarg
+                            fmtarg: fmtarg.pack(),
+                            vari: SliceV::$variant(Packed(this)),
+                        })
                     )
                 }
             )*
@@ -123,60 +125,62 @@ impl_panicfmt_array! {
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct SliceIter<'b, 's> {
-    slice: &'b Slice<'s>,
+pub(crate) struct SliceIter<'s> {
+    slice: SliceV<'s>,
+    fmtarg: FmtArg,
     state: IterState,
-    arr_len: usize,
+    arr_len: u32,
 }
 
-#[derive(Copy, Clone)]
-enum IterState {
-    Start,
-    Index(usize),
-    End,
+#[derive(Copy, Clone, PartialEq, Eq)]
+struct IterState(u32);
+
+#[allow(non_upper_case_globals)]
+impl IterState {
+    const Start: Self = Self(u32::MAX - 1);
+    const End: Self = Self(u32::MAX);
 }
 
 impl<'s> Slice<'s> {
-    pub(crate) const fn iter<'b>(&'b self) -> SliceIter<'b, 's> {
+    pub(crate) const fn iter<'b>(&'b self) -> SliceIter<'s> {
         SliceIter {
-            slice: self,
+            slice: self.vari,
+            fmtarg: self.fmtarg.unpack(),
             state: IterState::Start,
-            arr_len: self.arr_len(),
+            arr_len: self.arr_len() as u32,
         }
     }
 }
 
-impl<'b, 's> SliceIter<'b, 's> {
+impl<'s> SliceIter<'s> {
     pub(crate) const fn next(mut self) -> ([PanicVal<'s>; 2], Option<Self>) {
-        let slice = self.slice;
+        let fmtarg = self.fmtarg;
+
         let ret = match self.state {
             IterState::Start => {
                 self.state = if self.arr_len == 0 {
                     IterState::End
                 } else {
-                    IterState::Index(0)
+                    IterState(0)
                 };
 
-                [
-                    crate::fmt::OpenBracket.to_panicval(slice.fmtarg),
-                    PanicVal::EMPTY,
-                ]
+                [crate::fmt::OpenBracket.to_panicval(fmtarg), PanicVal::EMPTY]
             }
-            IterState::Index(x) => {
+            IterState::End => {
+                let close_brace = crate::fmt::CloseBracket.to_panicval(fmtarg.unindent());
+                return ([close_brace, PanicVal::EMPTY], None);
+            }
+            IterState(x) => {
                 let comma = if x + 1 == self.arr_len {
                     self.state = IterState::End;
                     crate::fmt::COMMA_TERM
                 } else {
-                    self.state = IterState::Index(x + 1);
+                    self.state = IterState(x + 1);
                     crate::fmt::COMMA_SEP
                 }
-                .to_panicval(slice.fmtarg);
+                .to_panicval(fmtarg);
 
-                [slice.get(x), comma]
-            }
-            IterState::End => {
-                let close_brace = crate::fmt::CloseBracket.to_panicval(slice.fmtarg.unindent());
-                return ([close_brace, PanicVal::EMPTY], None);
+                [self.slice.get(x as usize, fmtarg), comma]
             }
         };
 

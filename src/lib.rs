@@ -209,6 +209,8 @@ mod concat_panic_;
 
 mod debug_str_fmt;
 
+mod int_formatting;
+
 pub mod fmt;
 
 #[cfg(all(doctest, feature = "non_basic"))]

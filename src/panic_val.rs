@@ -1,6 +1,7 @@
 use crate::{
-    fmt::{FmtArg, FmtKind},
-    utils::{Sign, TailShortString, WasTruncated},
+    array_string::TinyString,
+    fmt::{FmtArg, FmtKind, NumberFmt},
+    utils::{string_cap, Packed, PreFmtString, RangedBytes, Sign, TailShortString, WasTruncated},
 };
 
 #[cfg(feature = "non_basic")]
@@ -17,24 +18,50 @@ use crate::fmt::{IsLast, ShortString};
 /// - [`ShortString`](crate::fmt::ShortString)
 /// (with the "non_basic" feature, enabled by default)
 ///
-#[non_exhaustive]
 #[derive(Copy, Clone)]
 pub struct PanicVal<'a> {
     pub(crate) var: PanicVariant<'a>,
-    leftpad: u8,
-    rightpad: u8,
-    fmt_kind: FmtKind,
 }
 
-#[non_exhaustive]
 #[derive(Copy, Clone)]
 pub(crate) enum PanicVariant<'a> {
-    Str(&'a str),
+    Str(StrFmt, Packed<&'a str>),
     #[cfg(feature = "non_basic")]
-    ShortString(ShortString),
+    ShortString(StrFmt, TinyString<{ string_cap::TINY }>),
+    PreFmt(PreFmtString),
     Int(IntVal),
     #[cfg(feature = "non_basic")]
     Slice(crate::slice_stuff::Slice<'a>),
+}
+
+pub(crate) enum PanicClass<'a> {
+    PreFmt(RangedBytes<&'a [u8]>),
+    Int(IntVal),
+    #[cfg(feature = "non_basic")]
+    Slice(crate::slice_stuff::Slice<'a>),
+}
+
+#[derive(Copy, Clone)]
+pub(crate) struct StrFmt {
+    pub(crate) leftpad: u8,
+    pub(crate) rightpad: u8,
+    pub(crate) fmt_kind: FmtKind,
+}
+
+impl StrFmt {
+    const DISPLAY: Self = Self {
+        leftpad: 0,
+        rightpad: 0,
+        fmt_kind: FmtKind::Display,
+    };
+
+    pub const fn new(fmtarg: FmtArg) -> Self {
+        Self {
+            leftpad: 0,
+            rightpad: 0,
+            fmt_kind: fmtarg.fmt_kind,
+        }
+    }
 }
 
 impl<'a> PanicVal<'a> {
@@ -43,34 +70,55 @@ impl<'a> PanicVal<'a> {
 
     /// How many spaces are printed before this
     pub const fn leftpad(&self) -> u8 {
-        self.leftpad
+        use self::PanicVariant as PV;
+
+        if let PV::Str(strfmt, ..) | PV::ShortString(strfmt, ..) = self.var {
+            strfmt.leftpad
+        } else {
+            0
+        }
     }
     /// How many spaces are printed after this
     pub const fn rightpad(&self) -> u8 {
-        self.rightpad
+        use self::PanicVariant as PV;
+
+        if let PV::Str(strfmt, ..) | PV::ShortString(strfmt, ..) = self.var {
+            strfmt.rightpad
+        } else {
+            0
+        }
     }
+}
+
+macro_rules! mutate_strfmt {
+    ($self:ident, |$strfmt:ident| $mutator:expr) => {
+        match $self.var {
+            PanicVariant::Str(mut $strfmt, str) => {
+                $mutator;
+                PanicVal {
+                    var: PanicVariant::Str($strfmt, str),
+                }
+            }
+            PanicVariant::ShortString(mut $strfmt, str) => {
+                $mutator;
+                PanicVal {
+                    var: PanicVariant::ShortString($strfmt, str),
+                }
+            }
+            var => PanicVal { var },
+        }
+    };
+}
+
+impl<'a> PanicVal<'a> {
     /// Sets the amount of spaces printed before this to `fmtarg.indentation`.
-    pub const fn with_leftpad(mut self, fmtarg: FmtArg) -> Self {
-        self.leftpad = fmtarg.indentation;
-        self
+    pub const fn with_leftpad(self, fmtarg: FmtArg) -> Self {
+        mutate_strfmt! {self, |strfmt| strfmt.leftpad = fmtarg.indentation}
     }
 
     /// Sets the amount of spaces printed after this to `fmtarg.indentation`.
-    pub const fn with_rightpad(mut self, fmtarg: FmtArg) -> Self {
-        self.rightpad = fmtarg.indentation;
-        self
-    }
-
-    /// Sets the amount of spaces printed before this
-    pub const fn set_leftpad(mut self, fmtarg: FmtArg) -> Self {
-        self.leftpad = fmtarg.indentation;
-        self
-    }
-
-    /// Sets the amount of spaces printed after this
-    pub const fn set_rightpad(mut self, fmtarg: FmtArg) -> Self {
-        self.rightpad = fmtarg.indentation;
-        self
+    pub const fn with_rightpad(self, fmtarg: FmtArg) -> Self {
+        mutate_strfmt! {self, |strfmt| strfmt.rightpad = fmtarg.indentation}
     }
 
     /// Constructs a PanicVal which outputs the contents of `string` verbatim.
@@ -78,10 +126,7 @@ impl<'a> PanicVal<'a> {
     /// Equivalent to `PanicVal::from_str(string, FmtArg::DISPLAY)`
     pub const fn write_str(string: &'a str) -> Self {
         PanicVal {
-            var: PanicVariant::Str(string),
-            leftpad: 0,
-            rightpad: 0,
-            fmt_kind: FmtKind::Display,
+            var: PanicVariant::Str(StrFmt::DISPLAY, Packed(string)),
         }
     }
 
@@ -89,8 +134,7 @@ impl<'a> PanicVal<'a> {
     #[cfg(feature = "non_basic")]
     pub const fn write_short_str(string: ShortString) -> Self {
         Self {
-            var: PanicVariant::ShortString(string),
-            ..Self::EMPTY
+            var: PanicVariant::ShortString(StrFmt::DISPLAY, string.to_compact()),
         }
     }
 
@@ -118,123 +162,192 @@ impl<'a> PanicVal<'a> {
             (IsLast::Yes, true) => (ShortString::concat(&[separator, "\n"]), 0),
         };
 
-        Self {
-            var: PanicVariant::ShortString(concat),
+        let strfmt = StrFmt {
             leftpad: 0,
             rightpad,
             fmt_kind: FmtKind::Display,
-        }
-    }
-
-    pub(crate) const fn __new(var: PanicVariant<'a>, fmtarg: FmtArg) -> Self {
+        };
         Self {
-            var,
-            leftpad: 0,
-            rightpad: 0,
-            fmt_kind: fmtarg.fmt_kind,
+            var: PanicVariant::ShortString(strfmt, concat.to_compact()),
         }
     }
 
-    // Gets the bytes in the string and integer variants,
-    // truncating them to `truncate_to`.
-    //
-    pub(crate) const fn __string(
+    #[inline(always)]
+    pub(crate) const fn __new(var: PanicVariant<'a>) -> Self {
+        Self { var }
+    }
+
+    pub(crate) const fn to_class(&self) -> (StrFmt, PanicClass<'_>) {
+        match &self.var {
+            &PanicVariant::Str(strfmt, Packed(str)) => {
+                let ranged = RangedBytes {
+                    start: 0,
+                    end: str.len(),
+                    bytes: str.as_bytes(),
+                };
+
+                (strfmt, PanicClass::PreFmt(ranged))
+            }
+            #[cfg(feature = "non_basic")]
+            PanicVariant::ShortString(strfmt, str) => (*strfmt, PanicClass::PreFmt(str.ranged())),
+            PanicVariant::PreFmt(str) => (StrFmt::DISPLAY, PanicClass::PreFmt(str.ranged())),
+            PanicVariant::Int(int) => (StrFmt::DISPLAY, PanicClass::Int(*int)),
+            #[cfg(feature = "non_basic")]
+            PanicVariant::Slice(slice) => (
+                StrFmt::new(slice.fmtarg.unpack()),
+                PanicClass::Slice(*slice),
+            ),
+        }
+    }
+
+    pub(crate) const fn to_class_truncated(
         &self,
         mut truncate_to: usize,
-    ) -> (usize, usize, &[u8], FmtKind, WasTruncated) {
-        let leftpad = self.leftpad as usize;
-        if leftpad > truncate_to {
+    ) -> (StrFmt, PanicClass<'_>, WasTruncated) {
+        let (mut strfmt, class) = self.to_class();
+
+        if strfmt.leftpad as usize > truncate_to {
             return (
-                leftpad - truncate_to,
-                0,
-                &[],
-                FmtKind::Display,
+                StrFmt {
+                    leftpad: strfmt.leftpad - truncate_to as u8,
+                    rightpad: 0,
+                    fmt_kind: FmtKind::Display,
+                },
+                PanicClass::PreFmt(RangedBytes::EMPTY),
                 WasTruncated::Yes(0),
             );
         } else {
-            truncate_to -= leftpad;
+            truncate_to -= strfmt.leftpad as usize;
         };
 
-        let string;
-        let was_trunc;
-        let fmt_kind;
+        let was_trunc: WasTruncated;
+        let orig_len: usize;
 
-        match &self.var {
-            PanicVariant::Str(str) => {
-                string = str.as_bytes();
-                fmt_kind = self.fmt_kind;
-                was_trunc = if let FmtKind::Display = self.fmt_kind {
-                    crate::utils::truncated_str_len(string, truncate_to)
+        match class {
+            PanicClass::PreFmt(str) => {
+                was_trunc = if let PanicVariant::PreFmt(pfmt) = self.var {
+                    if pfmt.len() <= truncate_to {
+                        WasTruncated::No
+                    } else {
+                        WasTruncated::Yes(0)
+                    }
                 } else {
-                    crate::utils::truncated_debug_str_len(string, truncate_to)
+                    if let FmtKind::Display = strfmt.fmt_kind {
+                        crate::utils::truncated_str_len(str, truncate_to)
+                    } else {
+                        crate::utils::truncated_debug_str_len(str, truncate_to)
+                    }
                 };
+                orig_len = str.len();
             }
-            #[cfg(feature = "non_basic")]
-            PanicVariant::ShortString(str) => {
-                string = str.as_bytes();
-                fmt_kind = self.fmt_kind;
-                was_trunc = if let FmtKind::Display = self.fmt_kind {
-                    crate::utils::truncated_str_len(string, truncate_to)
-                } else {
-                    crate::utils::truncated_debug_str_len(string, truncate_to)
-                };
-            }
-            PanicVariant::Int(int) => {
-                string = int.0.get();
-                fmt_kind = FmtKind::Display;
-                was_trunc = if int.0.len() <= truncate_to {
+            PanicClass::Int(int) => {
+                strfmt.fmt_kind = FmtKind::Display;
+                was_trunc = if int.len() <= truncate_to {
                     WasTruncated::No
                 } else {
                     WasTruncated::Yes(0)
                 };
+                orig_len = int.len();
             }
             #[cfg(feature = "non_basic")]
-            PanicVariant::Slice(_) => panic!("this method should only be called on non-slices"),
-        };
-        truncate_to -= was_trunc.get_length(string);
+            PanicClass::Slice(_) => {
+                was_trunc = WasTruncated::No;
+                orig_len = 0;
+            }
+        }
+        truncate_to -= was_trunc.get_length(orig_len);
 
-        let rightpad = crate::utils::min_usize(self.rightpad as usize, truncate_to);
+        strfmt.rightpad = crate::utils::min_usize(strfmt.rightpad as usize, truncate_to) as u8;
 
-        (leftpad, rightpad, string, fmt_kind, was_trunc)
+        (strfmt, class, was_trunc)
     }
 }
 
 #[derive(Copy, Clone)]
-pub struct IntVal(TailShortString<40>);
+pub(crate) struct IntVal {
+    sign: Sign,
+    number_fmt: NumberFmt,
+    is_alternate: bool,
+    // the size of the integer in bits
+    bits: u8,
+    // the length of the integer in bytes, once written.
+    len: u8,
+
+    value: Packed<u128>,
+}
 
 impl IntVal {
-    pub(crate) const fn from_u128(n: u128, f: FmtArg) -> Self {
-        Self::new(Sign::Positive, n, f)
+    pub(crate) const fn from_u128(n: u128, bits: u8, f: FmtArg) -> PanicVal<'static> {
+        Self::new(Sign::Positive, n, bits, f)
     }
-    pub(crate) const fn from_i128(n: i128, f: FmtArg) -> Self {
+    pub(crate) const fn from_i128(n: i128, bits: u8, f: FmtArg) -> PanicVal<'static> {
         let is_neg = if n < 0 {
             Sign::Negative
         } else {
             Sign::Positive
         };
-        Self::new(is_neg, n.unsigned_abs(), f)
+        Self::new(is_neg, n.unsigned_abs(), bits, f)
     }
-    const fn new(sign: Sign, mut n: u128, _f: FmtArg) -> Self {
-        let mut start = 40usize;
-        let mut buffer = [0u8; 40];
 
-        loop {
-            start -= 1;
-            let digit = (n % 10) as u8;
-            buffer[start] = b'0' + digit;
-            n /= 10;
-            if n == 0 {
-                break;
+    const fn new(sign: Sign, n: u128, bits: u8, fmtarg: FmtArg) -> PanicVal<'static> {
+        use crate::int_formatting::compute_len;
+
+        let len = compute_len(sign, n, bits, fmtarg);
+
+        let this = IntVal {
+            sign,
+            number_fmt: fmtarg.number_fmt,
+            is_alternate: fmtarg.is_alternate,
+            bits,
+            len,
+            value: Packed(n),
+        };
+
+        let var = if len as usize <= string_cap::PREFMT {
+            PanicVariant::PreFmt(this.fmt::<{ string_cap::PREFMT }>())
+        } else {
+            PanicVariant::Int(this)
+        };
+        PanicVal { var }
+    }
+
+    pub(crate) const fn fmt<const N: usize>(self) -> TailShortString<N> {
+        use crate::int_formatting::{fmt_binary, fmt_decimal, fmt_hexadecimal};
+
+        let IntVal {
+            sign,
+            number_fmt,
+            is_alternate,
+            len: _,
+            bits,
+            value: Packed(n),
+        } = self;
+
+        match number_fmt {
+            NumberFmt::Decimal => fmt_decimal::<N>(sign, n),
+            NumberFmt::Binary => {
+                let masked = apply_mask(sign, n, bits);
+                fmt_binary::<N>(masked, is_alternate)
+            }
+            NumberFmt::Hexadecimal => {
+                let masked = apply_mask(sign, n, bits);
+                fmt_hexadecimal::<N>(masked, is_alternate)
             }
         }
+    }
 
-        if let Sign::Negative = sign {
-            start -= 1;
-            buffer[start] = b'-';
-        }
+    pub(crate) const fn len(&self) -> usize {
+        self.len as usize
+    }
+}
 
-        // safety: buffer is only ever written ascii, so its automatically valid utf8.
-        unsafe { Self(TailShortString::new(start as u8, buffer)) }
+const fn apply_mask(sign: Sign, n: u128, bits: u8) -> u128 {
+    if let Sign::Negative = sign {
+        let mask: u128 = if bits == 128 { !0 } else { (1 << bits) - 1 };
+
+        (n as i128).wrapping_neg() as u128 & mask
+    } else {
+        n
     }
 }
 

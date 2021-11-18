@@ -1,5 +1,6 @@
 use crate::{
-    panic_val::{IntVal, PanicVal, PanicVariant},
+    panic_val::{IntVal, PanicVal, PanicVariant, StrFmt},
+    utils::Packed,
     FmtArg, PanicFmt, StdWrapper,
 };
 
@@ -102,10 +103,8 @@ macro_rules! impl_panicfmt_int {
         impl PanicVal<'_> {
             /// Constructs this `PanicVal` from an integer.
             pub const fn $panic_arg_ctor(this: $ty, f: FmtArg) -> PanicVal<'static> {
-                PanicVal::__new(
-                    PanicVariant::Int(IntVal::$intarg_contructor(this as _, f)),
-                    f,
-                )
+                const BITS: u8 = core::mem::size_of::<$ty>() as u8 * 8;
+                IntVal::$intarg_contructor(this as _, BITS, f)
             }
         }
 
@@ -140,7 +139,7 @@ impl_panicfmt_panicarg! {
 impl<'a> PanicVal<'a> {
     /// Constructs a `PanicVal` from a `&str`
     pub const fn from_str(this: &'a str, f: FmtArg) -> PanicVal<'a> {
-        PanicVal::__new(PanicVariant::Str(this), f)
+        PanicVal::__new(PanicVariant::Str(StrFmt::new(f), Packed(this)))
     }
 }
 
@@ -153,11 +152,11 @@ impl PanicFmt for str {
 impl<'a> StdWrapper<&'a str> {
     /// Formats this `&str` into a single-`PanicVal` array
     pub const fn to_panicvals(self: Self, f: FmtArg) -> [PanicVal<'a>; 1] {
-        [PanicVal::__new(PanicVariant::Str(self.0), f)]
+        [PanicVal::from_str(self.0, f)]
     }
     /// Formats this `&str` into a `PanicVal`
     pub const fn to_panicval(self: Self, f: FmtArg) -> PanicVal<'a> {
-        PanicVal::__new(PanicVariant::Str(self.0), f)
+        PanicVal::from_str(self.0, f)
     }
 }
 
