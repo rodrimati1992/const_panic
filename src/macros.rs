@@ -339,6 +339,30 @@ macro_rules! __set_fmt_from_kw {
     ({#?}, $fmtarg:ident) => {
         $fmtarg.set_debug().set_alternate(true)
     };
+    (hex, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(false)
+    };
+    ({X}, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(false)
+    };
+    (alt_hex, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(true)
+    };
+    ({#X}, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(true)
+    };
+    (bin, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(false)
+    };
+    ({b}, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(false)
+    };
+    (alt_bin, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(true)
+    };
+    ({#b}, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(true)
+    };
     (_, $fmtarg:ident) => {
         $fmtarg
     };
@@ -349,7 +373,13 @@ macro_rules! __set_fmt_from_kw {
             "\n",
             "expected one of:\n",
             "- display/{}\n",
+            "- alt_display/{#}\n",
             "- debug/{?}\n",
+            "- alt_debug/{#?}\n",
+            "- hex/{X}\n",
+            "- alt_hex/{#X}\n",
+            "- bin/{b}\n",
+            "- alt_bin/{#b}\n",
         ))
     };
 }
