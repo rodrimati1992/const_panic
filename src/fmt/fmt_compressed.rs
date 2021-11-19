@@ -33,7 +33,7 @@ impl FmtArg {
 }
 
 impl PackedFmtArg {
-    /// Converts this `PackedFmtArg` back into a `FmtArg`,
+    /// Converts this `PackedFmtArg` back into a `FmtArg`.
     pub const fn unpack(self) -> FmtArg {
         let indentation = self.indentation;
         let is_alternate = (self.bitfields & 1) != 0;

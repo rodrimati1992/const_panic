@@ -258,7 +258,7 @@ pub struct FmtArg {
     pub is_alternate: bool,
     /// Whether this is intended to be `Display` or `Debug` formatted.
     pub fmt_kind: FmtKind,
-    ///
+    /// What integers are formatted as: decimal, hexadecimal, or binary.
     pub number_fmt: NumberFmt,
 }
 

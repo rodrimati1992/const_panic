@@ -149,13 +149,13 @@ impl<'a> PanicVal<'a> {
 
     /// Constructs a `PanicVal` usable as a separator between fields or elements.
     ///
-    /// This is sensitive to te [`fmtarg.is_alternate`] flag,
+    /// This is sensitive to the [`fmtarg.is_alternate`] flag,
     /// for more details on that you can look at the docs for
     /// [`Separator::to_panicval`](crate::fmt::Separator#method.to_panicval)
     ///
     /// # Panics
     ///
-    /// This may panic if `string.len()` is greater than 12.
+    /// This panics if `string.len()` is greater than 12.
     ///
     /// [`fmtarg.is_alternate`]: crate::FmtArg#structfield.is_alternate
     #[cfg(feature = "non_basic")]

@@ -145,7 +145,8 @@ pub const INDENTATION_STEP: u8 = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A stack allocated string type that's convertible into [`PanicVal`],
+/// A stack allocated string type that's convertible into
+/// [`PanicVal<'static>`](PanicVal),
 /// with [`SHORT_STRING_CAP`] capacity.
 ///
 /// # Example
