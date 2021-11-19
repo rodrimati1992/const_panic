@@ -170,7 +170,7 @@
 //! (custom types can manually implement formatting with more difficulty).
 //!
 //! - `"derive"`(disabled by default):
-//! Enables the [`PanicFmt`](derive@crate::PanicFmt) derive macro.
+//! Enables the [`PanicFmt` derive] macro.
 //!
 //! # Plans
 //!
