@@ -41,14 +41,15 @@
 //!
 //! When called at runtime
 //! ```should_panic
-//! use const_panic::concat_panic;
+//! use const_panic::concat_assert;
 //!
 //! assert_non_zero(10, 0);
 //!
 //! #[track_caller]
 //! const fn assert_non_zero(foo: u32, bar: u32) {
-//!     if foo == 0 || bar == 0 {
-//!         concat_panic!("\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar)
+//!     concat_assert!{
+//!         foo != 0 && bar != 0,
+//!         "\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar
 //!     }
 //! }
 //! ```
@@ -314,3 +315,7 @@ pub mod test_utils;
 pub mod for_tests {
     pub use crate::concat_panic_::{format_panic_message, NotEnoughSpace};
 }
+
+#[cfg(all(doctest))]
+#[doc = include_str!("../README.md")]
+pub struct ReadmeTest;
