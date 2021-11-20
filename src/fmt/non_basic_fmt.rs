@@ -95,7 +95,9 @@ impl Delimiter {
     /// - [fmtarg.indentation](crate::FmtArg#structfield.indentation) amount of spaces
     ///
     /// When the [alternate flag] is disabled,
-    /// these methods only output the delimiter,
+    /// these methods output braces with spaces around them,
+    /// the empty delimiter as one space,
+    /// and the remaining delimiters with no spaces around them.
     ///
     /// [alternate flag]: crate::FmtArg#structfield.is_alternate
     ///
@@ -143,24 +145,45 @@ pub const INDENTATION_STEP: u8 = 4;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A stack allocated string type that's convetible into [`PanicVal`].
+/// A stack allocated string type that's convertible into
+/// [`PanicVal<'static>`](PanicVal),
+/// with [`SHORT_STRING_CAP`] capacity.
 ///
 /// # Example
 ///
 /// ```rust
 /// use const_panic::{
 ///     fmt::ShortString,
-///     ArrayString, PanicVal,
+///     ArrayString, FmtArg, PanicVal,
 /// };
 ///
 /// let pv: PanicVal<'static> =
 ///     PanicVal::write_short_str(ShortString::new("3,13,21,34,55,89"));
 ///
-/// assert_eq!(ArrayString::<20>::from_panicvals(&[pv]).unwrap(), "3,13,21,34,55,89")
+/// assert_eq!(ArrayString::<20>::from_panicvals(&[pv]).unwrap(), "3,13,21,34,55,89");
+///
+///
+/// let pv_debug: PanicVal<'static> =
+///     PanicVal::from_short_str(ShortString::new("foo\n\0bar"), FmtArg::DEBUG);
+///
+/// assert_eq!(
+///     ArrayString::<20>::from_panicvals(&[pv_debug]).unwrap(),
+///     "\"foo\\n\\x00bar\"",
+/// );
 ///
 /// ```
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
-pub type ShortString = ArrayString<16>;
+pub type ShortString = ArrayString<SHORT_STRING_CAP>;
+
+pub use crate::utils::string_cap::TINY as SHORT_STRING_CAP;
+
+impl<'a> PanicVal<'a> {
+    /// Constructs a `PanicVal` from a `ShortString`.
+    pub const fn from_short_str(this: ShortString, f: FmtArg) -> PanicVal<'a> {
+        use crate::panic_val::{PanicVariant, StrFmt};
+        PanicVal::__new(PanicVariant::ShortString(StrFmt::new(f), this.to_compact()))
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -278,6 +301,8 @@ impl ComputePvCount {
 
 /// Whether a struct or variant is Tupled or Braced.
 ///
+/// Unit structs/variants are considered braced.
+///
 /// # Example
 ///
 /// ### Formatting
@@ -335,7 +360,7 @@ pub enum TypeDelim {
 }
 
 impl TypeDelim {
-    /// Gets the delimiters that surround a type's fields.
+    /// Gets the delimiters that surround the fields of a struct or variant.
     pub const fn get_open_and_close(self) -> (Delimiter, Delimiter) {
         match self {
             Self::Tupled => (Delimiter::OpenParen, Delimiter::CloseParen),
@@ -346,7 +371,9 @@ impl TypeDelim {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// A comma separator for use between fields or elements.
+/// An [alternate-flag-aware] comma separator for use between fields or elements.
+///
+/// When the alternate flag is enabled, this puts each field/element on its own line.
 ///
 /// # Example
 ///
@@ -399,12 +426,17 @@ impl TypeDelim {
 ///
 /// ```
 ///
+/// [alternate-flag-aware]: crate::FmtArg#structfield.is_alternate
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub const COMMA_SEP: Separator<'_> = Separator::new(",", IsLast::No);
 
-/// A comma for use after the last field or element.
+/// An [alternate-flag-aware] comma for use after the last field or element.
 ///
 /// For an example, you can look at [the one for `COMMA_SEP`](COMMA_SEP#example)
+///
+/// When the alternate flag is enabled, this puts each field/element on its own line.
+///
+/// [alternate-flag-aware]: crate::FmtArg#structfield.is_alternate
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub const COMMA_TERM: Separator<'_> = Separator::new(",", IsLast::Yes);
 

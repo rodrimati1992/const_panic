@@ -15,6 +15,7 @@ pub const fn panicvals_id<'a, 'b, const LEN: usize>(
 /// # Panics
 ///
 /// Panics if the amount of `PanicVal`s in the slices is greater than `LEN`.
+///
 pub const fn flatten_panicvals<'a, const LEN: usize>(
     mut input: &[&[PanicVal<'a>]],
 ) -> [PanicVal<'a>; LEN] {
@@ -33,7 +34,17 @@ pub const fn flatten_panicvals<'a, const LEN: usize>(
     out
 }
 
-/// Gets the maximum value betweem `l` and `r`
+/// Gets the maximum value between `l` and `r`
+///
+/// # Example
+///
+/// ```rust
+/// use const_panic::utils::max_usize;
+///
+/// assert_eq!(max_usize(5, 3), 5);
+/// assert_eq!(max_usize(5, 8), 8);
+///
+/// ```
 pub const fn max_usize(l: usize, r: usize) -> usize {
     if l > r {
         l
@@ -43,6 +54,19 @@ pub const fn max_usize(l: usize, r: usize) -> usize {
 }
 
 /// Gets the maximum value in `slice`, returns `0` if the slice is empty.
+///
+/// # Example
+///
+/// ```rust
+/// use const_panic::utils::slice_max_usize;
+///
+/// assert_eq!(slice_max_usize(&[]), 0);
+/// assert_eq!(slice_max_usize(&[3]), 3);
+/// assert_eq!(slice_max_usize(&[5, 3]), 5);
+/// assert_eq!(slice_max_usize(&[5, 8, 3]), 8);
+/// assert_eq!(slice_max_usize(&[5, 13, 8, 3]), 13);
+///
+/// ```
 pub const fn slice_max_usize(mut slice: &[usize]) -> usize {
     let mut max = 0;
 

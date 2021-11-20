@@ -1,4 +1,4 @@
-/// Returns the value in the `Some` variant.
+/// Gets the value in the `Some` variant.
 ///
 /// # Panics
 ///
@@ -59,7 +59,7 @@ macro_rules! unwrap_some {
     };
 }
 
-/// Returns the value in the `Ok` variant.
+/// Gets the value in the `Ok` variant.
 ///
 /// # Panics
 ///
@@ -101,9 +101,8 @@ macro_rules! unwrap_some {
 ///     number: u8,
 /// }
 ///
+/// // You can also use `#[derive(PanicFmt))]` with the "derive" feature
 /// const_panic::impl_panicfmt!{
-///     impl OddError;
-///
 ///     struct OddError {
 ///         at: usize,
 ///         number: u8,
@@ -140,7 +139,7 @@ macro_rules! unwrap_ok {
     };
 }
 
-/// Returns the value in the `Err` variant.
+/// Gets the value in the `Err` variant.
 ///
 /// # Panics
 ///

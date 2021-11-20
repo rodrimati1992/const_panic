@@ -13,7 +13,7 @@
 //! ### Basic
 //!
 //! ```compile_fail
-//! use const_panic::concat_panic;
+//! use const_panic::concat_assert;
 //!
 //! const FOO: u32 = 10;
 //! const BAR: u32 = 0;
@@ -21,15 +21,16 @@
 //!
 //! #[track_caller]
 //! const fn assert_non_zero(foo: u32, bar: u32) {
-//!     if foo == 0 || bar == 0 {
-//!         concat_panic!("\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar)
+//!     concat_assert!{
+//!         foo != 0 && bar != 0,
+//!         "\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar
 //!     }
 //! }
 //! ```
 //! The above code fails to compile with this error:
 //! ```text
 //! error[E0080]: evaluation of constant value failed
-//!  --> src/lib.rs:17:15
+//!  --> src/lib.rs:20:15
 //!   |
 //! 8 | const _: () = assert_non_zero(FOO, BAR);
 //!   |               ^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at '
@@ -65,16 +66,18 @@
 //!
 //! Panic formatting for custom types can be done in these ways
 //! (in increasing order of verbosity):
+//! - Using the [`PanicFmt` derive] macro
+//! (requires the opt-in `"derive"` feature)
 //! - Using the [`impl_panicfmt`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Using the [`flatten_panicvals`] macro
 //! (requires the default-enabled `"non_basic"` feature)
 //! - Manually implementing the [`PanicFmt`] trait as described in its docs.
 //!
-//! This example uses the [`impl_panicfmt`] approach.
+//! This example uses the [`PanicFmt` derive] approach.
 //!
 //! ```compile_fail
-//! use const_panic::concat_panic;
+//! use const_panic::{PanicFmt, concat_panic};
 //!
 //! const LAST: u8 = {
 //!     Foo{
@@ -106,46 +109,23 @@
 //!     }
 //! }
 //!
+//! #[derive(PanicFmt)]
 //! struct Foo<'a> {
 //!     x: &'a [u8],
 //!     y: Bar,
 //!     z: Qux,
 //! }
 //!
-//! // You need to replace non-static lifetimes with `'_` here.
-//! const_panic::impl_panicfmt! {
-//!     impl Foo<'_>;
-//!
-//!     struct Foo {
-//!         x: &[u8],
-//!         y: Bar,
-//!         z: Qux,
-//!     }
-//! }
-//!
+//! #[derive(PanicFmt)]
 //! struct Bar(bool, bool);
 //!
-//! const_panic::impl_panicfmt! {
-//!     impl Bar;
-//!
-//!     struct Bar(bool, bool);
-//! }
-//!
+//! #[derive(PanicFmt)]
 //! enum Qux {
 //!     Up,
 //!     Down { x: u32, y: u32 },
 //!     Left(u64),
 //! }
 //!
-//! const_panic::impl_panicfmt!{
-//!     impl Qux;
-//!
-//!     enum Qux {
-//!         Up,
-//!         Down { x: u32, y: u32 },
-//!         Left(u64),
-//!     }
-//! }
 //! ```
 //! The above code fails to compile with this error:
 //! ```text
@@ -189,9 +169,12 @@
 //! Without this feature, you can effectively only format primitive types
 //! (custom types can manually implement formatting with more difficulty).
 //!
+//! - `"derive"`(disabled by default):
+//! Enables the [`PanicFmt` derive] macro.
+//!
 //! # Plans
 //!
-//! Adding a derive macro, under an opt-in "derive" feature.
+//! None for now
 //!
 //! # No-std support
 //!
@@ -202,15 +185,19 @@
 //! This requires Rust 1.57.0, because it uses the `panic` macro in a const context.
 //!
 //!
-//! [`PanicFmt`]: crate::PanicFmt
+//! [`PanicFmt` derive]: derive@crate::PanicFmt
+//! [`PanicFmt`]: trait@crate::PanicFmt
 //! [`impl_panicfmt`]: crate::impl_panicfmt
 //! [`flatten_panicvals`]: crate::flatten_panicvals
+//! [`MAX_PANIC_MSG_LEN`]: crate::MAX_PANIC_MSG_LEN
 #![no_std]
 #![cfg_attr(feature = "docsrs", feature(doc_cfg))]
 #![warn(missing_docs)]
 #![deny(clippy::missing_safety_doc)]
 #![deny(clippy::shadow_unrelated)]
 #![deny(clippy::wildcard_imports)]
+
+extern crate self as const_panic;
 
 #[macro_use]
 mod doc_macros;
@@ -222,9 +209,17 @@ mod concat_panic_;
 
 mod debug_str_fmt;
 
+mod int_formatting;
+
 pub mod fmt;
 
+#[cfg(all(doctest, feature = "non_basic"))]
+pub mod doctests;
+
 mod panic_val;
+
+#[cfg(feature = "non_basic")]
+mod const_default;
 
 #[cfg(not(feature = "non_basic"))]
 mod utils;
@@ -281,7 +276,7 @@ pub use crate::fmt::{ComputePvCount, TypeDelim};
 #[doc(hidden)]
 pub mod __ {
     pub use core::{
-        compile_error, concat,
+        assert, compile_error, concat,
         option::Option::{None, Some},
         primitive::usize,
         result::Result::{Err, Ok},
@@ -299,10 +294,16 @@ pub mod __ {
 mod reexported_non_basic {
     pub use core::option::Option::{self, None, Some};
 
-    pub use crate::utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id};
+    pub use crate::{
+        const_default::ConstDefault,
+        utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id},
+    };
 
     pub const EPV: crate::PanicVal<'_> = crate::PanicVal::EMPTY;
 }
+
+#[cfg(feature = "derive")]
+include! {"./proc_macro_reexports/panicfmt_derive.rs"}
 
 #[doc(hidden)]
 #[cfg(feature = "test")]

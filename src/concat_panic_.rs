@@ -1,4 +1,8 @@
-use crate::{fmt::FmtKind, panic_val::PanicVal, utils::WasTruncated};
+use crate::{
+    fmt::FmtKind,
+    panic_val::{PanicClass, PanicVal, StrFmt},
+    utils::{string_cap, WasTruncated},
+};
 
 /// Panics by concatenating the argument slice.
 ///
@@ -67,19 +71,37 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
 // const fn is called at runtime, and the stack is finy.
 pub const MAX_PANIC_MSG_LEN: usize = 32768;
 
-macro_rules! write_panicval_to_buffer {
+// writes a single PanicVal to an array
+macro_rules! write_panicval {
     (
         $outer_label:lifetime,
-        $buffer:ident,
-        $len:ident,
-        ($capacity:expr, $max_capacity:expr),
-        $panicval:expr
-        $(,)*
+        $mout:ident, $lout:ident, $tct:expr,
+        ($buffer:ident, $len:ident, $capacity:expr, $max_capacity:expr)
     ) => {
         let rem_space = $capacity - $len;
-        let arg = $panicval;
-        let (mut lpad, mut rpad, string, fmt_kind, was_truncated) = arg.__string(rem_space);
-        let trunc_len = was_truncated.get_length(string);
+        let (strfmt, class, was_truncated) = $tct;
+        let StrFmt {
+            leftpad: mut lpad,
+            rightpad: mut rpad,
+            fmt_kind,
+        } = strfmt;
+
+        let ranged = match class {
+            PanicClass::PreFmt(str) => str,
+            PanicClass::Int(int) => {
+                if int.len() <= string_cap::MEDIUM {
+                    $mout = int.fmt::<{ string_cap::MEDIUM }>();
+                    $mout.ranged()
+                } else {
+                    $lout = int.fmt::<{ string_cap::LARGE }>();
+                    $lout.ranged()
+                }
+            }
+            #[cfg(feature = "non_basic")]
+            PanicClass::Slice(_) => unreachable!(),
+        };
+
+        let trunc_end = ranged.start + was_truncated.get_length(ranged.len());
 
         while lpad != 0 {
             __write_array! {$buffer, $len, b' '}
@@ -87,18 +109,18 @@ macro_rules! write_panicval_to_buffer {
         }
 
         if let FmtKind::Display = fmt_kind {
-            let mut i = 0;
-            while i < trunc_len {
-                __write_array! {$buffer, $len, string[i]}
+            let mut i = ranged.start;
+            while i < trunc_end {
+                __write_array! {$buffer, $len, ranged.bytes[i]}
                 i += 1;
             }
         } else if rem_space != 0 {
             __write_array! {$buffer, $len, b'"'}
             let mut i = 0;
-            while i < trunc_len {
+            while i < trunc_end {
                 use crate::debug_str_fmt::{hex_as_ascii, ForEscaping};
 
-                let c = string[i];
+                let c = ranged.bytes[i];
                 let mut written_c = c;
                 if ForEscaping::is_escaped(c) {
                     __write_array! {$buffer, $len, b'\\'}
@@ -134,15 +156,24 @@ macro_rules! write_panicval_to_buffer {
     };
 }
 
-macro_rules! write_to_buffer {
-    ($args:ident, $buffer:ident, $len:ident, $wptb_args:tt $(,)*) => {
+macro_rules! write_to_buffer_inner {
+    (
+        $args:ident
+        ($buffer:ident, $len:ident, $capacity:expr, $max_capacity:expr)
+        $wptb_args:tt
+    ) => {
         let mut args = $args;
+
+        let mut mout;
+        let mut lout;
+
         'outer: while let [mut outer, ref nargs @ ..] = args {
             while let [arg, nouter @ ..] = outer {
-                match arg.var {
+                let tct = arg.to_class_truncated($capacity - $len);
+                match tct.1 {
                     #[cfg(feature = "non_basic")]
                     #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
-                    crate::panic_val::PanicVariant::Slice(slice) => {
+                    PanicClass::Slice(slice) => {
                         let mut iter = slice.iter();
 
                         'iter: loop {
@@ -150,7 +181,8 @@ macro_rules! write_to_buffer {
 
                             let mut two_args: &[_] = &two_args;
                             while let [arg, ntwo_args @ ..] = two_args {
-                                write_panicval_to_buffer! {'outer, $buffer, $len, $wptb_args, arg}
+                                let tct = arg.to_class_truncated($capacity - $len);
+                                write_panicval! {'outer, mout, lout, tct, $wptb_args}
                                 two_args = ntwo_args;
                             }
 
@@ -161,13 +193,23 @@ macro_rules! write_to_buffer {
                         }
                     }
                     _ => {
-                        write_panicval_to_buffer! {'outer, $buffer, $len, $wptb_args, arg}
+                        write_panicval! {'outer, mout, lout, tct, $wptb_args}
                     }
                 }
 
                 outer = nouter;
             }
             args = nargs;
+        }
+    };
+}
+
+macro_rules! write_to_buffer {
+    ($args:ident $wptb_args:tt) => {
+        write_to_buffer_inner! {
+            $args
+            $wptb_args
+            $wptb_args
         }
     };
 }
@@ -180,10 +222,8 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
     let mut len = 0usize;
 
     write_to_buffer! {
-        args,
-        buffer,
-        len,
-        (LEN, MAX_PANIC_MSG_LEN),
+        args
+        (buffer, len, LEN, MAX_PANIC_MSG_LEN)
     }
 
     unsafe {
@@ -214,10 +254,8 @@ pub fn format_panic_message<const LEN: usize>(
         let buffer = &mut buffer[..capacity];
 
         write_to_buffer! {
-            args,
-            buffer,
-            len,
-            (capacity, max_capacity),
+            args
+            (buffer, len, capacity, max_capacity)
         }
     }
 
@@ -234,10 +272,8 @@ pub(crate) const fn make_panic_string<const LEN: usize>(
     let mut len = 0usize;
 
     write_to_buffer! {
-        args,
-        buffer,
-        len,
-        (LEN, LEN + 1),
+        args
+        (buffer, len, LEN, LEN + 1)
     }
 
     assert!(len as u32 as usize == len, "the panic message is too large");

@@ -1,5 +1,7 @@
 use const_panic::FmtArg;
 
+use std::marker::PhantomData;
+
 #[test]
 fn struct_formatting() {
     let array = [3, 5, 8, 13];
@@ -21,10 +23,16 @@ fn struct_formatting() {
         *format!("{:#?}", foo)
     );
 
-    // making sure that the `lifetime = 'static;` argument to `impl_panicfmt` has an effect.
-    let _: [const_panic::PanicVal<'static>; 1] = foo.w.to_panicvals(FmtArg::DEBUG);
+    assert_eq!(trunc_fmt!(999;FmtArg::HEX; foo), *format!("{:X?}", foo));
 
-    let _: [const_panic::PanicVal<'static>; <Qux<u8> as const_panic::PanicFmt>::PV_COUNT] =
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::ALT_HEX; foo),
+        *format!("{:#X?}", foo)
+    );
+
+    let _: [const_panic::PanicVal<'_>; 1] = foo.w.to_panicvals(FmtArg::DEBUG);
+
+    let _: [const_panic::PanicVal<'_>; <Qux<u8> as const_panic::PanicFmt>::PV_COUNT] =
         foo.b.to_panicvals(FmtArg::DEBUG);
 }
 
@@ -40,9 +48,7 @@ struct Foo<'a> {
 }
 
 const_panic::impl_panicfmt! {
-    impl Foo<'_>;
-
-    struct Foo {
+    struct Foo<'a> {
         x: &[u8],
         y: u8,
         z: Bar,
@@ -51,13 +57,14 @@ const_panic::impl_panicfmt! {
         b: Qux<u16>,
         c: Qux<u32>,
     }
+
+    (impl Foo<'_>)
 }
 
 #[derive(Debug)]
 struct Bar(bool, bool);
 
 const_panic::impl_panicfmt! {
-    impl Bar;
     struct Bar(bool, bool);
 }
 
@@ -65,11 +72,7 @@ const_panic::impl_panicfmt! {
 struct Baz;
 
 const_panic::impl_panicfmt! {
-    impl Baz;
-
-    lifetime = 'static;
-
-    struct Baz
+    struct Baz;
 }
 
 #[derive(Debug)]
@@ -79,88 +82,264 @@ enum Qux<T> {
     Left(u64),
 }
 
-const_panic::inline_macro! {
-    (u8, ()),
-    (u16, (lifetime = 'static;)),
-    (u32, ());
+const_panic::impl_panicfmt! {
+    enum Qux<T> {
+        Up,
+        Down{
+            x: T,
+            y: T,
+        },
+        Left(u64),
+    }
 
-    ($T:ty , ($($other:tt)*)) =>
-        const_panic::impl_panicfmt!{
-            impl Qux<$T>;
-
-            $($other)*
-
-            enum Qux {
-                Up,
-                Down{
-                    x: $T,
-                    y: $T,
-                },
-                Left(u64),
-            }
-        }
+    (impl Qux<u8> )
+    (impl Qux<u16>)
+    (impl Qux<u32>)
 }
 
 #[test]
 fn to_panicvals_lifetime_test() {
-    use const_panic::PanicVal;
+    let struct_tup = StaticTupleStruct(&5u32);
+    let struct_brace = StaticBracedStruct { x: &8 };
+    let enum_ = StaticEnum::Bar(&13u8);
 
-    let u32_ = 5;
-    let u8_ = 3;
-
-    let _: &[PanicVal<'static>] = &StaticStruct(8).to_panicvals(FmtArg::DEBUG);
-
-    let _: &[PanicVal<'static>] = &StaticEnum::Foo.to_panicvals(FmtArg::DEBUG);
-
-    let _: &[PanicVal<'_>] = &NonStaticStruct(&u32_).to_panicvals(FmtArg::DEBUG);
-
-    let _: &[PanicVal<'_>] = &NonStaticEnum::Bar(&u8_).to_panicvals(FmtArg::DEBUG);
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; struct_tup),
+        *format!("{:?}", struct_tup)
+    );
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; struct_brace),
+        *format!("{:?}", struct_brace)
+    );
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; enum_),
+        *format!("{:?}", enum_)
+    );
 }
 
-struct StaticStruct(u32);
+#[derive(Debug)]
+struct StaticTupleStruct<'a>(&'a u32)
+where
+    'a: 'static;
 
 const_panic::impl_panicfmt! {
-    impl StaticStruct;
-
-    lifetime = 'static;
-
-    struct StaticStruct(u32);
+    struct StaticTupleStruct<'a> (&'a u32)
+    where ['a: 'static];
 }
 
-enum StaticEnum {
-    Foo,
-    #[allow(dead_code)]
-    Bar,
+#[derive(Debug)]
+struct StaticBracedStruct<'a>
+where
+    'a: 'static,
+{
+    x: &'a u32,
 }
 
 const_panic::impl_panicfmt! {
-    impl StaticEnum;
-
-    lifetime = 'static;
-
-    enum StaticEnum {Foo, Bar}
+    struct StaticBracedStruct<'a>
+    where ['a: 'static]
+    {
+        x: &'a u32,
+    }
 }
 
-struct NonStaticStruct<'a>(&'a u32);
-
-const_panic::impl_panicfmt! {
-    impl NonStaticStruct<'_>;
-
-    lifetime = '_;
-
-    struct NonStaticStruct(&u32);
-}
-
-enum NonStaticEnum<'a> {
+#[derive(Debug)]
+enum StaticEnum<'a>
+where
+    'a: 'static,
+{
     #[allow(dead_code)]
     Foo,
     Bar(&'a u8),
 }
 
 const_panic::impl_panicfmt! {
-    impl NonStaticEnum<'_>;
+    enum StaticEnum<'a>
+    where ['a: 'static]
+    {Foo, Bar(&u8)}
+}
 
-    lifetime = '_;
+#[test]
+fn generic_parsing() {
+    const_panic::inline_macro! {
+        (GenericParsing0<'_>),
+        (GenericParsing1<'_>),
+        (GenericParsing2<'_, ()>),
+        (GenericParsing3<'_, ()>),
+        (GenericParsing4<'_, (), 0>),
+        (GenericParsing5<'_, (), 0>),
+        (GenericParsing6<'_, (), 0>),
+        (GenericParsingB0<'_>),
+        (GenericParsingB1<'_>),
+        (GenericParsingB2<'_, str>),
+        (GenericParsingB3<'_, [u8]>),
+        (GenericParsingB4<'_, u32, 0>),
+        (GenericParsingB5<'_, u32, 0>),
+        (GenericParsingB6<'_, u32, 0>);
+        ($type_name:path) =>
+        {
+            let foo = $type_name(PhantomData);
+            assert_eq!(trunc_fmt!(999;FmtArg::DEBUG; foo), *format!("{:?}", foo));
+        }
+    }
+}
 
-    enum NonStaticEnum {Foo, Bar(&u8)}
+#[derive(Debug)]
+struct GenericParsing0<'a>(PhantomData<(&'a (), ())>);
+
+#[derive(Debug)]
+struct GenericParsing1<'a>(PhantomData<(&'a (), ())>);
+
+#[derive(Debug)]
+struct GenericParsing2<'a, T>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsing3<'a, T>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsing4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsing5<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsing6<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing0<'a,>(PhantomData<(&'a (), ())>);
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing1<'a,>(PhantomData<(&'a (), ())>);
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing2<'a, ignore T>(PhantomData<(&'a (), T)>);
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing3<'a, ignore T,>(PhantomData<(&'a (), T)>);
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing4<'a, ignore T, const U: u32>(PhantomData<(&'a (), T)>);
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing5<'a, ignore(PhantomData<u8>) T, ignore const U: u32,>(
+        PhantomData<(&'a (), T)>
+    );
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsing6<'a, ignore T, ignore(2) const U: u32,>(
+        PhantomData<(&'a (), T)>
+    );
+}
+
+#[derive(Debug)]
+struct GenericParsingB0<'a>(PhantomData<(&'a (), ())>);
+
+#[derive(Debug)]
+struct GenericParsingB1<'a>(PhantomData<(&'a (), ())>);
+
+#[derive(Debug)]
+struct GenericParsingB2<'a, T: ?Sized>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsingB3<'a, T: ?Sized>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsingB4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsingB5<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+#[derive(Debug)]
+struct GenericParsingB6<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB0<'a>(PhantomData<(&'a (), ())>);
+
+    (impl['a] GenericParsingB0<'a>)
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB1<'a>(PhantomData<(&'a (), ())>);
+
+    (impl['a] GenericParsingB1<'a,> where[])
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB2<'a, ignore T>(PhantomData<(&'a (), T)>)
+    where[T: ?Sized];
+
+    (impl['a, T] GenericParsingB2<'a, T> where[T: ?Sized])
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB3<'a, ignore T,>(PhantomData<(&'a (), T)>)
+    where[T: ?Sized];
+
+    (impl['a, T: ?Sized] GenericParsingB3<'a, T,>)
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+
+    (impl['a, const U: u32] GenericParsingB4<'a, u32, U,>)
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB5<'a, ignore(PhantomData<u8>) T, ignore const U: u32,>(
+        PhantomData<(&'a (), T)>
+    );
+
+    (impl['a, const U: u32] GenericParsingB5<'a, u32, U>)
+}
+
+const_panic::impl_panicfmt! {
+    struct GenericParsingB6<'a, ignore T, ignore(2) const U: u32,>(
+        PhantomData<(&'a (), T)>
+    );
+
+    (impl['a] GenericParsingB6<'a, u32, 0>)
+}
+
+#[test]
+fn where_clause_emision() {
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; Unit0),
+        *format!("{:?}", Unit0)
+    );
+
+    assert_eq!(HasConsts::A, 3);
+    assert_eq!(HasConsts::B, 5);
+}
+
+struct HasConsts;
+
+#[derive(Debug)]
+struct Unit0;
+
+const_panic::impl_panicfmt! {
+    struct Unit0
+    where[[(); {
+        impl HasConsts {
+            const A: u8 = 3;
+        }
+
+        0
+    }]:];
+
+    (
+        impl Unit0
+        where[[(); {
+            impl HasConsts {
+                const B: u8 = 5;
+            }
+
+            0
+        }]:]
+    )
 }

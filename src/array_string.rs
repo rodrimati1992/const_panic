@@ -1,4 +1,4 @@
-use crate::{FmtArg, PanicFmt, PanicVal};
+use crate::{utils::RangedBytes, FmtArg, PanicFmt, PanicVal};
 
 use core::{
     cmp::PartialEq,
@@ -12,6 +12,16 @@ use core::{
 pub struct ArrayString<const CAP: usize> {
     pub(crate) len: u32,
     pub(crate) buffer: [u8; CAP],
+}
+
+/// Equivalent of `ArrayString` which can only be up to 255 bytes long.
+///
+/// This stores the length as a `u8`, while `ArrayString` stores it as a `u32`,
+/// making this 3 bytes smaller and 1-aligned (while ArrayString is aligned to a `u32`).
+#[derive(Copy, Clone)]
+pub(crate) struct TinyString<const CAP: usize> {
+    len: u8,
+    buffer: [u8; CAP],
 }
 
 const fn add_up_lengths(mut strings: &[&str]) -> usize {
@@ -88,6 +98,8 @@ impl<const CAP: usize> ArrayString<CAP> {
 
     /// Constructs this string from a `&[&[PanicVal<'_>]]`.
     ///
+    /// Returns `None` if the formatted args would be larger than `CAP`.
+    ///
     /// # Example
     ///
     /// ```rust
@@ -118,6 +130,8 @@ impl<const CAP: usize> ArrayString<CAP> {
     }
 
     /// Constructs this string from a `&[PanicVal<'_>]`.
+    ///
+    /// Returns `None` if the formatted args would be larger than `CAP`.
     ///
     /// # Example
     ///
@@ -173,21 +187,7 @@ impl<const CAP: usize> ArrayString<CAP> {
     /// assert_eq!(ArrayString::<16>::new("Hello, world!").as_bytes(), b"Hello, world!");
     /// ```
     pub const fn as_bytes(&self) -> &[u8] {
-        let mut to_truncate = CAP - self.len();
-        let mut out: &[u8] = &self.buffer;
-
-        while to_truncate != 0 {
-            if let [rem @ .., _] = out {
-                out = rem;
-            }
-            to_truncate -= 1;
-        }
-
-        if out.len() != self.len() {
-            panic!("BUG!")
-        }
-
-        out
+        bytes_up_to(&self.buffer, self.len())
     }
 
     /// Gets the string.
@@ -222,6 +222,24 @@ impl<const CAP: usize> ArrayString<CAP> {
     }
 }
 
+impl<const CAP: usize> ArrayString<CAP> {
+    pub(crate) const fn to_compact(self) -> TinyString<CAP> {
+        if self.len() <= 255 {
+            TinyString {
+                len: self.len as u8,
+                buffer: self.buffer,
+            }
+        } else {
+            crate::concat_panic(&[&[
+                PanicVal::write_str(
+                    "The input string is too long, expected `length <= 255`, found length: ",
+                ),
+                PanicVal::from_usize(self.len(), FmtArg::DISPLAY),
+            ]])
+        }
+    }
+}
+
 impl<const CAP: usize> Debug for ArrayString<CAP> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Debug::fmt(self.to_str(), f)
@@ -243,4 +261,36 @@ impl<const CAP: usize> PanicFmt for ArrayString<CAP> {
     type This = Self;
     type Kind = crate::fmt::IsCustomType;
     const PV_COUNT: usize = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+impl<const CAP: usize> TinyString<CAP> {
+    pub(crate) const fn ranged(&self) -> RangedBytes<&[u8]> {
+        RangedBytes {
+            start: 0,
+            end: self.len as usize,
+            bytes: &self.buffer,
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
+    let mut to_truncate = buffer.len() - upto;
+    let mut out: &[u8] = buffer;
+
+    while to_truncate != 0 {
+        if let [rem @ .., _] = out {
+            out = rem;
+        }
+        to_truncate -= 1;
+    }
+
+    if out.len() != upto {
+        panic!("BUG!")
+    }
+
+    out
 }

@@ -18,6 +18,13 @@ any of the options below:
 - `alt_debug:` or `{#?}:`: alternate-`Debug` formats the argument.
 - `display:` or `{}:`: `Display` formats the argument.
 - `alt_display:` or `{#}:`: alternate-`Display` formats the argument.
+- `bin:` or `{b}:`: `Debug` formats the argument, with binary-formatted numbers.
+- `alt_bin:` or `{#b}:`:
+alternate-`Debug` formats the argument, with binary-formatted numbers.
+- `hex:` or `{X}:`:
+`Debug` formats the argument, with hexadecimal-formatted numbers.
+- `alt_hex:` or `{#X}:`:
+alternate-`Debug` formats the argument, with hexadecimal-formatted numbers.
 "##,
 $($additional_fmt_overrides,)?
 r##"

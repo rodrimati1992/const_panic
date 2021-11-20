@@ -1,6 +1,6 @@
 use const_panic::{
     __set_fmt_from_kw as set_fmt_fkw,
-    fmt::{self, FmtArg, FmtKind},
+    fmt::{self, FmtArg, FmtKind, NumberFmt},
 };
 
 #[test]
@@ -100,5 +100,47 @@ fn set_fmt_from_kw_test() {
     case! {{#?}, inita, |fmt| {
         fmt.fmt_kind = FmtKind::Debug;
         fmt.is_alternate = true;
+    }}
+
+    case! {hex, initb, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = false;
+        fmt.number_fmt = NumberFmt::Hexadecimal;
+    }}
+    case! {{X}, initb, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = false;
+        fmt.number_fmt = NumberFmt::Hexadecimal;
+    }}
+    case! {alt_hex, inita, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = true;
+        fmt.number_fmt = NumberFmt::Hexadecimal;
+    }}
+    case! {{#X}, inita, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = true;
+        fmt.number_fmt = NumberFmt::Hexadecimal;
+    }}
+
+    case! {bin, initb, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = false;
+        fmt.number_fmt = NumberFmt::Binary;
+    }}
+    case! {{b}, initb, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = false;
+        fmt.number_fmt = NumberFmt::Binary;
+    }}
+    case! {alt_bin, inita, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = true;
+        fmt.number_fmt = NumberFmt::Binary;
+    }}
+    case! {{#b}, inita, |fmt| {
+        fmt.fmt_kind = FmtKind::Debug;
+        fmt.is_alternate = true;
+        fmt.number_fmt = NumberFmt::Binary;
     }}
 }

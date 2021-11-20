@@ -71,6 +71,31 @@ fn string_test() {
 }
 
 #[test]
+fn bin_integer_test() {
+    let array = [-4, -3, -2, -1, 0i8, 1, 2, 3, 4];
+    assert_eq!(
+        overf_fmt!(1024; bin: array).unwrap(),
+        "[11111100, 11111101, 11111110, 11111111, 0, 1, 10, 11, 100]"
+    );
+
+    assert_eq!(
+        overf_fmt!(1024; alt_bin: array).unwrap(),
+        concat!(
+            "[\n",
+            "    0b11111100,\n",
+            "    0b11111101,\n",
+            "    0b11111110,\n",
+            "    0b11111111,\n",
+            "    0b0,\n",
+            "    0b1,\n",
+            "    0b10,\n",
+            "    0b11,\n",
+            "    0b100,\n",
+            "]",
+        )
+    );
+}
+#[test]
 fn integer_test() {
     macro_rules! test_case {
         ($array:expr) => ({
@@ -82,8 +107,23 @@ fn integer_test() {
             );
 
             assert_eq!(
+                overf_fmt!(1024; debug: array).unwrap(),
+                *format!("{:?}", array),
+            );
+
+            assert_eq!(
                 overf_fmt!(1024; alt_debug: array).unwrap(),
                 *format!("{:#?}", array),
+            );
+
+            assert_eq!(
+                overf_fmt!(1024; hex: array).unwrap(),
+                *format!("{:X?}", array),
+            );
+
+            assert_eq!(
+                overf_fmt!(1024; alt_hex: array).unwrap(),
+                *format!("{:#X?}", array),
             );
         })
     }

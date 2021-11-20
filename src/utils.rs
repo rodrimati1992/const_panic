@@ -22,6 +22,23 @@ pub(crate) struct TailShortString<const LEN: usize> {
     buffer: [u8; LEN],
 }
 
+pub(crate) type PreFmtString = TailShortString<{ string_cap::PREFMT }>;
+
+pub(crate) mod string_cap {
+    /// The capacity of a [`ShortString`](crate::fmt::ShortString).
+    #[cfg(feature = "non_basic")]
+    pub const TINY: usize = 16;
+
+    // the TailShortString that's stored in PanicVal
+    pub(crate) const PREFMT: usize = 21;
+
+    // length of string to alternate binary format a 64 bit integer
+    pub(crate) const MEDIUM: usize = 66;
+
+    // length of string to alternate binary format a 128 bit integer
+    pub(crate) const LARGE: usize = 130;
+}
+
 impl<const LEN: usize> TailShortString<LEN> {
     ///
     /// # Safety
@@ -36,23 +53,55 @@ impl<const LEN: usize> TailShortString<LEN> {
         LEN - self.start as usize
     }
 
-    pub(crate) const fn get(&self) -> &[u8] {
-        let mut rem = self.start;
-        let mut out: &[u8] = &self.buffer;
-        while rem != 0 {
-            if let [_, rem @ ..] = out {
-                out = rem;
-            }
-            rem -= 1;
+    pub(crate) const fn ranged(&self) -> RangedBytes<&[u8]> {
+        RangedBytes {
+            start: self.start as usize,
+            end: LEN,
+            bytes: &self.buffer,
         }
-        out
     }
 }
 
+////////////////////////////////////////////////////////
+
+#[repr(packed)]
+#[derive(Copy)]
+pub(crate) struct Packed<T>(pub(crate) T);
+
+impl<T: Copy> Clone for Packed<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone)]
+pub(crate) struct RangedBytes<B> {
+    pub(crate) start: usize,
+    pub(crate) end: usize,
+    pub(crate) bytes: B,
+}
+
+impl<B> RangedBytes<B> {
+    pub(crate) const fn len(&self) -> usize {
+        self.end - self.start
+    }
+}
+impl RangedBytes<&'static [u8]> {
+    pub const EMPTY: Self = RangedBytes {
+        start: 0,
+        end: 0,
+        bytes: &[],
+    };
+}
+
+////////////////////////////////////////////////////////
+
 #[derive(Copy, Clone)]
 pub(crate) enum Sign {
-    Negative,
     Positive,
+    Negative = 1,
 }
 
 #[derive(Copy, Clone)]
@@ -62,10 +111,10 @@ pub(crate) enum WasTruncated {
 }
 
 impl WasTruncated {
-    pub(crate) const fn get_length(self, s: &[u8]) -> usize {
+    pub(crate) const fn get_length(self, len: usize) -> usize {
         match self {
             WasTruncated::Yes(x) => x,
-            WasTruncated::No => s.len(),
+            WasTruncated::No => len,
         }
     }
 }
@@ -76,25 +125,31 @@ const fn is_char_boundary(b: u8) -> bool {
 
 // truncates a utf8-encoded string to the character before the `truncate_to` index
 //
-pub(crate) const fn truncated_str_len(bytes: &[u8], truncate_to: usize) -> WasTruncated {
-    if bytes.len() <= truncate_to {
+pub(crate) const fn truncated_str_len(
+    ranged: RangedBytes<&[u8]>,
+    truncate_to: usize,
+) -> WasTruncated {
+    if ranged.len() <= truncate_to {
         WasTruncated::No
     } else {
-        let mut i = truncate_to;
-        while i != 0 {
+        let mut i = ranged.start + truncate_to;
+        while i != ranged.start {
             // if it's a non-continuation byte, break
-            if is_char_boundary(bytes[i]) {
+            if is_char_boundary(ranged.bytes[i]) {
                 break;
             }
             i -= 1;
         }
 
-        WasTruncated::Yes(i)
+        WasTruncated::Yes(i - ranged.start)
     }
 }
 
-pub(crate) const fn truncated_debug_str_len(bytes: &[u8], truncate_to: usize) -> WasTruncated {
-    let blen = bytes.len();
+pub(crate) const fn truncated_debug_str_len(
+    ranged: RangedBytes<&[u8]>,
+    truncate_to: usize,
+) -> WasTruncated {
+    let blen = ranged.end;
 
     // `* 4` because the longest escape is written like `\xNN` which is 4 bytes
     // `+ 2` for the quote characters
@@ -103,21 +158,21 @@ pub(crate) const fn truncated_debug_str_len(bytes: &[u8], truncate_to: usize) ->
     } else if truncate_to == 0 {
         WasTruncated::Yes(0)
     } else {
-        let mut i = 0;
+        let mut i = ranged.start;
         // = 1 for opening quote char
         let mut fmtlen = 1;
         loop {
-            let next_i = next_char_boundary(bytes, min_usize(i + 1, bytes.len()));
+            let next_i = next_char_boundary(ranged, min_usize(i + 1, ranged.end));
 
             let mut j = i;
             while j < next_i {
-                fmtlen += ForEscaping::byte_len(bytes[j]);
+                fmtlen += ForEscaping::byte_len(ranged.bytes[j]);
                 j += 1;
             }
 
             if fmtlen > truncate_to {
                 break;
-            } else if next_i == bytes.len() {
+            } else if next_i == ranged.end {
                 i = next_i;
                 break;
             } else {
@@ -128,13 +183,13 @@ pub(crate) const fn truncated_debug_str_len(bytes: &[u8], truncate_to: usize) ->
         if i == blen && fmtlen < truncate_to {
             WasTruncated::No
         } else {
-            WasTruncated::Yes(i)
+            WasTruncated::Yes(i - ranged.start)
         }
     }
 }
 
-const fn next_char_boundary(bytes: &[u8], mut i: usize) -> usize {
-    while i < bytes.len() && !is_char_boundary(bytes[i]) {
+const fn next_char_boundary(ranged: RangedBytes<&[u8]>, mut i: usize) -> usize {
+    while i < ranged.end && !is_char_boundary(ranged.bytes[i]) {
         i += 1;
     }
     i

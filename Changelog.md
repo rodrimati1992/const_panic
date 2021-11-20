@@ -1,5 +1,38 @@
 This changelog is a summary of the changes made in each release.
 
+# 0.2
+
+### 0.2.0
+
+Added `concat_assert` macro.
+
+Added `PanicFmt` derive macro.
+
+Added `"derive"` crate feature, to enable the `PanicFmt` derive.
+
+Made breaking changes to `impl_panicfmt` to allow generic implementations with type and const parameters.
+
+Added `NumberFmt` enum, for choosing how numbers are formatted.
+
+Added `FmtArg::{BIN, ALT_BIN, HEX. ALT_HEX}` associated constants.
+
+Added `FmtArg::{set_hex, set_bin}` methods.
+
+Added `PanicVal::from_short_str` constructor.
+
+Added support for binary and hexadecimal formatting in macros.
+
+Added `PackedFmtArg` type (which requires the non_basic feature).
+
+Added `const_panic::fmt::SHORT_STRING_CAP` constant with the capacity of a `ShortString`.
+
+
+Changed `PanicVal` such that only strings can be left or right padded.
+
+Removed the `PanicVal::{set_leftpad, set_rightpad}` methods.
+
+Declared `const_panic_proc_macros` crate, depended by `const_panic` when the `"derive"` feature is enabled.
+
 # 0.1
 
 ### 0.1.1

@@ -1,3 +1,6 @@
+#[macro_use]
+mod concat_assert;
+
 #[cfg(feature = "non_basic")]
 #[macro_use]
 mod non_basic_macros;
@@ -76,15 +79,8 @@ macro_rules! __write_array_checked {
 ///
 /// enum IsReal{Yes, No}
 ///
-/// // Manually implementing panic formatting for a field-less enum
-/// //
-/// // All the code below is equivalent to this `impl_panicfmt` invocation:
-/// // ```
-/// // impl_panicfmt!{
-/// //      impl IsReal;
-/// //      enum IsReal { Yes, No }
-/// // }
-/// // ```
+/// // All the code below manually implements panic formatting for a field-less enum.
+/// // This can be written concisely with the `PanicFmt` derive or `impl_panicfmt` macro.
 /// impl PanicFmt for IsReal {
 ///     type This = Self;
 ///     type Kind = IsCustomType;
@@ -153,7 +149,7 @@ macro_rules! coerce_fmt {
 ///
 /// const _: () = concat_panic!{
 ///     // the optional `$fmtarg` parameter.
-///     // If this argument wasn't passed, it'd be `FmtArg::DEBUG`
+///     // If this argument isn't passed, it defaults to `FmtArg::DEBUG`
 ///     FmtArg::ALT_DEBUG;
 ///
 ///     "\n\nshowing off literals:\n",
@@ -185,6 +181,26 @@ macro_rules! coerce_fmt {
 ///     // `{#}:` is The same as `alt_display:`
 ///     {#}: ["bbb", "ccc"],
 ///
+///     "\n\nbinary formatted:\n",
+///     bin: [3u8, 5, 8, 13],
+///     // `{b}:` is The same as `bin:`
+///     {b}: [3u8, 5, 8, 13],
+///
+///     "\n\nalternate-binary formatted:\n",
+///     alt_bin: [21u8, 34, 55, 89],
+///     // `{#b}:` is The same as `alt_bin:`
+///     {#b}: [21u8, 34, 55, 89],
+///
+///     "\n\nhexadecimal formatted:\n",
+///     hex: [3u8, 5, 8, 13],
+///     // `{X}:` is The same as `hex:`
+///     {X}: [3u8, 5, 8, 13],
+///
+///     "\n\nalternate-hexadecimal formatted:\n",
+///     alt_hex: [21u8, 34, 55, 89],
+///     // `{#X}:` is The same as `alt_hex:`
+///     {#X}: [21u8, 34, 55, 89],
+///
 ///     "\n\n",
 /// };
 ///
@@ -192,16 +208,16 @@ macro_rules! coerce_fmt {
 /// The above code produces this compile-time error:
 /// ```text
 /// error[E0080]: evaluation of constant value failed
-///   --> src/macros.rs:94:15
+///   --> src/macros.rs:186:15
 ///    |
 /// 6  |   const _: () = concat_panic!{
 ///    |  _______________^
 /// 7  | |     // the optional `$fmtarg` parameter.
-/// 8  | |     // If this argument wasn't passed, it'd be `FmtArg::DEBUG`
+/// 8  | |     // If this argument isn't passed, it defaults to `FmtArg::DEBUG`
 /// 9  | |     FmtArg::ALT_DEBUG;
 /// ...  |
-/// 40 | |     "\n\n",
-/// 41 | | };
+/// 60 | |     "\n\n",
+/// 61 | | };
 ///    | |_^ the evaluated program panicked at '
 ///
 /// showing off literals:
@@ -232,7 +248,43 @@ macro_rules! coerce_fmt {
 ///     ccc,
 /// ]
 ///
+/// binary formatted:
+/// [11, 101, 1000, 1101][11, 101, 1000, 1101]
+///
+/// alternate-binary formatted:
+/// [
+///     0b10101,
+///     0b100010,
+///     0b110111,
+///     0b1011001,
+/// ][
+///     0b10101,
+///     0b100010,
+///     0b110111,
+///     0b1011001,
+/// ]
+///
+/// hexadecimal formatted:
+/// [3, 5, 8, D][3, 5, 8, D]
+///
+/// alternate-hexadecimal formatted:
+/// [
+///     0x15,
+///     0x22,
+///     0x37,
+///     0x59,
+/// ][
+///     0x15,
+///     0x22,
+///     0x37,
+///     0x59,
+/// ]
+///
 /// ', src/macros.rs:6:15
+///    |
+///    = note: this error originates in the macro `concat_panic` (in Nightly builds, run with -Z macro-backtrace for more info)
+///
+/// error: aborting due to previous error
 ///
 /// ```
 ///
@@ -343,6 +395,30 @@ macro_rules! __set_fmt_from_kw {
     ({#?}, $fmtarg:ident) => {
         $fmtarg.set_debug().set_alternate(true)
     };
+    (hex, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(false)
+    };
+    ({X}, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(false)
+    };
+    (alt_hex, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(true)
+    };
+    ({#X}, $fmtarg:ident) => {
+        $fmtarg.set_hex().set_alternate(true)
+    };
+    (bin, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(false)
+    };
+    ({b}, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(false)
+    };
+    (alt_bin, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(true)
+    };
+    ({#b}, $fmtarg:ident) => {
+        $fmtarg.set_bin().set_alternate(true)
+    };
     (_, $fmtarg:ident) => {
         $fmtarg
     };
@@ -353,7 +429,13 @@ macro_rules! __set_fmt_from_kw {
             "\n",
             "expected one of:\n",
             "- display/{}\n",
+            "- alt_display/{#}\n",
             "- debug/{?}\n",
+            "- alt_debug/{#?}\n",
+            "- hex/{X}\n",
+            "- alt_hex/{#X}\n",
+            "- bin/{b}\n",
+            "- alt_bin/{#b}\n",
         ))
     };
 }
