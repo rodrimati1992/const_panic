@@ -82,7 +82,7 @@ fn strings_iter<'a>(cap: usize, rng: &'a mut SmallRng) -> impl Iterator<Item = S
 
 #[test]
 fn fmt_arraystring_test() {
-    let mut rng = SmallRng::from_seed(6249204433781597762u128.to_ne_bytes());
+    let mut rng = SmallRng::seed_from_u64(6249204433781597762);
 
     fn as_test_case<const LEN: usize>(rng: &mut SmallRng) {
         let strings = strings_iter(LEN, rng);
