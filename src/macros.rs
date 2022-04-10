@@ -109,6 +109,8 @@ macro_rules! coerce_fmt {
 
 /// Panics with the concanenation of the arguments.
 ///
+/// [**Examples below**](#examples)
+///
 /// # Syntax
 ///
 /// This macro uses this syntax:
@@ -137,8 +139,42 @@ macro_rules! coerce_fmt {
 ///
 /// # Examples
 ///
-/// For basic examples of this macro,
-/// you can look [at the root module](./index.html#examples)
+/// ### `NonZeroU32`-constructing function
+///
+/// ```rust, compile_fail
+/// use core::num::NonZeroU32;
+///
+/// use const_panic::concat_panic;
+///
+///
+/// const _: NonZeroU32 = nonzero_u32(0);
+/// const _: NonZeroU32 = nonzero_u32(1);
+///
+///
+/// /// Constructs a `NonZeroU32`
+/// ///
+/// /// # Panics
+/// ///
+/// /// Panics if `n` is `0`
+/// #[track_caller]
+/// pub const fn nonzero_u32(n: u32) -> NonZeroU32 {
+///     match NonZeroU32::new(n) {
+///         Some(x) => x,
+///         _ => concat_panic!("\nexpected non-zero argument, found: ", n)
+///     }
+/// }
+/// ```
+/// produces this compile-time error:
+/// ```text
+/// error[E0080]: evaluation of constant value failed
+///  --> src/macros.rs:186:23
+///   |
+/// 9 | const _: NonZeroU32 = nonzero_u32(0);
+///   |                       ^^^^^^^^^^^^^^ the evaluated program panicked at '
+/// expected non-zero argument, found: 0', src/macros.rs:9:23
+///
+/// ```
+///
 ///
 /// ### All the syntax
 ///
