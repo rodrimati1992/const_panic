@@ -139,39 +139,64 @@ macro_rules! coerce_fmt {
 ///
 /// # Examples
 ///
-/// ### `NonZeroU32`-constructing function
+/// ### `Odd`-type
 ///
 /// ```rust, compile_fail
-/// use core::num::NonZeroU32;
-///
 /// use const_panic::concat_panic;
 ///
+/// use odd::Odd;
 ///
-/// const _: NonZeroU32 = nonzero_u32(0);
-/// const _: NonZeroU32 = nonzero_u32(1);
+/// # fn main(){
+/// const _: Odd = match Odd::new(3 * 4) {
+///     Ok(x) => x,
+///     Err(x) => concat_panic!("\nexpected odd number, got `", x, "`"),
+/// };
+/// # }
 ///
+/// mod odd {
+///     pub struct Odd(u32);
 ///
-/// /// Constructs a `NonZeroU32`
-/// ///
-/// /// # Panics
-/// ///
-/// /// Panics if `n` is `0`
-/// #[track_caller]
-/// pub const fn nonzero_u32(n: u32) -> NonZeroU32 {
-///     match NonZeroU32::new(n) {
-///         Some(x) => x,
-///         _ => concat_panic!("\nexpected non-zero argument, found: ", n)
+///     impl Odd {
+///         pub const fn new(n: u32) -> Result<Odd, Even> {
+///             if n % 2 == 1 {
+///                 Ok(Odd(n))
+///             } else {
+///                 Err(Even(n))
+///             }
+///         }
 ///     }
+///
+/// #   /*
+///     #[derive(const_panic::PanicFmt))]
+/// #   */
+///     pub struct Even(u32);
+/// #
+/// #   impl const_panic::PanicFmt for Even {
+/// #       type This = Self;
+/// #       type Kind = const_panic::IsCustomType;
+/// #       const PV_COUNT: usize = 1;
+/// #   }
+/// #   impl Even {
+/// #       pub const fn to_panicvals(
+/// #           &self,
+/// #           f: const_panic::FmtArg,
+/// #       ) -> [const_panic::PanicVal<'static>; 1] {
+/// #           const_panic::StdWrapper(&self.0).to_panicvals(f)
+/// #       }
+/// #   }
 /// }
+///
 /// ```
 /// produces this compile-time error:
 /// ```text
 /// error[E0080]: evaluation of constant value failed
-///  --> src/macros.rs:186:23
-///   |
-/// 9 | const _: NonZeroU32 = nonzero_u32(0);
-///   |                       ^^^^^^^^^^^^^^ the evaluated program panicked at '
-/// expected non-zero argument, found: 0', src/macros.rs:9:23
+///   --> src/macros.rs:188:15
+///    |
+/// 10 |     Err(x) => concat_panic!("\nexpected odd number, got `", x, "`"),
+///    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at '
+/// expected odd number, got `12`', src/macros.rs:10:15
+///    |
+///    = note: this error originates in the macro `concat_panic` (in Nightly builds, run with -Z macro-backtrace for more info)
 ///
 /// ```
 ///
