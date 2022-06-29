@@ -115,9 +115,10 @@ macro_rules! concat_assert {
     ($condition:expr $(,)?) => {
         $crate::__::assert!($condition);
     };
-    ($condition:expr, $($fmt:tt)*) => {
+    ($condition:expr, $($fmt:tt)*) => {{
+        #[allow(clippy::equatable_if_let)]
         if let false = $condition {
             $crate::concat_panic!{$($fmt)*}
         }
-    };
+    }};
 }
