@@ -5,7 +5,7 @@
 ///
 /// When two or more arguments are passed,
 /// this panics with formatting by delegating the second and remaining arguments
-/// to the [`concat_panic`](macro@concat_panic) macro.
+/// to the [`concat_panic`](macro@crate::concat_panic) macro.
 ///
 /// ### Examples
 ///
