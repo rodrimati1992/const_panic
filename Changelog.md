@@ -2,6 +2,14 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.5
+
+Added `"rust_1_64"` feature, which enables formatting impls which require newer versions.
+
+Added `core::str::Utf8Error` formatting (requires `"rust_1_64"` feature)
+
+Added formatting support for `char` and slices of `char`.
+
 
 ### 0.2.0
 
