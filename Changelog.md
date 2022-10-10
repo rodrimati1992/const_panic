@@ -2,6 +2,7 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+
 ### 0.2.0
 
 Added `concat_assert` macro.

@@ -69,7 +69,7 @@ fn char_to_utf8_debug_test() {
         assert_eq!(expected.len(), char_debug_len(c), "{:?}", c);
     }
 
-    let other_escapes = [('\'', r#"'\''"#), ('\"', r#"'\"'"#), ('\\', r#"'\\'"#)];
+    let other_escapes = [('\'', r#"'\''"#), ('\"', r#"'"'"#), ('\\', r#"'\\'"#)];
 
     let mut buffer = arrayvec::ArrayString::<12>::new();
     for c in '\x20'..=core::char::MAX {

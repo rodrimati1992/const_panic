@@ -2,8 +2,8 @@
 
 use crate::debug_str_fmt::ForEscaping;
 
-#[cfg(test)]
-mod utils_tests;
+#[cfg(feature = "rust_1_64")]
+mod utils_1_64_tests;
 
 #[cfg(feature = "non_basic")]
 mod non_basic_utils;
@@ -198,18 +198,35 @@ const fn next_char_boundary(ranged: RangedBytes<&[u8]>, mut i: usize) -> usize {
     i
 }
 
-pub(crate) const fn extend_byte_array<const FROM: usize, const TO: usize>(
-    input: [u8; FROM],
-) -> [u8; TO] {
-    assert!(FROM <= TO);
+#[cfg(feature = "rust_1_64")]
+#[cfg_attr(feature = "test", derive(Debug, PartialEq))]
+pub(crate) struct StartAndBytes<const LEN: usize> {
+    pub start: u8,
+    pub bytes: [u8; LEN],
+}
 
-    let mut out = [0u8; TO];
+#[cfg(feature = "rust_1_64")]
+#[track_caller]
+pub(crate) const fn tail_byte_array<const TO: usize>(
+    len: usize,
+    input: &[u8],
+) -> StartAndBytes<TO> {
+    assert!(len <= TO);
 
-    let mut i = 0;
-    while i < FROM {
-        out[i] = input[i];
+    let mut bytes = [0u8; TO];
+
+    let start = TO - len;
+    let mut i = start;
+    let mut j = 0;
+    while j < len {
+        bytes[i] = input[j];
         i += 1;
+        j += 1;
     }
 
-    out
+    assert!(start < 256);
+    StartAndBytes {
+        start: start as u8,
+        bytes,
+    }
 }

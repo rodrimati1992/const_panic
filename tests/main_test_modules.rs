@@ -14,6 +14,11 @@ mod main_tests {
 
     mod assert_tests;
 
+    mod char_tests;
+
+    #[cfg(feature = "rust_1_64")]
+    mod rust_1_64_types_tests;
+
     #[cfg(feature = "non_basic")]
     mod impl_panicfmt_tests;
 

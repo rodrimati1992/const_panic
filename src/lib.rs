@@ -170,6 +170,9 @@
 //! Without this feature, you can effectively only format primitive types
 //! (custom types can manually implement formatting with more difficulty).
 //!
+//! - `"rust_1_64"`(disabled by default):
+//! Enables formatting of additional items that require Rust 1.64.0 to do so.
+//!
 //! - `"derive"`(disabled by default):
 //! Enables the [`PanicFmt` derive] macro.
 //!
@@ -246,6 +249,9 @@ mod wrapper;
 mod fmt_impls {
     #[macro_use]
     pub(crate) mod basic_fmt_impls;
+
+    #[cfg(feature = "rust_1_64")]
+    mod rust_1_64_fmt_impls;
 
     #[macro_use]
     #[cfg(feature = "non_basic")]

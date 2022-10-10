@@ -4,7 +4,7 @@ use crate::{
     fmt::{FmtArg, FmtKind},
     fmt_impls::basic_fmt_impls::primitive_static_panicfmt,
     panic_val::{PanicVal, PanicVariant},
-    utils::{string_cap, PreFmtString},
+    utils::{string_cap, PreFmtString, StartAndBytes},
 };
 
 #[cfg(all(test, not(miri)))]
@@ -13,27 +13,21 @@ mod tests;
 impl PanicVal<'_> {
     /// Constructs a `PanicVal` from a `char`.
     pub const fn from_char(c: char, fmtarg: FmtArg) -> Self {
-        let (len, arr) = match fmtarg.fmt_kind {
+        let StartAndBytes { start, bytes } = match fmtarg.fmt_kind {
             FmtKind::Display => {
                 let (arr, len) = char_to_utf8(c);
-                (
-                    crate::utils::extend_byte_array::<4, { string_cap::PREFMT }>(arr),
-                    len as u8,
-                )
+                crate::utils::tail_byte_array::<{ string_cap::PREFMT }>(len, &arr)
             }
             FmtKind::Debug => {
                 let fmtchar = char_to_debug(c);
-                (
-                    crate::utils::extend_byte_array(fmtchar.encoded),
-                    fmtchar.len,
-                )
+                crate::utils::tail_byte_array(fmtchar.len(), &fmtchar.encoded)
             }
         };
         // SAFETY:
         // char_to_utf8 is exhaustively tested in the tests module.
         // char_to_debug is exhaustively tested in the tests module.
-        // extend_byte_array is also tested for smaller/equal/larger input arrays.
-        let prefmt = unsafe { PreFmtString::new(arr, len) };
+        // tail_byte_array is also tested for smaller/equal/larger input arrays.
+        let prefmt = unsafe { PreFmtString::new(start, bytes) };
         PanicVal {
             var: PanicVariant::PreFmt(prefmt),
         }
@@ -59,7 +53,7 @@ const fn hex_as_ascii(n: u8) -> u8 {
 #[cfg(any(test, feature = "fmt"))]
 pub(crate) const fn char_debug_len(c: char) -> usize {
     let inner = match c {
-        '\t' | '\r' | '\n' | '\\' | '\'' | '\"' => 2,
+        '\t' | '\r' | '\n' | '\\' | '\'' => 2,
         '\x00'..='\x1F' => 4,
         _ => c.len_utf8(),
     };
@@ -108,7 +102,7 @@ pub const fn char_to_debug(c: char) -> FmtChar {
         '\n' => (*br#"\n  "#, 2),
         '\\' => (*br#"\\  "#, 2),
         '\'' => (*br#"\'  "#, 2),
-        '\"' => (*br#"\"  "#, 2),
+        '\"' => (*br#""   "#, 1),
         '\x00'..='\x1F' => {
             let n = c as u8;
             (
