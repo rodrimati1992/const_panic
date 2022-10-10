@@ -2,6 +2,9 @@
 
 use crate::debug_str_fmt::ForEscaping;
 
+#[cfg(test)]
+mod utils_tests;
+
 #[cfg(feature = "non_basic")]
 mod non_basic_utils;
 
@@ -193,4 +196,20 @@ const fn next_char_boundary(ranged: RangedBytes<&[u8]>, mut i: usize) -> usize {
         i += 1;
     }
     i
+}
+
+pub(crate) const fn extend_byte_array<const FROM: usize, const TO: usize>(
+    input: [u8; FROM],
+) -> [u8; TO] {
+    assert!(FROM <= TO);
+
+    let mut out = [0u8; TO];
+
+    let mut i = 0;
+    while i < FROM {
+        out[i] = input[i];
+        i += 1;
+    }
+
+    out
 }

@@ -245,7 +245,7 @@ mod wrapper;
 
 mod fmt_impls {
     #[macro_use]
-    mod basic_fmt_impls;
+    pub(crate) mod basic_fmt_impls;
 
     #[macro_use]
     #[cfg(feature = "non_basic")]

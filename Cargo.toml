@@ -24,6 +24,9 @@ version = "=0.2.0"
 path = "./const_panic_proc_macros/"
 optional = true
 
+[dev-dependencies.arrayvec]
+version = "0.7"
+
 [dev-dependencies.rand]
 version = "0.8.4"
 default_features = false
