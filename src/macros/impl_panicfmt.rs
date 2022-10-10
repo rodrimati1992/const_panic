@@ -1,4 +1,4 @@
-/// Implements the [`PanicFmt`](crate::PanicFmt)
+/// Implements the [`PanicFmt`](crate::fmt::PanicFmt)
 /// trait and the `to_panicvals` method it requires.
 ///
 /// This macro roughly takes a type definition and a (conditionally required) list of impls,
