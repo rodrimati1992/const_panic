@@ -1,6 +1,6 @@
 [package]
 name = "const_panic"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
@@ -44,4 +44,4 @@ derive = ["const_panic_proc_macros"]
 test = []
 
 [package.metadata.docs.rs]
-features = ["derive", "docsrs"]
+features = ["derive", "rust_1_64", "docsrs"]
