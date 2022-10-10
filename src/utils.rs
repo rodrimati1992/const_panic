@@ -198,14 +198,12 @@ const fn next_char_boundary(ranged: RangedBytes<&[u8]>, mut i: usize) -> usize {
     i
 }
 
-#[cfg(feature = "rust_1_64")]
 #[cfg_attr(feature = "test", derive(Debug, PartialEq))]
 pub(crate) struct StartAndBytes<const LEN: usize> {
     pub start: u8,
     pub bytes: [u8; LEN],
 }
 
-#[cfg(feature = "rust_1_64")]
 #[track_caller]
 pub(crate) const fn tail_byte_array<const TO: usize>(
     len: usize,
