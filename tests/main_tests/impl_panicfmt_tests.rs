@@ -1,6 +1,6 @@
 use const_panic::FmtArg;
 
-use std::marker::PhantomData;
+use const_panic::test_utils::MyPhantomData;
 
 #[test]
 fn struct_formatting() {
@@ -178,121 +178,121 @@ fn generic_parsing() {
         (GenericParsingB6<'_, u32, 0>);
         ($type_name:path) =>
         {
-            let foo = $type_name(PhantomData);
+            let foo = $type_name(MyPhantomData::NEW);
             assert_eq!(trunc_fmt!(999;FmtArg::DEBUG; foo), *format!("{:?}", foo));
         }
     }
 }
 
 #[derive(Debug)]
-struct GenericParsing0<'a>(PhantomData<(&'a (), ())>);
+struct GenericParsing0<'a>(MyPhantomData<(&'a (), ())>);
 
 #[derive(Debug)]
-struct GenericParsing1<'a>(PhantomData<(&'a (), ())>);
+struct GenericParsing1<'a>(MyPhantomData<(&'a (), ())>);
 
 #[derive(Debug)]
-struct GenericParsing2<'a, T>(PhantomData<(&'a (), T)>);
+struct GenericParsing2<'a, T>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsing3<'a, T>(PhantomData<(&'a (), T)>);
+struct GenericParsing3<'a, T>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsing4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsing4<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsing5<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsing5<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsing6<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsing6<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing0<'a,>(PhantomData<(&'a (), ())>);
+    struct GenericParsing0<'a,>(MyPhantomData<(&'a (), ())>);
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing1<'a,>(PhantomData<(&'a (), ())>);
+    struct GenericParsing1<'a,>(MyPhantomData<(&'a (), ())>);
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing2<'a, ignore T>(PhantomData<(&'a (), T)>);
+    struct GenericParsing2<'a, ignore T>(MyPhantomData<(&'a (), T)>);
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing3<'a, ignore T,>(PhantomData<(&'a (), T)>);
+    struct GenericParsing3<'a, ignore T,>(MyPhantomData<(&'a (), T)>);
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing4<'a, ignore T, const U: u32>(PhantomData<(&'a (), T)>);
+    struct GenericParsing4<'a, ignore T, const U: u32>(MyPhantomData<(&'a (), T)>);
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsing5<'a, ignore(PhantomData<u8>) T, ignore const U: u32,>(
-        PhantomData<(&'a (), T)>
+    struct GenericParsing5<'a, ignore(MyPhantomData<u8>) T, ignore const U: u32,>(
+        MyPhantomData<(&'a (), T)>
     );
 }
 
 const_panic::impl_panicfmt! {
     struct GenericParsing6<'a, ignore T, ignore(2) const U: u32,>(
-        PhantomData<(&'a (), T)>
+        MyPhantomData<(&'a (), T)>
     );
 }
 
 #[derive(Debug)]
-struct GenericParsingB0<'a>(PhantomData<(&'a (), ())>);
+struct GenericParsingB0<'a>(MyPhantomData<(&'a (), ())>);
 
 #[derive(Debug)]
-struct GenericParsingB1<'a>(PhantomData<(&'a (), ())>);
+struct GenericParsingB1<'a>(MyPhantomData<(&'a (), ())>);
 
 #[derive(Debug)]
-struct GenericParsingB2<'a, T: ?Sized>(PhantomData<(&'a (), T)>);
+struct GenericParsingB2<'a, T: ?Sized>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsingB3<'a, T: ?Sized>(PhantomData<(&'a (), T)>);
+struct GenericParsingB3<'a, T: ?Sized>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsingB4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsingB4<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsingB5<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsingB5<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 #[derive(Debug)]
-struct GenericParsingB6<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+struct GenericParsingB6<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB0<'a>(PhantomData<(&'a (), ())>);
+    struct GenericParsingB0<'a>(MyPhantomData<(&'a (), ())>);
 
     (impl['a] GenericParsingB0<'a>)
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB1<'a>(PhantomData<(&'a (), ())>);
+    struct GenericParsingB1<'a>(MyPhantomData<(&'a (), ())>);
 
     (impl['a] GenericParsingB1<'a,> where[])
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB2<'a, ignore T>(PhantomData<(&'a (), T)>)
+    struct GenericParsingB2<'a, ignore T>(MyPhantomData<(&'a (), T)>)
     where[T: ?Sized];
 
     (impl['a, T] GenericParsingB2<'a, T> where[T: ?Sized])
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB3<'a, ignore T,>(PhantomData<(&'a (), T)>)
+    struct GenericParsingB3<'a, ignore T,>(MyPhantomData<(&'a (), T)>)
     where[T: ?Sized];
 
     (impl['a, T: ?Sized] GenericParsingB3<'a, T,>)
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB4<'a, T, const U: u32>(PhantomData<(&'a (), T)>);
+    struct GenericParsingB4<'a, T, const U: u32>(MyPhantomData<(&'a (), T)>);
 
     (impl['a, const U: u32] GenericParsingB4<'a, u32, U,>)
 }
 
 const_panic::impl_panicfmt! {
-    struct GenericParsingB5<'a, ignore(PhantomData<u8>) T, ignore const U: u32,>(
-        PhantomData<(&'a (), T)>
+    struct GenericParsingB5<'a, ignore(MyPhantomData<u8>) T, ignore const U: u32,>(
+        MyPhantomData<(&'a (), T)>
     );
 
     (impl['a, const U: u32] GenericParsingB5<'a, u32, U>)
@@ -300,7 +300,7 @@ const_panic::impl_panicfmt! {
 
 const_panic::impl_panicfmt! {
     struct GenericParsingB6<'a, ignore T, ignore(2) const U: u32,>(
-        PhantomData<(&'a (), T)>
+        MyPhantomData<(&'a (), T)>
     );
 
     (impl['a] GenericParsingB6<'a, u32, 0>)

@@ -51,3 +51,34 @@ macro_rules! concat_fmt {
         }
     )
 }
+
+// workaround for PhantomData changing to printing type argument
+pub struct MyPhantomData<T: ?Sized>(core::marker::PhantomData<T>);
+
+impl<T: ?Sized> Copy for MyPhantomData<T> {}
+
+impl<T: ?Sized> Clone for MyPhantomData<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> core::fmt::Debug for MyPhantomData<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.write_str("PhantomData")
+    }
+}
+
+impl<T: ?Sized> crate::PanicFmt for MyPhantomData<T> {
+    type This = Self;
+    type Kind = crate::IsCustomType;
+    const PV_COUNT: usize = 1;
+}
+
+impl<T: ?Sized> MyPhantomData<T> {
+    pub const NEW: Self = Self(core::marker::PhantomData);
+
+    pub const fn to_panicvals(self, _: crate::FmtArg) -> [crate::PanicVal<'static>; 1] {
+        [crate::PanicVal::write_str("PhantomData")]
+    }
+}
