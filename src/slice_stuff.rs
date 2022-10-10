@@ -121,6 +121,7 @@ impl_panicfmt_array! {
     (I128, from_slice_i128, i128),
     (Isize, from_slice_isize, isize),
     (Bool, from_slice_bool, bool),
+    (Char, from_slice_char, char),
     (Str, from_slice_str, &'s str),
 }
 

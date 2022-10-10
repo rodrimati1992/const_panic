@@ -11,7 +11,7 @@
 //! - Manually implementing the [`PanicFmt`] trait as described in its docs.
 //!
 //! [`PanicFmt` derive]: derive@crate::PanicFmt
-//! [`PanicFmt`]: trait@crate::PanicFmt
+//! [`PanicFmt`]: trait@crate::fmt::PanicFmt
 //! [`impl_panicfmt`]: crate::impl_panicfmt
 //! [`flatten_panicvals`]: crate::flatten_panicvals
 
@@ -20,6 +20,8 @@ mod non_basic_fmt;
 
 #[cfg(feature = "non_basic")]
 mod fmt_compressed;
+
+pub mod char_formatting;
 
 #[cfg(feature = "non_basic")]
 pub use self::{fmt_compressed::PackedFmtArg, non_basic_fmt::*};
@@ -106,7 +108,7 @@ use core::marker::PhantomData;
 ///
 /// ```
 /// [`PanicFmt` derive]: derive@crate::PanicFmt
-/// [`PanicFmt`]: trait@crate::PanicFmt
+/// [`PanicFmt`]: trait@crate::fmt::PanicFmt
 /// [`impl_panicfmt`]: crate::impl_panicfmt
 /// [`flatten_panicvals`]: crate::flatten_panicvals
 pub trait PanicFmt {

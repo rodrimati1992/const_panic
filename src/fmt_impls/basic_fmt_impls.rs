@@ -10,7 +10,7 @@ macro_rules! primitive_static_panicfmt {
             $($content:tt)*
         }
     ) => {
-        impl<$($impl)*> PanicFmt for $ty {
+        impl<$($impl)*> crate::PanicFmt for $ty {
             type This = Self;
             type Kind = crate::fmt::IsStdType;
             const PV_COUNT: usize = 1;
@@ -20,7 +20,7 @@ macro_rules! primitive_static_panicfmt {
             #[doc = concat!(
                 "Converts this `", stringify!($ty), "` to a single-element `PanicVal` array."
             )]
-            pub const fn to_panicvals($self, $f: FmtArg) -> [PanicVal<'static>; 1] {
+            pub const fn to_panicvals($self, $f: crate::FmtArg) -> [PanicVal<'static>; 1] {
                 [{
                     $($content)*
                 }]
@@ -29,12 +29,13 @@ macro_rules! primitive_static_panicfmt {
             #[doc = concat!(
                 "Converts this `", stringify!($ty), "` to a `PanicVal`."
             )]
-            pub const fn to_panicval($self, $f: FmtArg) -> PanicVal<'static> {
+            pub const fn to_panicval($self, $f: crate::FmtArg) -> PanicVal<'static> {
                 $($content)*
             }
         }
     }
 }
+pub(crate) use primitive_static_panicfmt;
 
 macro_rules! impl_panicfmt_panicval_array {
     (

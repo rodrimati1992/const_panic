@@ -1,6 +1,6 @@
 use const_panic::{FmtArg, PanicFmt};
 
-use core::marker::PhantomData;
+use const_panic::test_utils::MyPhantomData;
 
 macro_rules! fmt_flatten {
     ($($args:tt)*) => (
@@ -181,7 +181,7 @@ fn ignored_generic_params_formatting() {
         {
             use $module::IgnoredGenericParams as IGP;
 
-            let foo = IGP(&3, PhantomData, PhantomData);
+            let foo = IGP(&3, MyPhantomData::NEW, MyPhantomData::NEW);
 
             assert_eq!(
                 fmt_flatten!(FmtArg::DEBUG; IGP<NoFmt, NoFmt, 10, 'c'> => foo),
@@ -203,8 +203,8 @@ mod implicit_gpi {
     #[pfmt(ignore(A, B))]
     pub struct IgnoredGenericParams<'a, A, B, const X: u32, const Y: char>(
         pub &'a u32,
-        pub PhantomData<A>,
-        pub PhantomData<B>,
+        pub MyPhantomData<A>,
+        pub MyPhantomData<B>,
     );
 }
 
@@ -215,8 +215,8 @@ mod explicit_gpi {
     #[pfmt(ignore(A = u32, B = u64, X = 100, Y = '_'))]
     pub struct IgnoredGenericParams<'a, A, B, const X: u32, const Y: char>(
         pub &'a u32,
-        pub PhantomData<A>,
-        pub PhantomData<B>,
+        pub MyPhantomData<A>,
+        pub MyPhantomData<B>,
     );
 }
 
@@ -231,7 +231,7 @@ fn ignored_generic_params_and_impl_formatting() {
         (IgnoredAndImpl<i16, u32, 13, 'Y'>);
         ($ty:path) =>
         {
-            let foo = $ty(&3, PhantomData, PhantomData);
+            let foo = $ty(&3, MyPhantomData::NEW, MyPhantomData::NEW);
 
             assert_eq!(
                 fmt_flatten!(FmtArg::DEBUG; $ty => foo),
@@ -253,6 +253,6 @@ fn ignored_generic_params_and_impl_formatting() {
 #[pfmt(impl<'b, G, const H: u32, const I: char> IgnoredAndImpl<'b, G, u32, H, I>)]
 pub struct IgnoredAndImpl<'a, A, B, const X: u32, const Y: char>(
     pub &'a u32,
-    pub PhantomData<A>,
-    pub PhantomData<B>,
+    pub MyPhantomData<A>,
+    pub MyPhantomData<B>,
 );

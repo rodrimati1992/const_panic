@@ -69,6 +69,60 @@ fn string_test() {
         r#"["h\nllo", "人ö个"]"#
     );
 }
+#[test]
+fn char_test() {
+    assert_eq!(trunc_fmt!(0; ['c'; 0]), r#""#);
+    assert_eq!(trunc_fmt!(1; ['c'; 0]), r#"["#);
+    assert_eq!(trunc_fmt!(2; ['c'; 0]), r#"[]"#);
+    assert_eq!(trunc_fmt!(3; ['c'; 0]), r#"[]"#);
+
+    assert_eq!(trunc_fmt!(0; ['c']), r#""#);
+    assert_eq!(trunc_fmt!(1; ['c']), r#"["#);
+    assert_eq!(trunc_fmt!(2; ['c']), r#"["#);
+    assert_eq!(trunc_fmt!(3; ['c']), r#"["#);
+    assert_eq!(trunc_fmt!(4; ['c']), r#"['c'"#);
+    assert_eq!(trunc_fmt!(5; ['c']), r#"['c']"#);
+    assert_eq!(trunc_fmt!(6; ['c']), r#"['c']"#);
+
+    for (range, expected) in [
+        (0..=0, ""),
+        (1..=3, "["),
+        (4..=4, "['c'"),
+        (5..=5, "['c',"),
+        (6..=11, "['c', "),
+        (12..=12, r#"['c', '\x01'"#),
+        (13..=14, r#"['c', '\x01']"#),
+    ] {
+        for len in range {
+            assert_eq!(trunc_fmt!(len; ['c', '\x01']), expected);
+        }
+    }
+
+    for (range, expected) in [
+        (0..=0, ""),
+        (1..=3, "["),
+        (4..=4, "['c'"),
+        (5..=5, "['c',"),
+        (6..=9, "['c', "),
+        (10..=10, r#"['c', 'ö'"#),
+        (11..=11, r#"['c', 'ö',"#),
+        (12..=16, r#"['c', 'ö', "#),
+        (17..=17, r#"['c', 'ö', '人'"#),
+        (18..=18, r#"['c', 'ö', '人',"#),
+        (19..=21, r#"['c', 'ö', '人', "#),
+        (22..=22, r#"['c', 'ö', '人', '_'"#),
+        (23..=30, r#"['c', 'ö', '人', '_']"#),
+    ] {
+        for len in range {
+            assert_eq!(
+                trunc_fmt!(len; ['c', 'ö', '人', '_']),
+                expected,
+                "len: {}",
+                len
+            );
+        }
+    }
+}
 
 #[test]
 fn bin_integer_test() {
