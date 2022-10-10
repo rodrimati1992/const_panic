@@ -25,7 +25,7 @@ jobs:
         cd "${{github.workspace}}/"
 
         cargo test --no-default-features --features "test rust_1_64"
-        cargo test --no-default-features --features "test __for_konst"
+        cargo test --no-default-features --features "test rust_1_64 non_basic"
 
     - name: ci-all-versions
       run: |
