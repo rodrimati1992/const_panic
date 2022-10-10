@@ -14,6 +14,7 @@ jobs:
       matrix:
         rust: [stable, beta, nightly, 1.64.0, 1.57.0]
 
+    steps:
     - uses: actions/checkout@v2
     - name: ci-1.64
       if: ${{ matrix.rust != '1.57.0' }}
@@ -26,8 +27,6 @@ jobs:
         cargo test --no-default-features --features "test rust_1_64"
         cargo test --no-default-features --features "test __for_konst"
 
-    steps:
-    - uses: actions/checkout@v2
     - name: ci-all-versions
       run: |
         rustup override set ${{ matrix.rust }}
