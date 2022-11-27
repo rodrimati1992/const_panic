@@ -19,6 +19,10 @@ include = [
 
 [workspace]
 
+[dependencies.konst_kernel]
+version = "0.3"
+optional = true
+
 [dependencies.const_panic_proc_macros]
 version = "=0.2.0"
 path = "./const_panic_proc_macros/"
@@ -36,7 +40,7 @@ features = ["small_rng"]
 default = ["non_basic"]
 
 rust_1_64 = []
-non_basic = []
+non_basic = ["konst_kernel"]
 docsrs = []
 derive = ["const_panic_proc_macros"]
 

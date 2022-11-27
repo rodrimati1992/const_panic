@@ -76,7 +76,14 @@ macro_rules! write_panicval {
     (
         $outer_label:lifetime,
         $mout:ident, $lout:ident, $tct:expr,
-        ($buffer:ident, $len:ident, $capacity:expr, $max_capacity:expr)
+        (
+            $len:expr,
+            $capacity:expr,
+            $max_capacity:expr,
+            $not_enough_space:expr,
+            $write_buffer:ident,
+            $write_buffer_checked:ident,
+        )
     ) => {
         let rem_space = $capacity - $len;
         let (strfmt, class, was_truncated) = $tct;
@@ -104,18 +111,18 @@ macro_rules! write_panicval {
         let trunc_end = ranged.start + was_truncated.get_length(ranged.len());
 
         while lpad != 0 {
-            __write_array! {$buffer, $len, b' '}
+            $write_buffer! {b' '}
             lpad -= 1;
         }
 
         if let FmtKind::Display = fmt_kind {
             let mut i = ranged.start;
             while i < trunc_end {
-                __write_array! {$buffer, $len, ranged.bytes[i]}
+                $write_buffer! {ranged.bytes[i]}
                 i += 1;
             }
         } else if rem_space != 0 {
-            __write_array! {$buffer, $len, b'"'}
+            $write_buffer! {b'"'}
             let mut i = 0;
             while i < trunc_end {
                 use crate::debug_str_fmt::{hex_as_ascii, ForEscaping};
@@ -123,32 +130,32 @@ macro_rules! write_panicval {
                 let c = ranged.bytes[i];
                 let mut written_c = c;
                 if ForEscaping::is_escaped(c) {
-                    __write_array! {$buffer, $len, b'\\'}
+                    $write_buffer! {b'\\'}
                     if ForEscaping::is_backslash_escaped(c) {
                         written_c = ForEscaping::get_backslash_escape(c);
                     } else {
-                        __write_array! {$buffer, $len, b'x'}
-                        __write_array! {$buffer, $len, hex_as_ascii(c >> 4)}
+                        $write_buffer! {b'x'}
+                        $write_buffer! {hex_as_ascii(c >> 4)}
                         written_c = hex_as_ascii(c & 0b1111);
                     };
                 }
-                __write_array! {$buffer, $len, written_c}
+                $write_buffer! {written_c}
 
                 i += 1;
             }
             if let WasTruncated::No = was_truncated {
-                __write_array_checked! {$buffer, $len, b'"'}
+                $write_buffer_checked! {b'"'}
             }
         }
 
         while rpad != 0 {
-            __write_array! {$buffer, $len, b' '}
+            $write_buffer! {b' '}
             rpad -= 1;
         }
 
         if let WasTruncated::Yes(_) = was_truncated {
             if $capacity < $max_capacity {
-                return Err(NotEnoughSpace);
+                return $not_enough_space;
             } else {
                 break $outer_label;
             }
@@ -159,7 +166,11 @@ macro_rules! write_panicval {
 macro_rules! write_to_buffer_inner {
     (
         $args:ident
-        ($buffer:ident, $len:ident, $capacity:expr, $max_capacity:expr)
+        (
+            $len:expr,
+            $capacity:expr,
+            $($_rem:tt)*
+        )
         $wptb_args:tt
     ) => {
         let mut args = $args;
@@ -214,6 +225,21 @@ macro_rules! write_to_buffer {
     };
 }
 
+macro_rules! make_buffer_writer_macros {
+    ($buffer:ident, $len:ident) => {
+        macro_rules! write_buffer {
+            ($value:expr) => {
+                __write_array! {$buffer, $len, $value}
+            };
+        }
+        macro_rules! write_buffer_checked {
+            ($value:expr) => {
+                __write_array_checked! {$buffer, $len, $value}
+            };
+        }
+    };
+}
+
 #[cold]
 #[inline(never)]
 #[track_caller]
@@ -221,9 +247,14 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
     let mut buffer = [0u8; LEN];
     let mut len = 0usize;
 
+    make_buffer_writer_macros! {buffer, len}
+
     write_to_buffer! {
         args
-        (buffer, len, LEN, MAX_PANIC_MSG_LEN)
+        (
+            len, LEN, MAX_PANIC_MSG_LEN, Err(NotEnoughSpace),
+            write_buffer, write_buffer_checked,
+        )
     }
 
     unsafe {
@@ -253,9 +284,14 @@ pub fn format_panic_message<const LEN: usize>(
         // intentionally shadowed
         let buffer = &mut buffer[..capacity];
 
+        make_buffer_writer_macros! {buffer, len}
+
         write_to_buffer! {
             args
-            (buffer, len, capacity, max_capacity)
+            (
+                len, capacity, max_capacity, Err(NotEnoughSpace),
+                write_buffer, write_buffer_checked,
+            )
         }
     }
 
@@ -271,9 +307,11 @@ pub(crate) const fn make_panic_string<const LEN: usize>(
     let mut buffer = [0u8; LEN];
     let mut len = 0usize;
 
+    make_buffer_writer_macros! {buffer, len}
+
     write_to_buffer! {
         args
-        (buffer, len, LEN, LEN + 1)
+        (len, LEN, LEN + 1, Err(NotEnoughSpace), write_buffer, write_buffer_checked,)
     }
 
     assert!(len as u32 as usize == len, "the panic message is too large");
@@ -282,4 +320,41 @@ pub(crate) const fn make_panic_string<const LEN: usize>(
         buffer,
         len: len as u32,
     })
+}
+
+#[cfg(feature = "non_basic")]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
+#[doc(hidden)]
+#[track_caller]
+pub const fn make_panic_string_unwrapped<const LEN: usize>(
+    args: &[&[PanicVal<'_>]],
+) -> crate::ArrayString<LEN> {
+    match make_panic_string(args) {
+        Ok(x) => x,
+        Err(_) => panic!("arguments are too large to fit in LEN"),
+    }
+}
+
+#[cfg(feature = "non_basic")]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
+#[doc(hidden)]
+pub const fn compute_length(args: &[&[PanicVal<'_>]]) -> usize {
+    let mut len = 0usize;
+
+    macro_rules! add_to_len {
+        ($value:expr) => {{
+            let _: u8 = $value;
+            len += 1;
+        }};
+    }
+
+    write_to_buffer! {
+        args
+        (
+            len, usize::MAX - 1, usize::MAX, usize::MAX,
+            add_to_len, add_to_len,
+        )
+    }
+
+    len
 }

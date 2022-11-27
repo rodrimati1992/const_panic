@@ -3,6 +3,10 @@ mod concat_assert;
 
 #[cfg(feature = "non_basic")]
 #[macro_use]
+pub(crate) mod concat_macro;
+
+#[cfg(feature = "non_basic")]
+#[macro_use]
 mod non_basic_macros;
 
 #[cfg(feature = "non_basic")]
