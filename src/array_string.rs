@@ -145,6 +145,7 @@ impl<const CAP: usize> ArrayString<CAP> {
     ///     "100hello",
     /// );
     ///
+    /// // trying to format panicvals into too small an ArrayString
     /// assert!(
     ///     ArrayString::<7>::from_panicvals(
     ///         &flatten_panicvals!(FmtArg::DEBUG; 100u8, "hello")
@@ -175,7 +176,11 @@ impl<const CAP: usize> ArrayString<CAP> {
     ///
     /// # Performance
     ///
-    /// This takes a linear amount of time to run, proportional to `CAP - self.len()`.
+    /// When the "rust_1_64" feature is disabled,
+    /// this takes a linear amount of time to run, proportional to `CAP - self.len()`.
+    ///
+    /// When the "rust_1_64" feature is enabled,
+    /// this takes a constant amount of time to run.
     ///
     /// # Example
     ///
@@ -194,7 +199,7 @@ impl<const CAP: usize> ArrayString<CAP> {
     ///
     /// # Performance
     ///
-    /// This takes a linear amount of time to run, proportional to `CAP - self.len()`.
+    /// This takes a linear amount of time to run.
     ///
     /// # Example
     ///
@@ -206,9 +211,18 @@ impl<const CAP: usize> ArrayString<CAP> {
     /// assert_eq!(ArrayString::<16>::new("Hello, world!").to_str(), "Hello, world!");
     /// ```
     pub const fn to_str(&self) -> &str {
-        // safety: make_panic_string delegates formatting to the `write_to_buffer` macro,
-        // which is tested as producing valid utf8.
-        unsafe { core::str::from_utf8_unchecked(self.as_bytes()) }
+        #[cfg(not(feature = "rust_1_64"))]
+        {
+            // safety: make_panic_string delegates formatting to the `write_to_buffer` macro,
+            // which is tested as producing valid utf8.
+            unsafe { core::str::from_utf8_unchecked(self.as_bytes()) }
+        }
+
+        #[cfg(feature = "rust_1_64")]
+        match core::str::from_utf8(self.as_bytes()) {
+            Ok(x) => x,
+            Err(_) => panic!("INTERNAL BUG: the string isn't valid utf-8"),
+        }
     }
 
     /// Creates a single element `PanicVal` borrowing from this string.
@@ -277,6 +291,7 @@ impl<const CAP: usize> TinyString<CAP> {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#[cfg(not(feature = "rust_1_64"))]
 const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
     let mut to_truncate = buffer.len() - upto;
     let mut out: &[u8] = buffer;
@@ -293,4 +308,15 @@ const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
     }
 
     out
+}
+
+#[cfg(feature = "rust_1_64")]
+const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
+    if upto > buffer.len() {
+        return buffer;
+    }
+
+    // SAFETY: the above conditional ensures that `upto` doesn't
+    // create a partially-dangling slice
+    unsafe { core::slice::from_raw_parts(buffer.as_ptr(), upto) }
 }

@@ -299,10 +299,17 @@ pub mod __ {
 #[cfg(feature = "non_basic")]
 #[doc(hidden)]
 mod reexported_non_basic {
-    pub use core::option::Option::{self, None, Some};
+    pub use core::{
+        option::Option::{self, None, Some},
+        primitive::str,
+    };
+
+    pub use konst_kernel::type_eq::MakeTypeWitness;
 
     pub use crate::{
+        concat_panic_::{compute_length, make_panic_string_unwrapped},
         const_default::ConstDefault,
+        macros::concat_macro::ConcatCmd,
         utils::{assert_flatten_panicvals_length, flatten_panicvals, panicvals_id},
     };
 

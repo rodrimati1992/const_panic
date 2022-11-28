@@ -16,6 +16,9 @@ mod main_tests {
 
     mod char_tests;
 
+    #[cfg(feature = "non_basic")]
+    mod concat_macro_tests;
+
     #[cfg(feature = "rust_1_64")]
     mod rust_1_64_types_tests;
 

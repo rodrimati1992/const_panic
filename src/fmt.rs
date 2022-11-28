@@ -208,17 +208,17 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 /// use const_panic::{ArrayString, FmtArg, StdWrapper};
 ///
 /// // `StdWrapper` wraps references to std types to provide their `to_panicvals` methods
-/// let array = StdWrapper(&["3", "foo\nbar", "\0qux"]);
+/// const ARRAY: &[&str] = &["3", "foo\nbar", "\0qux"];
 ///
 /// // Debug formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///     const_panic::concat_!(FmtArg::DEBUG; ARRAY),
 ///     r#"["3", "foo\nbar", "\x00qux"]"#
 /// );
 ///
 /// // Alternate-Debug formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DEBUG; ARRAY),
 ///     concat!(
 ///         "[\n",
 ///         "    \"3\",\n",
@@ -230,13 +230,13 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
 ///
 /// // Display formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::DISPLAY)).unwrap(),
+///     const_panic::concat_!(FmtArg::DISPLAY; ARRAY),
 ///     "[3, foo\nbar, \x00qux]"
 /// );
 ///
 /// // Alternate-Display formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(&array.to_panicvals(FmtArg::ALT_DISPLAY)).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DISPLAY; ARRAY),
 ///     concat!(
 ///         "[\n",
 ///         "    3,\n",

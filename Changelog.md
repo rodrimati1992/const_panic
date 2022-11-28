@@ -2,6 +2,18 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.7
+
+Added `concat_` macro, which requires `"non_basic"` feature.
+
+Added `TypeDelim::{close, open}` methods.
+
+Made `ArrayString::as_bytes` take constant time when the `"rust_1_64"` feature is enabled.
+
+Made `"derive"` feature enable `"non_basic"` feature.
+
+Added `konst_kernel = 0.3` dependency, enabled by `"non_basic"` feature.
+
 ### 0.2.5
 
 Added `"rust_1_64"` feature, which enables formatting impls which require newer versions.

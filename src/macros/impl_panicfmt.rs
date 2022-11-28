@@ -56,18 +56,18 @@
 /// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
 ///
 /// fn main(){
-///     let foo = Foo {
+///     const FOO: Foo = Foo {
 ///         x: &[3, 5, 8, 13],
 ///         y: 21,
 ///         z: Bar(false, true),
 ///     };
 ///     
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&foo.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; FOO),
 ///         "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true) }",
 ///     );
 ///     assert_eq!(
-///         ArrayString::<200>::from_panicvals(&foo.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::ALT_DEBUG; FOO),
 ///         concat!(
 ///             "Foo {\n",
 ///             "    x: [\n",
@@ -117,23 +117,23 @@
 /// use const_panic::{ArrayString, FmtArg, impl_panicfmt};
 ///
 /// fn main() {
-///     let up: Qux<u8> = Qux::Up;
+///     const UP: Qux<u8> = Qux::Up;
 ///     // Debug formatting the Up variant
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&up.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; UP),
 ///         "Up",
 ///     );
 ///
 ///
-///     let down: Qux<u16> = Qux::Down { x: 21, y: 34, z: 55 };
+///     const DOWN: Qux<u16> = Qux::Down { x: 21, y: 34, z: 55 };
 ///     // Debug formatting the Down variant
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&down.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; DOWN),
 ///         "Down { x: 21, y: 34, z: 55 }",
 ///     );
 ///     // Alternate-Debug formatting the Down variant
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&down.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::ALT_DEBUG; DOWN),
 ///         concat!(
 ///             "Down {\n",
 ///             "    x: 21,\n",
@@ -144,15 +144,15 @@
 ///     );
 ///
 ///
-///     let left: Qux<u32> = Qux::Left(89);
+///     const LEFT: Qux<u32> = Qux::Left(89);
 ///     // Debug formatting the Left variant
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&left.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; LEFT),
 ///         "Left(89)",
 ///     );
 ///     // Alternate-Debug formatting the Left variant
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&left.to_panicvals(FmtArg::ALT_DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::ALT_DEBUG; LEFT),
 ///         concat!(
 ///             "Left(\n",
 ///             "    89,\n",
@@ -198,22 +198,22 @@
 /// use std::marker::PhantomData;
 ///
 /// {
-///     let with_int = Foo::<&str, u8> {
+///     const WITH_INT: Foo<&str, u8> = Foo {
 ///         value: 100u8,
 ///         _marker: PhantomData,
 ///     };
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&with_int.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; WITH_INT),
 ///         "Foo { value: 100, _marker: PhantomData }",
 ///     );
 /// }
 /// {
-///     let with_str = Foo::<bool, &str> {
+///     const WITH_STR: Foo<bool, &str> = Foo {
 ///         value: "hello",
 ///         _marker: PhantomData,
 ///     };
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&with_str.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; WITH_STR),
 ///         r#"Foo { value: "hello", _marker: PhantomData }"#,
 ///     );
 /// }
@@ -256,22 +256,22 @@
 /// use std::marker::PhantomData;
 ///
 /// {
-///     let with_int: Foo<u8, bool, 100> = Foo{
+///     const WITH_INT: Foo<u8, bool, 100> = Foo{
 ///         value: 5,
 ///         _marker: PhantomData,
 ///     };
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&with_int.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; WITH_INT),
 ///         "Foo { value: 5, _marker: PhantomData }",
 ///     );
 /// }
 /// {
-///     let with_str: Foo<str, char, 200> = Foo {
+///     const WITH_STR: Foo<str, char, 200> = Foo {
 ///         value: 8,
 ///         _marker: PhantomData,
 ///     };
 ///     assert_eq!(
-///         ArrayString::<100>::from_panicvals(&with_str.to_panicvals(FmtArg::DEBUG)).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG; WITH_STR),
 ///         r#"Foo { value: 8, _marker: PhantomData }"#,
 ///     );
 /// }

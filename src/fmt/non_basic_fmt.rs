@@ -19,34 +19,30 @@ use super::{FmtArg, IsCustomType, PanicFmt};
 ///
 /// // Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::DEBUG;
-///             open: fmt::EmptyDelimiter,
-///                 100u8, fmt::COMMA_SEP,
-///                 false, fmt::COMMA_SEP,
-///                 [0u16; 0], fmt::COMMA_SEP,
-///                 // parenthesizing to pass this as a non-literal
-///                 // otherwise the string is Display formatted
-///                 ("really"), fmt::COMMA_TERM,
-///             close: "",
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::DEBUG;
+///         open: fmt::EmptyDelimiter,
+///             100u8, fmt::COMMA_SEP,
+///             false, fmt::COMMA_SEP,
+///             [0u16; 0], fmt::COMMA_SEP,
+///             // parenthesizing to pass this as a non-literal
+///             // otherwise the string is Display formatted
+///             ("really"), fmt::COMMA_TERM,
+///         close: "",
+///     ),
 ///     " 100, false, [], \"really\""
 /// );
 ///
 ///
 /// // Alternate-Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::ALT_DEBUG;
-///             open: fmt::EmptyDelimiter,
-///                 100u8, fmt::COMMA_SEP,
-///                 false, fmt::COMMA_SEP,
-///                 [0u16; 0], fmt::COMMA_SEP,
-///                 ("really"), fmt::COMMA_TERM,
-///             close: "",
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DEBUG;
+///         open: fmt::EmptyDelimiter,
+///             100u8, fmt::COMMA_SEP,
+///             false, fmt::COMMA_SEP,
+///             [0u16; 0], fmt::COMMA_SEP,
+///             ("really"), fmt::COMMA_TERM,
+///         close: "",
+///     ),
 ///     concat!(
 ///         "\n",
 ///         "    100,\n",
@@ -315,35 +311,27 @@ impl ComputePvCount {
 /// };
 ///
 /// {
-///     let (open, close) = TypeDelim::Tupled.get_open_and_close();
-///
 ///     assert_eq!(
-///         ArrayString::<999>::from_panicvals(
-///             &flatten_panicvals!(FmtArg::DEBUG;
-///                 "Foo",
-///                 open: open,
-///                     10u8, fmt::COMMA_SEP,
-///                     false, fmt::COMMA_TERM,
-///                 close: close,
-///             )
-///         ).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG;
+///             "Foo",
+///             open: TypeDelim::Tupled.open(),
+///                 10u8, fmt::COMMA_SEP,
+///                 false, fmt::COMMA_TERM,
+///             close: TypeDelim::Tupled.close(),
+///         ),
 ///         "Foo(10, false)"
 ///     );
 /// }
 ///
 /// {
-///     let (open, close) = TypeDelim::Braced.get_open_and_close();
-///
 ///     assert_eq!(
-///         ArrayString::<999>::from_panicvals(
-///             &flatten_panicvals!(FmtArg::DEBUG;
-///                 "Bar",
-///                 open: open,
-///                     "x: ", debug: "hello", fmt::COMMA_SEP,
-///                     "y: ", true, fmt::COMMA_TERM,
-///                 close: close,
-///             )
-///         ).unwrap(),
+///         const_panic::concat_!(FmtArg::DEBUG;
+///             "Bar",
+///             open: TypeDelim::Braced.open(),
+///                 "x: ", debug: "hello", fmt::COMMA_SEP,
+///                 "y: ", true, fmt::COMMA_TERM,
+///             close: TypeDelim::Braced.close(),
+///         ),
 ///         "Bar { x: \"hello\", y: true }"
 ///     );
 /// }
@@ -362,9 +350,20 @@ pub enum TypeDelim {
 impl TypeDelim {
     /// Gets the delimiters that surround the fields of a struct or variant.
     pub const fn get_open_and_close(self) -> (Delimiter, Delimiter) {
+        (self.open(), self.close())
+    }
+    /// Gets the group delimiter that precedes the fields of a struct or variant.
+    pub const fn open(self) -> Delimiter {
         match self {
-            Self::Tupled => (Delimiter::OpenParen, Delimiter::CloseParen),
-            Self::Braced => (Delimiter::OpenBrace, Delimiter::CloseBrace),
+            Self::Tupled => Delimiter::OpenParen,
+            Self::Braced => Delimiter::OpenBrace,
+        }
+    }
+    /// Gets the group delimiter that follows the fields of a struct or variant.
+    pub const fn close(self) -> Delimiter {
+        match self {
+            Self::Tupled => Delimiter::CloseParen,
+            Self::Braced => Delimiter::CloseBrace,
         }
     }
 }
@@ -386,34 +385,30 @@ impl TypeDelim {
 ///
 /// // Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::DEBUG;
-///             open: fmt::OpenBracket,
-///                 100u8, fmt::COMMA_SEP,
-///                 false, fmt::COMMA_SEP,
-///                 [0u16; 0], fmt::COMMA_SEP,
-///                 // fmt::COMMA_TERM always goes after the last field
-///                 debug: "really", fmt::COMMA_TERM,
-///             close: fmt::CloseBracket,
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::DEBUG;
+///         open: fmt::OpenBracket,
+///             100u8, fmt::COMMA_SEP,
+///             false, fmt::COMMA_SEP,
+///             [0u16; 0], fmt::COMMA_SEP,
+///             // fmt::COMMA_TERM always goes after the last field
+///             debug: "really", fmt::COMMA_TERM,
+///         close: fmt::CloseBracket,
+///     ),
 ///     "[100, false, [], \"really\"]"
 /// );
 ///
 ///
 /// // Alternate-Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::ALT_DEBUG;
-///             open: fmt::OpenBracket,
-///                 100u8, fmt::COMMA_SEP,
-///                 false, fmt::COMMA_SEP,
-///                 [0u16; 0], fmt::COMMA_SEP,
-///                 // fmt::COMMA_TERM always goes after the last field
-///                 debug: "really", fmt::COMMA_TERM,
-///             close: fmt::CloseBracket,
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DEBUG;
+///         open: fmt::OpenBracket,
+///             100u8, fmt::COMMA_SEP,
+///             false, fmt::COMMA_SEP,
+///             [0u16; 0], fmt::COMMA_SEP,
+///             // fmt::COMMA_TERM always goes after the last field
+///             debug: "really", fmt::COMMA_TERM,
+///         close: fmt::CloseBracket,
+///     ),
 ///     concat!(
 ///         "[\n",
 ///         "    100,\n",
@@ -466,15 +461,13 @@ pub enum IsLast {
 ///
 /// // Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::DEBUG;
-///             open: fmt::OpenBrace,
-///                 debug: "foo", SEMICOLON_SEP,
-///                 [3u8, 5, 8], SEMICOLON_SEP,
-///                 false, SEMICOLON_TERM,
-///             close: fmt::CloseBrace,
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::DEBUG;
+///         open: fmt::OpenBrace,
+///             debug: "foo", SEMICOLON_SEP,
+///             [3u8, 5, 8], SEMICOLON_SEP,
+///             false, SEMICOLON_TERM,
+///         close: fmt::CloseBrace,
+///     ),
 ///     // the space before the brace is because Delimiter is intended for
 ///     // formatting structs and enum variants.
 ///     " { \"foo\"; [3, 5, 8]; false }"
@@ -483,15 +476,13 @@ pub enum IsLast {
 ///
 /// // Alternate-Debug formatting
 /// assert_eq!(
-///     ArrayString::<999>::from_panicvals(
-///         &flatten_panicvals!(FmtArg::ALT_DEBUG;
-///             open: fmt::OpenBrace,
-///                 debug: "foo", SEMICOLON_SEP,
-///                 debug: [3u8, 5, 8], SEMICOLON_SEP,
-///                 false, SEMICOLON_TERM,
-///             close: fmt::CloseBrace,
-///         )
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DEBUG;
+///         open: fmt::OpenBrace,
+///             debug: "foo", SEMICOLON_SEP,
+///             debug: [3u8, 5, 8], SEMICOLON_SEP,
+///             false, SEMICOLON_TERM,
+///         close: fmt::CloseBrace,
+///     ),
 ///     concat!(
 ///         " {\n",
 ///         "    \"foo\";\n",

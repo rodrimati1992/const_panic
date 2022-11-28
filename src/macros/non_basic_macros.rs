@@ -608,17 +608,13 @@ macro_rules! __to_pvf_used_length {
 ///
 /// // Debug formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(
-///         &Foo(10, 20).to_panicvals(FmtArg::DEBUG)
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::DEBUG; Foo(10, 20)),
 ///     "Foo(10, 20)"
 /// );
 ///
 /// // Alternate-Debug formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(
-///         &Foo(false, true).to_panicvals(FmtArg::ALT_DEBUG)
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::ALT_DEBUG; Foo(false, true)),
 ///     concat!(
 ///         "Foo(\n",
 ///         "    false,\n",
@@ -629,9 +625,7 @@ macro_rules! __to_pvf_used_length {
 ///
 /// // Display formatting
 /// assert_eq!(
-///     ArrayString::<99>::from_panicvals(
-///         &Foo("hmm", "what?").to_panicvals(FmtArg::DISPLAY)
-///     ).unwrap(),
+///     const_panic::concat_!(FmtArg::DISPLAY; Foo("hmm", "what?")),
 ///     "Foo(hmm, what?)"
 /// );
 ///

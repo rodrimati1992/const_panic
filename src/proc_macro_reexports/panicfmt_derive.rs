@@ -118,9 +118,8 @@ this also requires a [`#[pfmt(ignored(T))]`](#pfmt-ignored-attr) attribute
 ```rust
 use const_panic::{ArrayString, FmtArg, PanicFmt};
 
-let foo = Foo { x: 3, y: &[3, 5, 8] };
 assert_eq!(
-    ArrayString::<100>::from_panicvals(&foo.to_panicvals(FmtArg::DEBUG)).unwrap(),
+    const_panic::concat_!(Foo { x: 3, y: &[3, 5, 8] }),
     "Foo { x: 3, y: [3, 5, 8] }",
 );
 
@@ -136,15 +135,10 @@ struct Foo<'a> {
 ```rust
 use const_panic::{ArrayString, FmtArg, PanicFmt};
 
-let bar = Foo::Bar;
-assert_eq!(
-    ArrayString::<100>::from_panicvals(&bar.to_panicvals(FmtArg::DEBUG)).unwrap(),
-    "Bar",
-);
+assert_eq!(const_panic::concat_!(Foo::Bar), "Bar");
 
-let baz = Foo::Baz("hello", true);
 assert_eq!(
-    ArrayString::<100>::from_panicvals(&baz.to_panicvals(FmtArg::DEBUG)).unwrap(),
+    const_panic::concat_!(Foo::Baz("hello", true)),
     "Baz(\"hello\", true)",
 );
 
@@ -167,22 +161,22 @@ use const_panic::{ArrayString, FmtArg, PanicFmt};
 use std::marker::PhantomData;
 
 {
-    let with_int = Foo::<&str, u8> {
+    const WITH_INT: Foo<&str, u8> = Foo {
         value: 100u8,
         _marker: PhantomData,
     };
     assert_eq!(
-        ArrayString::<100>::from_panicvals(&with_int.to_panicvals(FmtArg::DEBUG)).unwrap(),
+        const_panic::concat_!(WITH_INT),
         "Foo { value: 100, _marker: PhantomData }",
     );
 }
 {
-    let with_str = Foo::<bool, &str> {
+    const WITH_STR: Foo<bool, &str> = Foo {
         value: "hello",
         _marker: PhantomData,
     };
     assert_eq!(
-        ArrayString::<100>::from_panicvals(&with_str.to_panicvals(FmtArg::DEBUG)).unwrap(),
+        const_panic::concat_!(WITH_STR),
         r#"Foo { value: "hello", _marker: PhantomData }"#,
     );
 }
@@ -216,22 +210,22 @@ use const_panic::{ArrayString, FmtArg, PanicFmt};
 use std::marker::PhantomData;
 
 {
-    let with_int: Foo<u8, bool, 100> = Foo{
+    const WITH_INT: Foo<u8, bool, 100> = Foo{
         value: 5,
         _marker: PhantomData,
     };
     assert_eq!(
-        ArrayString::<100>::from_panicvals(&with_int.to_panicvals(FmtArg::DEBUG)).unwrap(),
+        const_panic::concat_!(WITH_INT),
         "Foo { value: 5, _marker: PhantomData }",
     );
 }
 {
-    let with_str: Foo<str, char, 200> = Foo {
+    const WITH_STR: Foo<str, char, 200> = Foo {
         value: 8,
         _marker: PhantomData,
     };
     assert_eq!(
-        ArrayString::<100>::from_panicvals(&with_str.to_panicvals(FmtArg::DEBUG)).unwrap(),
+        const_panic::concat_!(WITH_STR),
         r#"Foo { value: 8, _marker: PhantomData }"#,
     );
 }
@@ -254,17 +248,9 @@ pub struct Foo<A: ?Sized, B, const X: u32> {
 ```rust
 use const_panic::{ArrayString, FmtArg, PanicFmt};
 
-let empty = Foo([]);
-assert_eq!(
-    ArrayString::<100>::from_panicvals(&empty.to_panicvals(FmtArg::DEBUG)).unwrap(),
-    "Foo([])",
-);
+assert_eq!(const_panic::concat_!(Foo([])), "Foo([])");
 
-let three = Foo([3, 5, 8]);
-assert_eq!(
-    ArrayString::<100>::from_panicvals(&three.to_panicvals(FmtArg::DEBUG)).unwrap(),
-    "Foo([3, 5, 8])",
-);
+assert_eq!(const_panic::concat_!(Foo([3, 5, 8])), "Foo([3, 5, 8])");
 
 #[derive(PanicFmt)]
 struct Foo<const LEN: usize>([u8; LEN]);
@@ -284,11 +270,7 @@ passing the new name to the derive macro.
 #
 use cpanic::{ArrayString, FmtArg, PanicFmt};;
 
-let foo = Foo(Some(13));
-assert_eq!(
-    ArrayString::<100>::from_panicvals(&foo.to_panicvals(FmtArg::DEBUG)).unwrap(),
-    "Foo(Some(13))",
-);
+assert_eq!(cpanic::concat_!(Foo(Some(13))), "Foo(Some(13))");
 
 #[derive(PanicFmt)]
 #[pfmt(crate = cpanic)]
