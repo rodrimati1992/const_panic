@@ -4,8 +4,8 @@ use konst_kernel::type_eq::{MakeTypeWitness, TypeEq, TypeWitnessTypeArg};
 
 /// Concatenates [`PanicFmt`] constants into a `&'static str`
 ///
-/// This uses the same parameter syntax as the [`concat_panic`] macro,
-/// and the arguments must be constant expressions.
+/// This formats arguments the same as the [`concat_panic`] macro,
+/// also requiring the arguments to be constant expressions.
 ///
 /// # Example
 ///

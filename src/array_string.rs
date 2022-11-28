@@ -145,6 +145,7 @@ impl<const CAP: usize> ArrayString<CAP> {
     ///     "100hello",
     /// );
     ///
+    /// // trying to format panicvals into too small an ArrayString
     /// assert!(
     ///     ArrayString::<7>::from_panicvals(
     ///         &flatten_panicvals!(FmtArg::DEBUG; 100u8, "hello")
