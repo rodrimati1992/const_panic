@@ -270,7 +270,7 @@ passing the new name to the derive macro.
 #
 use cpanic::{ArrayString, FmtArg, PanicFmt};;
 
-assert_eq!(const_panic::concat_!(Foo(Some(13))), "Foo(Some(13))");
+assert_eq!(cpanic::concat_!(Foo(Some(13))), "Foo(Some(13))");
 
 #[derive(PanicFmt)]
 #[pfmt(crate = cpanic)]

@@ -10,6 +10,8 @@ Added `TypeDelim::{close, open}` methods.
 
 Made `ArrayString::as_bytes` take constant time when the `"rust_1_64"` feature is enabled.
 
+Made `"derive"` feature enable `"non_basic"` feature.
+
 Added `konst_kernel = 0.3` dependency, enabled by `"non_basic"` feature.
 
 ### 0.2.5

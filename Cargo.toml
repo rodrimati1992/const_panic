@@ -42,7 +42,7 @@ default = ["non_basic"]
 rust_1_64 = []
 non_basic = ["konst_kernel"]
 docsrs = []
-derive = ["const_panic_proc_macros"]
+derive = ["const_panic_proc_macros", "non_basic"]
 
 # private feature
 test = []
