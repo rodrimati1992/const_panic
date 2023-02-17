@@ -46,30 +46,26 @@ use crate::{
 pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     // The panic message capacity starts small and gets larger each time,
     // so that platforms with smaller stacks can call this at runtime.
-    //
-    // Also, given that most(?) panic messages are smaller than 1024 bytes long,
-    // it's not going to be any less efficient in the common case.
+    if let Err(_) = panic_inner::<64>(args) {}
+
+    if let Err(_) = panic_inner::<256>(args) {}
+
     if let Err(_) = panic_inner::<1024>(args) {}
 
-    if let Err(_) = panic_inner::<{ 1024 * 6 }>(args) {}
+    if let Err(_) = panic_inner::<4096>(args) {}
 
-    match panic_inner::<MAX_PANIC_MSG_LEN>(args) {
-        Ok(x) => match x {},
-        Err(_) => panic!(
-            "\
-            unreachable:\n\
-            the `write_panicval_to_buffer` macro must not return Err when \
-            $capacity == $max_capacity\
-        "
-        ),
-    }
+    if let Err(_) = panic_inner::<MAX_PANIC_MSG_LEN>(args) {}
+
+    unreachable!()
 }
 
 /// The maximum length of panic messages (in bytes),
 /// after which the message is truncated.
-// this should probably be smaller on platforms where this
-// const fn is called at runtime, and the stack is finy.
-pub const MAX_PANIC_MSG_LEN: usize = 32768;
+pub const MAX_PANIC_MSG_LEN: usize = if cfg!(target_pointer_width = "16") {
+    16384
+} else {
+    32768
+};
 
 // writes a single PanicVal to an array
 macro_rules! write_panicval {

@@ -16,6 +16,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: ci-nightly
+      if: ${{ matrix.rust == 'nightly' }}
+        rustup override set ${{ matrix.rust }}
+        cargo update
+        cd "${{github.workspace}}/"
+
+        # makes sure that this crate builds on at least this 16-bit architecture
+        cargo build -Zbuild-std=core --target=msp430-none-elf \
+          --features "test rust_1_64 non_basic"
+
+    - uses: actions/checkout@v2
     - name: ci-1.64
       if: ${{ matrix.rust != '1.57.0' }}
       run: |
