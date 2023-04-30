@@ -1,6 +1,6 @@
 [package]
 name = "const_panic"
-version = "0.2.7"
+version = "0.2.8"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
@@ -19,8 +19,8 @@ include = [
 
 [workspace]
 
-[dependencies.konst_kernel]
-version = "0.3"
+[dependencies.typewit]
+version = "1.1.0"
 optional = true
 
 [dependencies.const_panic_proc_macros]
@@ -40,7 +40,7 @@ features = ["small_rng"]
 default = ["non_basic"]
 
 rust_1_64 = []
-non_basic = ["konst_kernel"]
+non_basic = ["typewit"]
 docsrs = []
 derive = ["const_panic_proc_macros", "non_basic"]
 

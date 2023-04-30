@@ -304,7 +304,7 @@ mod reexported_non_basic {
         primitive::str,
     };
 
-    pub use konst_kernel::type_eq::MakeTypeWitness;
+    pub use typewit::MakeTypeWitness;
 
     pub use crate::{
         concat_panic_::{compute_length, make_panic_string_unwrapped},
