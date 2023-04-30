@@ -1,6 +1,6 @@
 use crate::ArrayString;
 
-use konst_kernel::type_eq::{MakeTypeWitness, TypeEq, TypeWitnessTypeArg};
+use typewit::{MakeTypeWitness, TypeEq, TypeWitnessTypeArg};
 
 /// Concatenates [`PanicFmt`] constants into a `&'static str`
 ///
