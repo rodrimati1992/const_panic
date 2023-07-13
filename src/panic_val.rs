@@ -27,7 +27,7 @@ pub struct PanicVal<'a> {
 
 #[derive(Copy, Clone)]
 pub(crate) enum PanicVariant<'a> {
-    Str(StrFmt, Packed<&'a str>),
+    Str(StrFmt, &'a str),
     #[cfg(feature = "non_basic")]
     ShortString(StrFmt, TinyString<{ string_cap::TINY }>),
     PreFmt(PreFmtString),
@@ -135,7 +135,7 @@ impl<'a> PanicVal<'a> {
     /// Equivalent to `PanicVal::from_str(string, FmtArg::DISPLAY)`
     pub const fn write_str(string: &'a str) -> Self {
         PanicVal {
-            var: PanicVariant::Str(StrFmt::DISPLAY, Packed(string)),
+            var: PanicVariant::Str(StrFmt::DISPLAY, string),
         }
     }
 
@@ -188,7 +188,7 @@ impl<'a> PanicVal<'a> {
 
     pub(crate) const fn to_class(&self) -> (StrFmt, PanicClass<'_>) {
         match &self.var {
-            &PanicVariant::Str(strfmt, Packed(str)) => {
+            &PanicVariant::Str(strfmt, str) => {
                 let ranged = RangedBytes {
                     start: 0,
                     end: str.len(),
