@@ -113,11 +113,11 @@ fn parse_attribute<'a>(
     ctx: ParseCtx<'a>,
     attribute: &Attribute,
 ) -> syn::Result<()> {
-    if attribute.path.is_ident("pfmt") {
+    if attribute.path().is_ident("pfmt") {
         let closure =
             move |input: &'_ ParseBuffer<'_>| parse_helper_attribute(this, ds, ctx, input);
 
-        if attribute.tokens.is_empty() {
+        if attribute.to_token_stream().is_empty() {
             Parser::parse2(closure, crate::TokenStream2::new())
         } else {
             attribute.parse_args_with(closure)
