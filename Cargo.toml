@@ -20,7 +20,7 @@ include = [
 [workspace]
 
 [dependencies.typewit]
-version = "1.1.0"
+version = "1.9.0"
 optional = true
 
 [dependencies.const_panic_proc_macros]
