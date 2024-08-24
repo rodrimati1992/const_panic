@@ -22,8 +22,8 @@ travis-ci = { repository =  "rodrimati1992/const_format_crates/" }
 proc-macro = true
 
 [dependencies]
-quote = "1.0.7"
-proc-macro2 = "1.0.19"
+quote = "1.0.37"
+proc-macro2 = "1.0.86"
 unicode-xid = "0.2"
 
 [dependencies.syn]
