@@ -9,6 +9,7 @@ mod utils_1_64_tests;
 mod non_basic_utils;
 
 #[cfg(feature = "non_basic")]
+#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub use self::non_basic_utils::*;
 
 pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
@@ -231,32 +232,55 @@ pub(crate) const fn tail_byte_array<const TO: usize>(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#[cfg(not(feature = "rust_1_64"))]
-pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
-    let mut to_truncate = buffer.len() - upto;
-    let mut out: &[u8] = buffer;
 
-    while to_truncate != 0 {
-        if let [rem @ .., _] = out {
-            out = rem;
-        }
-        to_truncate -= 1;
-    }
-
-    if out.len() != upto {
-        panic!("BUG!")
-    }
-
-    out
-}
-
-#[cfg(feature = "rust_1_64")]
+/// Const equivalent of `&buffer[..upto]` with saturating indexing.
+/// 
+/// "saturating indexing" means that if `upto > buffer.len()`, 
+/// then this returns all of `buffer` instead of panicking.
+/// 
+/// # Example 
+/// 
+/// ```rust
+/// use const_panic::utils::bytes_up_to;
+/// 
+/// const BYTES: &[u8] = &[3, 5, 8, 13, 21, 34, 55, 89];
+/// 
+/// const SLICE: &[u8] = bytes_up_to(BYTES, 4);
+/// assert_eq!(SLICE, &[3, 5, 8, 13][..]);
+/// 
+/// const WHOLE: &[u8] = bytes_up_to(BYTES, usize::MAX);
+/// assert_eq!(WHOLE, &[3, 5, 8, 13, 21, 34, 55, 89][..]);
+/// 
+/// ```
 pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
     if upto > buffer.len() {
         return buffer;
     }
 
-    // SAFETY: the above conditional ensures that `upto` doesn't
-    // create a partially-dangling slice
-    unsafe { core::slice::from_raw_parts(buffer.as_ptr(), upto) }
+    #[cfg(not(feature = "rust_1_64"))]
+    {
+        let mut to_truncate = buffer.len() - upto;
+        let mut out: &[u8] = buffer;
+
+        while to_truncate != 0 {
+            if let [rem @ .., _] = out {
+                out = rem;
+            }
+            to_truncate -= 1;
+        }
+
+        if out.len() != upto {
+            panic!("BUG!")
+        }
+
+        out
+    }
+
+    #[cfg(feature = "rust_1_64")]
+    {
+        // SAFETY: the above conditional ensures that `upto` doesn't
+        // create a partially-dangling slice
+        unsafe { core::slice::from_raw_parts(buffer.as_ptr(), upto) }
+    }
 }
+

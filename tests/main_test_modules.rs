@@ -44,4 +44,6 @@ mod main_tests {
     mod pvcount_tests;
 
     mod string_tests;
+    
+    mod utils_tests;
 }
