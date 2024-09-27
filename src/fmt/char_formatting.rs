@@ -50,7 +50,7 @@ const fn hex_as_ascii(n: u8) -> u8 {
     }
 }
 
-#[cfg(any(test, feature = "fmt"))]
+#[cfg(test)]
 pub(crate) const fn char_debug_len(c: char) -> usize {
     let inner = match c {
         '\t' | '\r' | '\n' | '\\' | '\'' => 2,

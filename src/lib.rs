@@ -225,11 +225,6 @@ mod panic_val;
 #[cfg(feature = "non_basic")]
 mod const_default;
 
-#[cfg(not(feature = "non_basic"))]
-mod utils;
-
-#[cfg(feature = "non_basic")]
-#[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub mod utils;
 
 #[cfg(all(test, not(feature = "test")))]

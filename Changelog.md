@@ -2,6 +2,13 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.10
+
+[Fixed internal use of the panic macro to not append nul bytes to the output](<https://github.com/rodrimati1992/const_panic/pull/12>).
+
+Added `const_panic::utils::bytes_up_to` function.
+
+
 ### 0.2.7
 
 Added `concat_` macro, which requires `"non_basic"` feature.
