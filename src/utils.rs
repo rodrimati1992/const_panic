@@ -228,3 +228,35 @@ pub(crate) const fn tail_byte_array<const TO: usize>(
         bytes,
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+#[cfg(not(feature = "rust_1_64"))]
+pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
+    let mut to_truncate = buffer.len() - upto;
+    let mut out: &[u8] = buffer;
+
+    while to_truncate != 0 {
+        if let [rem @ .., _] = out {
+            out = rem;
+        }
+        to_truncate -= 1;
+    }
+
+    if out.len() != upto {
+        panic!("BUG!")
+    }
+
+    out
+}
+
+#[cfg(feature = "rust_1_64")]
+pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
+    if upto > buffer.len() {
+        return buffer;
+    }
+
+    // SAFETY: the above conditional ensures that `upto` doesn't
+    // create a partially-dangling slice
+    unsafe { core::slice::from_raw_parts(buffer.as_ptr(), upto) }
+}

@@ -1,7 +1,7 @@
 use crate::{
     fmt::FmtKind,
     panic_val::{PanicClass, PanicVal, StrFmt},
-    utils::{string_cap, WasTruncated},
+    utils::{bytes_up_to, string_cap, WasTruncated},
 };
 
 /// Panics by concatenating the argument slice.
@@ -258,7 +258,8 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
     }
 
     unsafe {
-        let str = core::str::from_utf8_unchecked(&buffer);
+        let buffer = bytes_up_to(&buffer, len);
+        let str = core::str::from_utf8_unchecked(buffer);
         panic!("{}", str)
     }
 }
