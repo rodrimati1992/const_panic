@@ -140,7 +140,7 @@ impl_panicfmt_panicarg! {
 impl<'a> PanicVal<'a> {
     /// Constructs a `PanicVal` from a `&str`
     pub const fn from_str(this: &'a str, f: FmtArg) -> PanicVal<'a> {
-        PanicVal::__new(PanicVariant::Str(StrFmt::new(f), Packed(this)))
+        PanicVal::__new(PanicVariant::Str(StrFmt::new(f), this))
     }
 }
 
