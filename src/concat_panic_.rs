@@ -49,11 +49,34 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     //
     // Also, given that most(?) panic messages are smaller than 1024 bytes long,
     // it's not going to be any less efficient in the common case.
-    if let Err(_) = panic_inner::<1024>(args) {}
+    if let Err(_) = panic_inner::<1024, MAX_PANIC_MSG_LEN>(args) {}
 
-    if let Err(_) = panic_inner::<{ 1024 * 6 }>(args) {}
+    if let Err(_) = panic_inner::<{ 1024 * 6 }, MAX_PANIC_MSG_LEN>(args) {}
 
-    match panic_inner::<MAX_PANIC_MSG_LEN>(args) {
+    match panic_inner::<MAX_PANIC_MSG_LEN, MAX_PANIC_MSG_LEN>(args) {
+        Ok(x) => match x {},
+        Err(_) => panic!(
+            "\
+            unreachable:\n\
+            the `write_panicval_to_buffer` macro must not return Err when \
+            $capacity == $max_capacity\
+        "
+        ),
+    }
+}
+
+/// Panics by concatenating the argument slice. Limited to a max
+/// `PANIC_MSG_LEN`, after which the message will be truncated.
+///
+/// See [`const_panic_truncate`] for details on parameters.
+///
+/// This is the function that the
+/// [`concat_panic_truncate`](macro@concat_panic_truncat) macro calls to panic.
+#[cold]
+#[inline(never)]
+#[track_caller]
+pub const fn concat_panic_truncate<const PANIC_MSG_LEN: usize>(args: &[&[PanicVal<'_>]]) -> ! {
+    match panic_inner::<PANIC_MSG_LEN, PANIC_MSG_LEN>(args) {
         Ok(x) => match x {},
         Err(_) => panic!(
             "\
@@ -243,7 +266,9 @@ macro_rules! make_buffer_writer_macros {
 #[cold]
 #[inline(never)]
 #[track_caller]
-const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never, NotEnoughSpace> {
+const fn panic_inner<const LEN: usize, const MAX_LEN: usize>(
+    args: &[&[PanicVal<'_>]],
+) -> Result<Never, NotEnoughSpace> {
     let mut buffer = [0u8; LEN];
     let mut len = 0usize;
 
@@ -252,7 +277,7 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
     write_to_buffer! {
         args
         (
-            len, LEN, MAX_PANIC_MSG_LEN, Err(NotEnoughSpace),
+            len, LEN, MAX_LEN, Err(NotEnoughSpace),
             write_buffer, write_buffer_checked,
         )
     }
