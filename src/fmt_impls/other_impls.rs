@@ -1,4 +1,4 @@
-use crate::{FmtArg, PanicFmt, PanicVal};
+use crate::{FmtArg, PanicVal};
 
 use core::{
     marker::{PhantomData, PhantomPinned},

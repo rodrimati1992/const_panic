@@ -3,6 +3,7 @@
 use crate::debug_str_fmt::ForEscaping;
 
 #[cfg(feature = "rust_1_64")]
+#[cfg(test)]
 mod utils_1_64_tests;
 
 #[cfg(feature = "non_basic")]
@@ -232,25 +233,24 @@ pub(crate) const fn tail_byte_array<const TO: usize>(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
 /// Const equivalent of `&buffer[..upto]` with saturating indexing.
-/// 
-/// "saturating indexing" means that if `upto > buffer.len()`, 
+///
+/// "saturating indexing" means that if `upto > buffer.len()`,
 /// then this returns all of `buffer` instead of panicking.
-/// 
-/// # Example 
-/// 
+///
+/// # Example
+///
 /// ```rust
 /// use const_panic::utils::bytes_up_to;
-/// 
+///
 /// const BYTES: &[u8] = &[3, 5, 8, 13, 21, 34, 55, 89];
-/// 
+///
 /// const SLICE: &[u8] = bytes_up_to(BYTES, 4);
 /// assert_eq!(SLICE, &[3, 5, 8, 13][..]);
-/// 
+///
 /// const WHOLE: &[u8] = bytes_up_to(BYTES, usize::MAX);
 /// assert_eq!(WHOLE, &[3, 5, 8, 13, 21, 34, 55, 89][..]);
-/// 
+///
 /// ```
 pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
     if upto > buffer.len() {
@@ -283,4 +283,3 @@ pub const fn bytes_up_to(buffer: &[u8], upto: usize) -> &[u8] {
         unsafe { core::slice::from_raw_parts(buffer.as_ptr(), upto) }
     }
 }
-

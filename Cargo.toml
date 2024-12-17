@@ -1,6 +1,6 @@
 [package]
 name = "const_panic"
-version = "0.2.10"
+version = "0.2.11"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2021"
 license = "Zlib"
@@ -40,6 +40,8 @@ features = ["small_rng"]
 default = ["non_basic"]
 
 rust_1_64 = []
+rust_1_82 = ["rust_1_64"]
+rust_latest_stable = ["rust_1_82"]
 non_basic = ["typewit"]
 docsrs = []
 derive = ["const_panic_proc_macros", "non_basic"]
@@ -48,4 +50,4 @@ derive = ["const_panic_proc_macros", "non_basic"]
 test = []
 
 [package.metadata.docs.rs]
-features = ["derive", "rust_1_64", "docsrs"]
+features = ["derive", "rust_latest_stable", "docsrs"]

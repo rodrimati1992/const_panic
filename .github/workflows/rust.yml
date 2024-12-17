@@ -12,20 +12,23 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        rust: [stable, beta, nightly, 1.64.0, 1.57.0]
+        rust: [stable, beta, nightly, 1.82.0, 1.64.0, 1.57.0]
 
     steps:
     - uses: actions/checkout@v2
-    - name: ci-1.64
-      if: ${{ matrix.rust != '1.57.0' }}
-      run: |
-        rustup override set ${{ matrix.rust }}
-        cargo update
+    - name: ci-1-82-version-env_vars
+      if: ${{ matrix.rust == '1.82.0' }}
+      run: echo "rustv=rust_1_82" >> $GITHUB_ENV
 
-        cd "${{github.workspace}}/"
+    - uses: actions/checkout@v2
+    - name: ci-1-64-version-env_vars
+      if: ${{ matrix.rust == '1.64.0' }}
+      run: echo "rustv=rust_1_64" >> $GITHUB_ENV
 
-        cargo test --no-default-features --features "test rust_1_64"
-        cargo test --no-default-features --features "test rust_1_64 non_basic"
+    - uses: actions/checkout@v2
+    - name: ci-stable-or-later-env_vars
+      if: ${{ matrix.rust == 'stable' || matrix.rust == 'beta' || matrix.rust == 'nightly' }}
+      run: echo "rustv=rust_latest_stable" >> $GITHUB_ENV
 
     - name: ci-all-versions
       run: |
@@ -39,7 +42,7 @@ jobs:
         cargo build --no-default-features
         cargo build
         cargo test --features "test"
-        cargo test --no-default-features --features "test "
-        cargo test --no-default-features --features "test non_basic"
-        cargo test --no-default-features --features "test non_basic derive"
+        cargo test --no-default-features --features "test ${{env.rustv}}"
+        cargo test --no-default-features --features "test ${{env.rustv}} non_basic"
+        cargo test --no-default-features --features "test ${{env.rustv}} non_basic derive"
 

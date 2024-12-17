@@ -1,3 +1,5 @@
+#![allow(non_local_definitions)]
+
 use const_panic::FmtArg;
 
 use const_panic::test_utils::MyPhantomData;
