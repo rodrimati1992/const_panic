@@ -2,6 +2,12 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.11
+
+Added formatting for `core::num::{IntErrorKind, ParseIntError}`
+
+Added `"rust_1_82"` and `"rust_latest_stable"` features
+
 ### 0.2.10
 
 [Fixed internal use of the panic macro to not append nul bytes to the output](<https://github.com/rodrimati1992/const_panic/pull/12>).
