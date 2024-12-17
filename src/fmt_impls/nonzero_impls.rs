@@ -1,4 +1,4 @@
-use crate::{FmtArg, PanicFmt, PanicVal};
+use crate::{FmtArg, PanicVal};
 
 use core::num::{
     NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,

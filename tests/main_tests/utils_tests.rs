@@ -1,13 +1,11 @@
 use const_panic::utils::bytes_up_to;
 
-
 macro_rules! case {
-    ($bytes:expr, $upto:expr) => ({
+    ($bytes:expr, $upto:expr) => {{
         const SLICE: &[u8] = bytes_up_to($bytes, $upto);
-        assert_eq!(slice, );
-    })
+        assert_eq!(slice,);
+    }};
 }
-
 
 #[test]
 fn test_bytes_up_to_isconst() {
@@ -25,10 +23,7 @@ fn test_bytes_up_to() {
     for bytes_len in iter.clone() {
         let bytes = BYTES.get(..bytes_len).unwrap_or(BYTES);
         for upto in iter.clone() {
-            assert_eq!(
-                bytes_up_to(bytes, upto),
-                bytes.get(..upto).unwrap_or(bytes),
-            )
+            assert_eq!(bytes_up_to(bytes, upto), bytes.get(..upto).unwrap_or(bytes),)
         }
     }
 }

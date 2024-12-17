@@ -22,6 +22,9 @@ mod main_tests {
     #[cfg(feature = "rust_1_64")]
     mod rust_1_64_types_tests;
 
+    #[cfg(feature = "rust_1_64")]
+    mod rust_1_82_types_tests;
+
     #[cfg(feature = "non_basic")]
     mod impl_panicfmt_tests;
 
@@ -44,6 +47,6 @@ mod main_tests {
     mod pvcount_tests;
 
     mod string_tests;
-    
+
     mod utils_tests;
 }
