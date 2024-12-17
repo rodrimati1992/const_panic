@@ -22,7 +22,7 @@ mod main_tests {
     #[cfg(feature = "rust_1_64")]
     mod rust_1_64_types_tests;
 
-    #[cfg(feature = "rust_1_64")]
+    #[cfg(feature = "rust_1_82")]
     mod rust_1_82_types_tests;
 
     #[cfg(feature = "non_basic")]
