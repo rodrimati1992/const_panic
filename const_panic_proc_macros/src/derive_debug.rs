@@ -110,6 +110,11 @@ pub(crate) fn derive_constdebug_impl(input: DeriveInput) -> syn::Result<TokenStr
         }
     }
 
+    let pv_count_init_lb = match &config.panicvals_lower_bound {
+        Some(lb) => quote!(__cp_bCj7dq3Pud::utils::max_usize(#pv_count_init, #lb)),
+        None => pv_count_init,
+    };
+
     let args_for_inherent_impl = ArgsForInherentImpl {
         comma_sep: Ident::new("COMMA_SEP", Span::call_site()),
         comma_term: Ident::new("COMMA_TERM", Span::call_site()),
@@ -208,7 +213,7 @@ pub(crate) fn derive_constdebug_impl(input: DeriveInput) -> syn::Result<TokenStr
             type This = Self;
             type Kind = __cp_bCj7dq3Pud::IsCustomType;
 
-            const PV_COUNT: __cp_bCj7dq3Pud::__::usize = #pv_count_init;
+            const PV_COUNT: __cp_bCj7dq3Pud::__::usize = #pv_count_init_lb;
         }
 
         #(#impl_ihapvcs_mapped)*

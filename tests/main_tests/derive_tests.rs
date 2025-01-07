@@ -120,8 +120,9 @@ struct Foo<'a> {
     w: Baz,
 }
 
+
+
 #[derive(Debug, PanicFmt)]
-// #[pfmt(debug_print)]
 #[pfmt(display_fmt = Self::fmt_display)]
 struct DispStruct<'a> {
     x: &'a [u8],
@@ -310,6 +311,33 @@ fn ignored_generic_params_formatting() {
         }
     }
 }
+
+
+
+#[test]
+fn struct_panicvals_lower_bound() {
+    assert_eq!(LbStruct::PV_COUNT, 100);
+}
+
+#[test]
+fn enum_panicvals_lower_bound() {
+    assert_eq!(LbEnum::PV_COUNT, 101);
+}
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(panicvals_lower_bound = 100)]
+struct LbStruct<'a> {
+    x: &'a [u8],
+    y: u8,
+}
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(panicvals_lower_bound = 101)]
+enum LbEnum {
+    Up,
+    Down,
+}
+
 
 mod implicit_gpi {
     use super::*;

@@ -18,6 +18,7 @@ use core::marker::PhantomData;
 
 mod keyword {
     syn::custom_keyword!(display_fmt);
+    syn::custom_keyword!(panicvals_lower_bound);
     syn::custom_keyword!(debug_print);
     syn::custom_keyword!(ignore);
 }
@@ -33,6 +34,7 @@ struct ParsedAttributes<'a> {
     debug_print: bool,
     crate_path: syn::Path,
     display_fmt: Option<syn::Expr>,
+    panicvals_lower_bound: Option<syn::Expr>,
     impls: Vec<ImplHeader>,
     gen_params_props: Vec<GenParamProps<'a>>,
     type_const_params: Vec<Ident>,
@@ -43,6 +45,7 @@ pub(super) struct Configuration<'a> {
     pub(super) debug_print: bool,
     pub(super) crate_path: syn::Path,
     pub(super) display_fmt: Option<syn::Expr>,
+    pub(super) panicvals_lower_bound: Option<syn::Expr>,
     pub(super) impls: Vec<ImplHeader>,
     pub(super) gen_params_props: Vec<GenParamProps<'a>>,
     _marker: PhantomData<&'a ()>,
@@ -53,6 +56,7 @@ pub(super) fn parse_attributes<'a>(ds: &'a DataStructure<'a>) -> syn::Result<Con
         debug_print: false,
         crate_path: syn::parse_quote!(::const_panic),
         display_fmt: None,
+        panicvals_lower_bound: None,
         impls: Vec::new(),
         gen_params_props: ds
             .generics
@@ -148,6 +152,11 @@ fn parse_helper_attribute<'a>(
 
         input.parse::<Token!(=)>()?;
         this.display_fmt = Some(syn::Expr::Verbatim(input.parse()?));
+    } else if let Some(_) = input.peek_parse(keyword::panicvals_lower_bound)? {
+        check_is_container(&ctx, empty)?;
+
+        input.parse::<Token!(=)>()?;
+        this.panicvals_lower_bound = Some(syn::Expr::Verbatim(input.parse()?));
     } else if let Some(_) = input.peek_parse(Token!(crate))? {
         check_is_container(&ctx, empty)?;
 
@@ -210,6 +219,7 @@ fn finish<'a>(
         debug_print,
         crate_path,
         display_fmt,
+        panicvals_lower_bound,
         impls,
         gen_params_props,
         type_const_params: _,
@@ -220,6 +230,7 @@ fn finish<'a>(
         debug_print,
         crate_path,
         display_fmt,
+        panicvals_lower_bound,
         impls,
         gen_params_props,
         _marker,
