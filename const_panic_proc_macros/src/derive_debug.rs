@@ -11,7 +11,7 @@ use syn::{punctuated::Punctuated, DeriveInput, Ident};
 
 use alloc::{string::ToString, vec::Vec};
 
-use self::attribute_parsing::GenParamIgnorance;
+use self::attribute_parsing::{Configuration, GenParamIgnorance};
 
 mod attribute_parsing;
 
@@ -183,7 +183,7 @@ pub(crate) fn derive_constdebug_impl(input: DeriveInput) -> syn::Result<TokenStr
 
     let impl_ihapvcs_mapped = impl_ihapvcs
         .iter()
-        .map(|impl_ihapvc| emit_inherent_impl(impl_ihapvc, &args_for_inherent_impl));
+        .map(|impl_ihapvc| emit_inherent_impl(&config, impl_ihapvc, &args_for_inherent_impl));
 
     let ty_params = ds
         .generics
@@ -242,6 +242,7 @@ struct ArgsForInherentImpl<'a> {
 }
 
 fn emit_inherent_impl(
+    Configuration { display_fmt, .. }: &Configuration<'_>,
     ImplHeaderAndPvCountSelf {
         impl_header,
         pvcount_self,
@@ -260,66 +261,82 @@ fn emit_inherent_impl(
         let vname = v.name;
         let vsname = vname.to_string();
 
+        let last_field_pos = v.fields.len().saturating_sub(1);
+        let field_names = v.fields.iter().map(|f| &f.ident);
+        let field_patia = v.fields.iter().map(|f| &f.pattern_ident);
+        let delimiter = &delimiters[v_index];
+
+        let field_fmt = v.fields.iter().map(|f| {
+            let field_patib = &f.pattern_ident;
+
+            let comma = if f.index.pos == last_field_pos {
+                &comma_term
+            } else {
+                &comma_sep
+            };
+
+            let field_name_colon = if let StructKind::Braced = v.kind {
+                let fname = ::alloc::format!("{}: ", f.ident);
+
+                quote!(
+                    &[__cp_bCj7dq3Pud::PanicVal::write_str(#fname)],
+                )
+            } else {
+                TokenStream2::new()
+            };
+
+            quote!(
+                #field_name_colon
+                &__cp_bCj7dq3Pud::PanicFmt::PROOF
+                    .infer(#field_patib)
+                    .coerce(#field_patib)
+                    .to_panicvals(fmtarg),
+                &__cp_bCj7dq3Pud::fmt::#comma
+                    .to_panicvals(fmtarg),
+            )
+        });
+
         if v.fields.is_empty() {
             quote!(
-                #match_prefix #vname {} => {
+                #match_prefix #vname { #(#field_names: #field_patia,)* } => {
                     __cp_bCj7dq3Pud::__::flatten_panicvals::<{#get_pv_count}>(&[&[
                         __cp_bCj7dq3Pud::PanicVal::write_str(#vsname)
                     ]])
                 }
             )
         } else {
-            let last_field_pos = v.fields.len().saturating_sub(1);
-            let field_names = v.fields.iter().map(|f| &f.ident);
-            let field_patia = v.fields.iter().map(|f| &f.pattern_ident);
-            let delimiter = &delimiters[v_index];
+            quote!(#match_prefix #vname { #(#field_names: #field_patia,)* } => {
+                let (open, close) = #delimiter.get_open_and_close();
 
-            let field_fmt = v.fields.iter().map(|f| {
-                let field_patib = &f.pattern_ident;
-
-                let comma = if f.index.pos == last_field_pos {
-                    &comma_term
-                } else {
-                    &comma_sep
-                };
-
-                let field_name_colon = if let StructKind::Braced = v.kind {
-                    let fname = ::alloc::format!("{}: ", f.ident);
-
-                    quote!(
-                        &[__cp_bCj7dq3Pud::PanicVal::write_str(#fname)],
-                    )
-                } else {
-                    TokenStream2::new()
-                };
-
-                quote!(
-                    #field_name_colon
-                    &__cp_bCj7dq3Pud::PanicFmt::PROOF
-                        .infer(#field_patib)
-                        .coerce(#field_patib)
-                        .to_panicvals(fmtarg),
-                    &__cp_bCj7dq3Pud::fmt::#comma
-                        .to_panicvals(fmtarg),
-                )
-            });
-
-            quote!(
-                #match_prefix #vname { #(#field_names: #field_patia,)* } => {
-                    let (open, close) = #delimiter.get_open_and_close();
-
-                    __cp_bCj7dq3Pud::__::flatten_panicvals::<{#get_pv_count}>(&[
-                        &[
-                            __cp_bCj7dq3Pud::PanicVal::write_str(#vsname),
-                            open.to_panicval(fmtarg)
-                        ],
-                        #( #field_fmt )*
-                        &close.to_panicvals(fmtarg.unindent()),
-                    ])
-                }
-            )
+                __cp_bCj7dq3Pud::__::flatten_panicvals::<{#get_pv_count}>(&[
+                    &[
+                        __cp_bCj7dq3Pud::PanicVal::write_str(#vsname),
+                        open.to_panicval(fmtarg)
+                    ],
+                    #( #field_fmt )*
+                    &close.to_panicvals(fmtarg.unindent()),
+                ])
+            })
         }
     });
+
+    let ondebug = quote! (
+        fmtarg = fmtarg.indent();
+
+        match self {
+            #(#branches)*
+        }
+    );
+
+    let dofmt = match display_fmt {
+        Some(display_fmt_) => quote!(
+            match fmtarg.fmt_kind {
+                __cp_bCj7dq3Pud::fmt::FmtKind::Debug => { #ondebug }
+                _ => (#display_fmt_)(self, fmtarg),
+            }
+        ),
+        None => ondebug,
+    };
 
     quote!(
         #impl_header
@@ -328,11 +345,7 @@ fn emit_inherent_impl(
                 &self,
                 mut fmtarg: __cp_bCj7dq3Pud::FmtArg,
             ) -> [__cp_bCj7dq3Pud::PanicVal<'_>; #get_pv_count] {
-                fmtarg = fmtarg.indent();
-
-                match self {
-                    #(#branches)*
-                }
+                #dofmt
             }
         }
     )

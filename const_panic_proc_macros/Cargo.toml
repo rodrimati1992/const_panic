@@ -28,4 +28,3 @@ unicode-xid = "0.2.5"
 
 [dependencies.syn]
 version = "2.0"
-

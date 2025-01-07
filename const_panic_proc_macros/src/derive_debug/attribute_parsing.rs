@@ -17,6 +17,7 @@ use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 mod keyword {
+    syn::custom_keyword!(display_fmt);
     syn::custom_keyword!(debug_print);
     syn::custom_keyword!(ignore);
 }
@@ -31,6 +32,7 @@ pub(crate) enum ParseCtx<'a> {
 struct ParsedAttributes<'a> {
     debug_print: bool,
     crate_path: syn::Path,
+    display_fmt: Option<syn::Expr>,
     impls: Vec<ImplHeader>,
     gen_params_props: Vec<GenParamProps<'a>>,
     type_const_params: Vec<Ident>,
@@ -40,6 +42,7 @@ struct ParsedAttributes<'a> {
 pub(super) struct Configuration<'a> {
     pub(super) debug_print: bool,
     pub(super) crate_path: syn::Path,
+    pub(super) display_fmt: Option<syn::Expr>,
     pub(super) impls: Vec<ImplHeader>,
     pub(super) gen_params_props: Vec<GenParamProps<'a>>,
     _marker: PhantomData<&'a ()>,
@@ -49,6 +52,7 @@ pub(super) fn parse_attributes<'a>(ds: &'a DataStructure<'a>) -> syn::Result<Con
     let mut this = ParsedAttributes {
         debug_print: false,
         crate_path: syn::parse_quote!(::const_panic),
+        display_fmt: None,
         impls: Vec::new(),
         gen_params_props: ds
             .generics
@@ -139,6 +143,11 @@ fn parse_helper_attribute<'a>(
         check_is_container(&ctx, empty)?;
 
         this.debug_print = true;
+    } else if let Some(_) = input.peek_parse(keyword::display_fmt)? {
+        check_is_container(&ctx, empty)?;
+
+        input.parse::<Token!(=)>()?;
+        this.display_fmt = Some(syn::Expr::Verbatim(input.parse()?));
     } else if let Some(_) = input.peek_parse(Token!(crate))? {
         check_is_container(&ctx, empty)?;
 
@@ -200,6 +209,7 @@ fn finish<'a>(
     let ParsedAttributes {
         debug_print,
         crate_path,
+        display_fmt,
         impls,
         gen_params_props,
         type_const_params: _,
@@ -209,6 +219,7 @@ fn finish<'a>(
     Ok(Configuration {
         debug_print,
         crate_path,
+        display_fmt,
         impls,
         gen_params_props,
         _marker,
