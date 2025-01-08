@@ -1,11 +1,25 @@
 /// Implements the [`PanicFmt`](crate::fmt::PanicFmt)
 /// trait and the `to_panicvals` method it requires.
 ///
+/// For a derive macro alternative, there's the [`PanicFmt`](derive@crate::PanicFmt) derive,
+/// which requires the `"derive"` feature(disabled by default).
+///
+/// # Syntax
+///
 /// This macro roughly takes a type definition and a (conditionally required) list of impls,
 /// [for an example demonstrating all the parts of the syntax look here](#all-the-syntax).
 ///
-/// For a derive macro alternative, there's the [`PanicFmt`](derive@crate::PanicFmt) derive,
-/// which requires the `"derive"` feature(disabled by default).
+/// This macro has these optional attributes that go above the item definition
+/// (and must go in this order):
+///
+/// - `#[pfmt(display_fmt = $display_fmt:expr)]`:
+/// Tells the macro to use the `$display_fmt` function to Display-format the type.
+///
+/// - `#[pfmt(panicvals_lower_bound = $panicvals_lower_bound:expr)]`:
+/// Tells the macro to use at least `$panicvals_lower_bound` [`PanicVal`]s for 
+/// formatting the type, useful for Display formatting with the 
+/// `#[pfmt(display_fmt = ...)]` attribute.
+///
 ///
 /// # Limitations
 ///
@@ -301,7 +315,8 @@
 /// ### All the syntax
 ///
 /// ```rust
-/// # use const_panic::impl_panicfmt;
+/// # use const_panic::{impl_panicfmt, PanicFmt, PanicVal};
+/// # use const_panic::fmt::FmtArg;
 /// #
 /// # use std::marker::PhantomData;
 /// #
@@ -316,6 +331,9 @@
 /// #     _marker: PhantomData<(PhantomData<C>, PhantomData<D>, PhantomData<E>)>,
 /// # }
 /// impl_panicfmt!{
+///     // these are the only supported struct-level attributes and can only go in this order
+///     #[pfmt(display_fmt = Self::display_fmt)]
+///     #[pfmt(panicvals_lower_bound = 100)]
 ///     struct Foo<
 ///         'a,
 ///         'b,
@@ -348,25 +366,45 @@
 ///         where[D: ?Sized]
 ///     )
 /// }
+/// 
+/// impl<'a, 'b, C, D, E, const X: u32> Foo<'a, 'b, C, D, E, X>
+/// where
+///     C: ?Sized,
+///     D: ?Sized,
+///     E: ?Sized,
+/// {
+///     const fn display_fmt(
+///         &self,
+///         fmt: FmtArg,
+///     ) -> [PanicVal<'_>; <Foo<'_, '_, (), u8, u32, 0>>::PV_COUNT] {
+///         const_panic::flatten_panicvals!{fmt, <Foo<'_, '_, (), u8, u32, 0>>::PV_COUNT;
+///             "Foo: ", X
+///         }
+///     }
+/// }
+/// 
 /// ```
 ///
+/// [`PanicVal`]: crate::PanicVal
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 #[macro_export]
 macro_rules! impl_panicfmt {
     (
-        $kind:tt $typename:ident < $($rem:tt)*
+        $(# $attrs:tt)*
+        $kind:ident $typename:ident < $($rem:tt)*
     ) => (
         $crate::__impl_panicfmt_step_aaa!{
-            ($kind $typename)
+            ($(# $attrs)* $kind $typename)
             ()
             ($($rem)*)
         }
     );
     (
-        $kind:tt $typename:ident $($rem:tt)*
+        $(# $attrs:tt)*
+        $kind:ident $typename:ident $($rem:tt)*
     ) => (
         $crate::__impl_panicfmt_step_aaa!{
-            ($kind $typename)
+            ($(# $attrs)* $kind $typename)
             ()
             (> $($rem)*)
         }
@@ -377,7 +415,7 @@ macro_rules! impl_panicfmt {
 #[macro_export]
 macro_rules! __impl_panicfmt_step_aaa {
     (
-        (struct $struct_name:ident)
+        ($(# $attrs:tt)* struct $struct_name:ident)
         $generic_params:tt
         (
             $(,)? >
@@ -389,6 +427,7 @@ macro_rules! __impl_panicfmt_step_aaa {
     ) => (
         $crate::__impl_panicfmt_step_ccc!{
             [
+                $(# $attrs)*
                 struct $struct_name
                 $generic_params
                 ($($($where_preds)*)?)
@@ -403,7 +442,7 @@ macro_rules! __impl_panicfmt_step_aaa {
         }
     );
     (
-        (struct $struct_name:ident)
+        ($(# $attrs:tt)* struct $struct_name:ident)
         $generic_params:tt
         (
             $(,)? >
@@ -416,7 +455,7 @@ macro_rules! __impl_panicfmt_step_aaa {
         compile_error!{"the where clause must come after the tuple struct fields"}
     );
     (
-        (struct $struct_name:ident)
+        ($(# $attrs:tt)* struct $struct_name:ident)
         $generic_params:tt
         (
             $(,)?>
@@ -428,6 +467,7 @@ macro_rules! __impl_panicfmt_step_aaa {
     ) => (
         $crate::__impl_panicfmt_step_ccc!{
             [
+                $(# $attrs)*
                 struct $struct_name
                 $generic_params
                 ($($($where_preds)*)?)
@@ -442,7 +482,7 @@ macro_rules! __impl_panicfmt_step_aaa {
         }
     );
     (
-        (enum $enum_name:ident)
+        ($(# $attrs:tt)* enum $enum_name:ident)
         $generic_params:tt
         (
             $(,)?>
@@ -459,6 +499,7 @@ macro_rules! __impl_panicfmt_step_aaa {
     ) => (
         $crate::__impl_panicfmt_step_ccc!{
             [
+                $(# $attrs)*
                 enum $enum_name
                 $generic_params
                 ($($($where_preds)*)?)
@@ -699,6 +740,8 @@ macro_rules!  __impl_panicfmt_step__panicfmt_impl {
     (
 
         [
+            $(#[pfmt(display_fmt = $__display_fmt:expr)])?
+            $(#[pfmt(panicvals_lower_bound = $panicvals_lower_bound:expr)])?
             $type_kind:ident $type_name:ident
             (
                 $($kept_type:ident [$kept_type_:ident])*
@@ -748,8 +791,9 @@ macro_rules!  __impl_panicfmt_step__panicfmt_impl {
                         field_amount: $field_amount,
                         summed_pv_count: 0 $( + <$ty as $crate::PanicFmt>::PV_COUNT )*,
                         delimiter: $crate::fmt::TypeDelim::$delimiter
-                    }.call()
-                ),*
+                    }.call(),
+                )*
+                $($panicvals_lower_bound)?
             ]);
         }
 
@@ -968,6 +1012,8 @@ macro_rules! __impl_to_panicvals_finish {
             $type:ty
 
             [
+                $(#[pfmt(display_fmt = $display_fmt:expr)])?
+                $(#[pfmt(panicvals_lower_bound = $__panicvals_lower_bound:expr)])?
                 $type_kind:ident $type_name:ident
                 $generics:tt
                 $type_where_preds:tt
@@ -1005,19 +1051,24 @@ macro_rules! __impl_to_panicvals_finish {
                 &self,
                 mut fmt: $crate::FmtArg,
             ) -> [$crate::PanicVal<'_>; $crate::__ipm_cself!($type_name $cself)] {
-                match self {
-                    $(
-                        $crate::__ipm_pattern!($type_kind $variant{$($fpati: $fname,)* ..}) =>
-                            $crate::__ipm_fmt!{
-                                ($crate::__ipm_cself!($type_name $cself))
-                                $delimiter
-                                $variant
-                                fmt
-                                ( $($is_last_field ($fname, $ty))* )
-                            },
-                    )*
+                $(
+                    if let $crate::fmt::FmtKind::Display = fmt.fmt_kind {
+                        $display_fmt(self, fmt)
+                    } else
+                )? {
+                    match self {
+                        $(
+                            $crate::__ipm_pattern!($type_kind $variant{$($fpati: $fname,)* ..}) =>
+                                $crate::__ipm_fmt!{
+                                    ($crate::__ipm_cself!($type_name $cself))
+                                    $delimiter
+                                    $variant
+                                    fmt
+                                    ( $($is_last_field ($fname, $ty))* )
+                                },
+                        )*
+                    }
                 }
-
             }
         }
     };
