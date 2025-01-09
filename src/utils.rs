@@ -13,8 +13,18 @@ mod non_basic_utils;
 #[cfg_attr(feature = "docsrs", doc(cfg(feature = "non_basic")))]
 pub use self::non_basic_utils::*;
 
-pub(crate) const fn min_usize(l: usize, r: usize) -> usize {
+/// Computes the minimum of `l` and `r`
+pub const fn min_usize(l: usize, r: usize) -> usize {
     if l < r {
+        l
+    } else {
+        r
+    }
+}
+
+/// Computes the maximum of `l` and `r`
+pub const fn max_usize(l: usize, r: usize) -> usize {
+    if l > r {
         l
     } else {
         r

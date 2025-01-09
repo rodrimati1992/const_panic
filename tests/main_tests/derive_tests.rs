@@ -42,6 +42,31 @@ fn struct_formatting() {
     );
 
     assert_eq!(
+        fmt_flatten!(FmtArg::ALT_BIN; Foo => foo),
+        concat!(
+            "Foo {\n",
+            "    x: [\n",
+            "        0b11,\n",
+            "        0b101,\n",
+            "        0b1000,\n",
+            "        0b1101,\n",
+            "    ],\n",
+            "    y: 0b10101,\n",
+            "    z: Bar(\n",
+            "        false,\n",
+            "        true,\n",
+            "    ),\n",
+            "    w: Baz {\n",
+            "        h: [\n",
+            "            \"hi\",\n",
+            "            \"hel\\nlo\",\n",
+            "        ],\n",
+            "    },\n",
+            "}",
+        )
+    );
+
+    assert_eq!(
         fmt_flatten!(FmtArg::DISPLAY; Foo => foo),
         "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true), w: Baz { h: [hi, hel\nlo] } }"
     );
@@ -73,12 +98,71 @@ fn struct_formatting() {
     );
 }
 
+#[test]
+fn nondebug_formatting() {
+    let foo = DispStruct {
+        x: &[3, 5, 8, 13],
+        y: 21,
+    };
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DEBUG; DispStruct => foo),
+        *format!("{:?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DEBUG; DispStruct => foo),
+        *format!("{:#?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::HEX; DispStruct => foo),
+        *format!("{:X?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_HEX; DispStruct => foo),
+        *format!("{:#X?}", foo)
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; DispStruct => foo),
+        "hello: 21"
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; DispStruct => foo),
+        "hello: 21"
+    );
+
+}
+
 #[derive(Debug, PanicFmt)]
 struct Foo<'a> {
     x: &'a [u8],
     y: u8,
     z: Bar,
     w: Baz,
+}
+
+
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(display_fmt = Self::fmt_display)]
+struct DispStruct<'a> {
+    x: &'a [u8],
+    y: u8,
+}
+
+impl DispStruct<'_> {
+    const fn fmt_display(
+        &self, 
+        fmtarg: FmtArg,
+    ) -> [const_panic::PanicVal<'_>; DispStruct::PV_COUNT] {
+        const_panic::flatten_panicvals!(fmtarg, DispStruct::PV_COUNT;
+            "hello: ", self.y
+        )
+    }
 }
 
 #[derive(Debug, PanicFmt)]
@@ -145,6 +229,102 @@ enum Qux<T> {
 }
 
 #[test]
+fn display_enum_formatting() {
+    for val in [
+        DispEnum::Up, 
+        DispEnum::Down,
+        DispEnum::Other(3),
+        DispEnum::Other(5),
+        DispEnum::Other(8),
+    ] {
+        assert_eq!(
+            fmt_flatten!(FmtArg::DEBUG; DispEnum => val),
+            *format!("{:?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_DEBUG; DispEnum => val),
+            *format!("{:#?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::HEX; DispEnum => val),
+            *format!("{:x?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_HEX; DispEnum => val),
+            *format!("{:#x?}", val)
+        );
+    }
+
+    for n in [3, 5, 8] {
+        assert_eq!(
+            fmt_flatten!(FmtArg::BIN; DispEnum => DispEnum::Other(n)),
+            *format!("Other({:b})", n),
+        );
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_BIN; DispEnum => DispEnum::Other(n)),
+            *format!("Other(\n    {:#b},\n)", n),
+        );
+    }
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; DispEnum => DispEnum::Up),
+        "up",
+    );
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; DispEnum => DispEnum::Up),
+        "UP",
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; DispEnum => DispEnum::Down),
+        "down",
+    );
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; DispEnum => DispEnum::Down),
+        "DOWN",
+    );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; DispEnum => DispEnum::Other(0)),
+        "other",
+    );
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; DispEnum => DispEnum::Other(0)),
+        "OTHER",
+    );
+}
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(display_fmt = Self::fmt_display)]
+enum DispEnum {
+    Up,
+    Down,
+    Other(u8),
+}
+
+impl DispEnum {
+    const fn fmt_display(
+        &self, 
+        fmtarg: FmtArg,
+    ) -> [const_panic::PanicVal<'_>; DispEnum::PV_COUNT] {
+        const_panic::flatten_panicvals!(fmtarg, DispEnum::PV_COUNT;
+            display: match (self, fmtarg.is_alternate) {
+                (Self::Up, false) => "up",
+                (Self::Up, true) => "UP",
+                (Self::Down, false) => "down",
+                (Self::Down, true) => "DOWN",
+                (Self::Other(_), false) => "other",
+                (Self::Other(_), true) => "OTHER",
+            }
+        )
+    }
+}
+
+
+#[test]
 fn const_gen_enum_formatting() {
     assert_eq!(
         fmt_flatten!(FmtArg::DEBUG; ConstGenE<0> => ConstGenE::X(&[])),
@@ -195,6 +375,33 @@ fn ignored_generic_params_formatting() {
         }
     }
 }
+
+
+
+#[test]
+fn struct_panicvals_lower_bound() {
+    assert_eq!(LbStruct::PV_COUNT, 100);
+}
+
+#[test]
+fn enum_panicvals_lower_bound() {
+    assert_eq!(LbEnum::PV_COUNT, 101);
+}
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(panicvals_lower_bound = 100)]
+struct LbStruct<'a> {
+    x: &'a [u8],
+    y: u8,
+}
+
+#[derive(Debug, PanicFmt)]
+#[pfmt(panicvals_lower_bound = 101)]
+enum LbEnum {
+    Up,
+    Down,
+}
+
 
 mod implicit_gpi {
     use super::*;

@@ -1,4 +1,20 @@
-use const_panic::utils::bytes_up_to;
+use const_panic::utils::{self, bytes_up_to};
+
+#[test]
+fn test_min_usize() {
+    assert_eq!(utils::min_usize(3, 5), 3);
+    assert_eq!(utils::min_usize(5, 3), 3);
+    assert_eq!(utils::min_usize(3, 3), 3);
+    assert_eq!(utils::min_usize(5, 5), 5);
+}
+
+#[test]
+fn test_max_usize() {
+    assert_eq!(utils::max_usize(3, 5), 5);
+    assert_eq!(utils::max_usize(5, 3), 5);
+    assert_eq!(utils::max_usize(3, 3), 3);
+    assert_eq!(utils::max_usize(5, 5), 5);
+}
 
 macro_rules! case {
     ($bytes:expr, $upto:expr) => {{

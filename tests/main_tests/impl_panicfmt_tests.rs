@@ -1,6 +1,6 @@
 #![allow(non_local_definitions)]
 
-use const_panic::FmtArg;
+use const_panic::{FmtArg, PanicFmt, PanicVal};
 
 use const_panic::test_utils::MyPhantomData;
 
@@ -345,3 +345,118 @@ const_panic::impl_panicfmt! {
         }]:]
     )
 }
+
+
+#[test]
+fn attrs_braced_struct_test() {
+    let this = AttrsBracedStruct {
+        x: 3,
+        y: 5,
+    };
+
+    assert_eq!(AttrsBracedStruct::PV_COUNT, 15);
+
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; this),
+        "AttrsBracedStruct { x: 3, y: 5 }"
+    );
+
+    assert_eq!(trunc_fmt!(999;FmtArg::DISPLAY; this), "3 5");
+}
+
+struct AttrsBracedStruct {
+    x: u32,
+    y: u32,
+}
+
+const_panic::impl_panicfmt! {
+    #[pfmt(display_fmt = Self::display_fmt)]
+    #[pfmt(panicvals_lower_bound = 15)]
+    struct AttrsBracedStruct {
+        x: u32,
+        y: u32,
+    }
+}
+
+impl AttrsBracedStruct {
+    const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsBracedStruct::PV_COUNT] {
+        const_panic::flatten_panicvals!(fmtarg, AttrsBracedStruct::PV_COUNT; 
+            self.x, " ", self.y
+        )
+    }
+}
+
+
+#[test]
+fn attrs_tupled_struct_test() {
+    let this = AttrsTupledStruct(3, 5);
+
+    assert_eq!(AttrsTupledStruct::PV_COUNT, 16);
+
+    assert_eq!(
+        trunc_fmt!(999;FmtArg::DEBUG; this),
+        "AttrsTupledStruct(3, 5)"
+    );
+
+    assert_eq!(trunc_fmt!(999;FmtArg::DISPLAY; this), "5 3");
+}
+
+struct AttrsTupledStruct(u32, u32);
+
+const_panic::impl_panicfmt! {
+    #[pfmt(display_fmt = Self::display_fmt)]
+    #[pfmt(panicvals_lower_bound = 16)]
+    struct AttrsTupledStruct(u32, u32);
+}
+
+impl AttrsTupledStruct {
+    const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsTupledStruct::PV_COUNT] {
+        const_panic::flatten_panicvals!(fmtarg, AttrsTupledStruct::PV_COUNT; 
+            self.1, " ", self.0
+        )
+    }
+}
+
+
+#[test]
+fn attrs_enum_test() {
+    assert_eq!(AttrsEnum::PV_COUNT, 21);
+
+    {
+        let this = AttrsEnum::Foo;
+        assert_eq!(trunc_fmt!(999;FmtArg::DEBUG; this), "Foo");
+        assert_eq!(trunc_fmt!(999;FmtArg::DISPLAY; this), "foo");
+    }
+
+    {
+        let this = AttrsEnum::Bar;
+        assert_eq!(trunc_fmt!(999;FmtArg::DEBUG; this), "Bar");
+        assert_eq!(trunc_fmt!(999;FmtArg::DISPLAY; this), "bar");
+    }
+}
+
+enum AttrsEnum {
+    Foo,
+    Bar,
+}
+
+const_panic::impl_panicfmt! {
+    #[pfmt(display_fmt = Self::display_fmt)]
+    #[pfmt(panicvals_lower_bound = 21)]
+    enum AttrsEnum {
+        Foo,
+        Bar,
+    }
+}
+
+impl AttrsEnum {
+    const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsEnum::PV_COUNT] {
+        const_panic::flatten_panicvals!(fmtarg, AttrsEnum::PV_COUNT; 
+            display: match self {
+                Self::Foo => "foo",
+                Self::Bar => "bar",
+            }
+        )
+    }
+}
+
