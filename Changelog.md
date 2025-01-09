@@ -5,8 +5,8 @@ This changelog is a summary of the changes made in each release.
 ### 0.2.12
 
 Added these helper attributes to `PanicFmt` derive and `impl_panicfmt` macro:
-- `#[pfmt(display_fmt = ...)]`:
-- `#[pfmt(panicvals_lower_bound = ...)]`:
+- `#[pfmt(display_fmt = ...)]`
+- `#[pfmt(panicvals_lower_bound = ...)]`
 
 Added `const_panic::utils::{min_usize, max_usize}`
 
