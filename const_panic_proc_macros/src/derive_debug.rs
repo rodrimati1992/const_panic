@@ -336,8 +336,8 @@ fn emit_inherent_impl(
     let dofmt = match display_fmt {
         Some(display_fmt_) => quote!(
             match fmtarg.fmt_kind {
-                __cp_bCj7dq3Pud::fmt::FmtKind::Debug => { #ondebug }
-                _ => (#display_fmt_)(self, fmtarg),
+                __cp_bCj7dq3Pud::fmt::FmtKind::Display => (#display_fmt_)(self, fmtarg),
+                _ => { #ondebug }
             }
         ),
         None => ondebug,

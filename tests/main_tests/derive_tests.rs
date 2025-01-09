@@ -42,6 +42,31 @@ fn struct_formatting() {
     );
 
     assert_eq!(
+        fmt_flatten!(FmtArg::ALT_BIN; Foo => foo),
+        concat!(
+            "Foo {\n",
+            "    x: [\n",
+            "        0b11,\n",
+            "        0b101,\n",
+            "        0b1000,\n",
+            "        0b1101,\n",
+            "    ],\n",
+            "    y: 0b10101,\n",
+            "    z: Bar(\n",
+            "        false,\n",
+            "        true,\n",
+            "    ),\n",
+            "    w: Baz {\n",
+            "        h: [\n",
+            "            \"hi\",\n",
+            "            \"hel\\nlo\",\n",
+            "        ],\n",
+            "    },\n",
+            "}",
+        )
+    );
+
+    assert_eq!(
         fmt_flatten!(FmtArg::DISPLAY; Foo => foo),
         "Foo { x: [3, 5, 8, 13], y: 21, z: Bar(false, true), w: Baz { h: [hi, hel\nlo] } }"
     );
@@ -205,7 +230,13 @@ enum Qux<T> {
 
 #[test]
 fn display_enum_formatting() {
-    for val in [DispEnum::Up, DispEnum::Down] {
+    for val in [
+        DispEnum::Up, 
+        DispEnum::Down,
+        DispEnum::Other(3),
+        DispEnum::Other(5),
+        DispEnum::Other(8),
+    ] {
         assert_eq!(
             fmt_flatten!(FmtArg::DEBUG; DispEnum => val),
             *format!("{:?}", val)
@@ -214,6 +245,27 @@ fn display_enum_formatting() {
         assert_eq!(
             fmt_flatten!(FmtArg::ALT_DEBUG; DispEnum => val),
             *format!("{:#?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::HEX; DispEnum => val),
+            *format!("{:x?}", val)
+        );
+
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_HEX; DispEnum => val),
+            *format!("{:#x?}", val)
+        );
+    }
+
+    for n in [3, 5, 8] {
+        assert_eq!(
+            fmt_flatten!(FmtArg::BIN; DispEnum => DispEnum::Other(n)),
+            *format!("Other({n:b})"),
+        );
+        assert_eq!(
+            fmt_flatten!(FmtArg::ALT_BIN; DispEnum => DispEnum::Other(n)),
+            *format!("Other(\n    {n:#b},\n)"),
         );
     }
 
@@ -234,6 +286,15 @@ fn display_enum_formatting() {
         fmt_flatten!(FmtArg::ALT_DISPLAY; DispEnum => DispEnum::Down),
         "DOWN",
     );
+
+    assert_eq!(
+        fmt_flatten!(FmtArg::DISPLAY; DispEnum => DispEnum::Other(0)),
+        "other",
+    );
+    assert_eq!(
+        fmt_flatten!(FmtArg::ALT_DISPLAY; DispEnum => DispEnum::Other(0)),
+        "OTHER",
+    );
 }
 
 #[derive(Debug, PanicFmt)]
@@ -241,6 +302,7 @@ fn display_enum_formatting() {
 enum DispEnum {
     Up,
     Down,
+    Other(u8),
 }
 
 impl DispEnum {
@@ -254,6 +316,8 @@ impl DispEnum {
                 (Self::Up, true) => "UP",
                 (Self::Down, false) => "down",
                 (Self::Down, true) => "DOWN",
+                (Self::Other(_), false) => "other",
+                (Self::Other(_), true) => "OTHER",
             }
         )
     }
