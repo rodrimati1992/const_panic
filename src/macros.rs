@@ -364,6 +364,21 @@ macro_rules! concat_panic {
     )
 }
 
+/// Panics with the concanenation of the arguments, truncating after the max
+/// length passed as the first argument to the macro.
+///
+/// See [`concat_panic`] for more details.
+#[macro_export]
+macro_rules! concat_panic_truncate {
+    ($max_len:expr, $($args:tt)*) => (
+        $crate::__concat_func_setup!{
+            (|args| $crate::concat_panic_truncate::<$max_len>(args))
+            []
+            [$($args)*,]
+        }
+    )
+}
+
 // This macro takes the optional `$fmt:expr;` argument before everything else.
 // But I had to parse the argument manually,
 // because `$fmt:expr;` fails compilation instead of trying the following branches
