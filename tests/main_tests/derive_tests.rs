@@ -261,11 +261,11 @@ fn display_enum_formatting() {
     for n in [3, 5, 8] {
         assert_eq!(
             fmt_flatten!(FmtArg::BIN; DispEnum => DispEnum::Other(n)),
-            *format!("Other({n:b})"),
+            *format!("Other({:b})", n),
         );
         assert_eq!(
             fmt_flatten!(FmtArg::ALT_BIN; DispEnum => DispEnum::Other(n)),
-            *format!("Other(\n    {n:#b},\n)"),
+            *format!("Other(\n    {:#b},\n)", n),
         );
     }
 
