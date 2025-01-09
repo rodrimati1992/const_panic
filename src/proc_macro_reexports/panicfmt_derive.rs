@@ -85,7 +85,7 @@ Tells the derive the minimum amount of [`PanicVal`]s that this type needs,
 generally only useful in combination with the [`display_fmt`](#display_fmt-attr) attribute.
 
 <a id = "pfmt-ignored-attr"></a>
-##### `#[pfmt(ignored(T, C))]`
+### `#[pfmt(ignored(T, C))]`
 
 Accepts the names of type and const parameters,
 replacing the generic arguments in [`here`](#concrete-pv-count) with a concrete value.
@@ -112,7 +112,7 @@ examples:
 [^1]: a private trait is used to get the default value for const parameters.
 
 <a id = "pfmt-impl-attr"></a>
-##### `#[pfmt(impl Foo<Bar, BAZ>)]`
+### `#[pfmt(impl Foo<Bar, BAZ>)]`
 
 Tells the derive to generate an inherent `to_panicvals` method for the type in the attribute
 (it must be the deriving type with concrete enough generic arguments).

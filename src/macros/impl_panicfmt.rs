@@ -12,8 +12,9 @@
 /// This macro has these optional attributes that go above the item definition
 /// (and must go in this order):
 ///
-/// - `#[pfmt(display_fmt = $display_fmt:expr)]`:
+/// - `#[pfmt(display_fmt = $display_fmt:expr)]`[**(example below)**](#display-example):
 /// Tells the macro to use the `$display_fmt` function to Display-format the type.
+/// 
 ///
 /// - `#[pfmt(panicvals_lower_bound = $panicvals_lower_bound:expr)]`:
 /// Tells the macro to use at least `$panicvals_lower_bound` [`PanicVal`]s for 
@@ -309,6 +310,39 @@
 ///         _marker: PhantomData<(PhantomData<A>, B)>,
 ///     }
 /// }
+/// ```
+///
+/// <a id = "display-example"></a>
+/// ### Display formatting
+///
+/// ```rust
+/// use const_panic::{impl_panicfmt, FmtArg, PanicFmt, PanicVal};
+/// 
+/// assert_eq!(const_panic::concat_!(debug: Foo([3, 5, 8])), "Foo([3, 5, 8])");
+/// assert_eq!(const_panic::concat_!(display: Foo([3, 5, 8])), "3 5 8");
+/// 
+/// struct Foo([u8; 3]);
+/// 
+/// impl_panicfmt! {
+///     // these (optional) attributes are the only supported struct-level attributes and 
+///     // can only go in this order
+///     #[pfmt(display_fmt = Self::display_fmt)]
+///     // need this attribute to output more PanicVals in Display formatting than 
+///     // in Debug formatting.
+///     #[pfmt(panicvals_lower_bound = 10)]
+///     struct Foo([u8; 3]);
+/// }
+/// 
+/// impl Foo {
+///     const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; Foo::PV_COUNT] {
+///         let [a, b, c] = self.0;
+/// 
+///         const_panic::flatten_panicvals!{fmtarg, Foo::PV_COUNT;
+///             a, " ", b, " ", c
+///         }
+///     }
+/// }
+/// 
 /// ```
 ///
 /// <a id = "all-the-syntax"></a>
