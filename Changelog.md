@@ -2,6 +2,15 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.13
+
+Added `PanicFmt` impls for:
+- `core::ffi::c_str::FromBytesWithNulError`
+- `core::ffi::c_str::FromBytesUntilNulError`
+- `core::convert::Infallible`
+
+Fixed alt-debug formatting of `core::num::ParseIntError`
+
 ### 0.2.12
 
 Added these helper attributes to `PanicFmt` derive and `impl_panicfmt` macro:
