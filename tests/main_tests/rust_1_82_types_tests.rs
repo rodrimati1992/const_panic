@@ -87,6 +87,7 @@ fn test_int_error_kind() {
 }
 
 #[test]
+#[cfg(feature = "non_basic")]
 fn test_from_bytes_with_nul_error() {
     for err in [
         FromBytesWithNulError::InteriorNul { position: 0 },
@@ -98,6 +99,7 @@ fn test_from_bytes_with_nul_error() {
 }
 
 #[test]
+#[cfg(feature = "non_basic")]
 fn test_from_bytes_until_nul_error() {
     let err: FromBytesUntilNulError = CStr::from_bytes_until_nul(&[]).unwrap_err();
 
