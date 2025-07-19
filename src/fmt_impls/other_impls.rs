@@ -73,3 +73,12 @@ primitive_static_panicfmt! {
         PanicVal::write_str(v)
     }
 }
+
+#[allow(unreachable_code)]
+const _: () = {
+    primitive_static_panicfmt! {
+        fn[](&self: std::convert::Infallible, _f) {
+            match *self.0 {}
+        }
+    }
+};

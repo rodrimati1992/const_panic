@@ -134,7 +134,6 @@ fn nondebug_formatting() {
         fmt_flatten!(FmtArg::ALT_DISPLAY; DispStruct => foo),
         "hello: 21"
     );
-
 }
 
 #[derive(Debug, PanicFmt)]
@@ -145,8 +144,6 @@ struct Foo<'a> {
     w: Baz,
 }
 
-
-
 #[derive(Debug, PanicFmt)]
 #[pfmt(display_fmt = Self::fmt_display)]
 struct DispStruct<'a> {
@@ -156,7 +153,7 @@ struct DispStruct<'a> {
 
 impl DispStruct<'_> {
     const fn fmt_display(
-        &self, 
+        &self,
         fmtarg: FmtArg,
     ) -> [const_panic::PanicVal<'_>; DispStruct::PV_COUNT] {
         const_panic::flatten_panicvals!(fmtarg, DispStruct::PV_COUNT;
@@ -231,7 +228,7 @@ enum Qux<T> {
 #[test]
 fn display_enum_formatting() {
     for val in [
-        DispEnum::Up, 
+        DispEnum::Up,
         DispEnum::Down,
         DispEnum::Other(3),
         DispEnum::Other(5),
@@ -306,10 +303,7 @@ enum DispEnum {
 }
 
 impl DispEnum {
-    const fn fmt_display(
-        &self, 
-        fmtarg: FmtArg,
-    ) -> [const_panic::PanicVal<'_>; DispEnum::PV_COUNT] {
+    const fn fmt_display(&self, fmtarg: FmtArg) -> [const_panic::PanicVal<'_>; DispEnum::PV_COUNT] {
         const_panic::flatten_panicvals!(fmtarg, DispEnum::PV_COUNT;
             display: match (self, fmtarg.is_alternate) {
                 (Self::Up, false) => "up",
@@ -322,7 +316,6 @@ impl DispEnum {
         )
     }
 }
-
 
 #[test]
 fn const_gen_enum_formatting() {
@@ -376,8 +369,6 @@ fn ignored_generic_params_formatting() {
     }
 }
 
-
-
 #[test]
 fn struct_panicvals_lower_bound() {
     assert_eq!(LbStruct::PV_COUNT, 100);
@@ -401,7 +392,6 @@ enum LbEnum {
     Up,
     Down,
 }
-
 
 mod implicit_gpi {
     use super::*;
