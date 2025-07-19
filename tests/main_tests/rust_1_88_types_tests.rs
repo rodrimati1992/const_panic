@@ -8,7 +8,8 @@ fn test_from_bytes_with_nul_error() {
         FromBytesWithNulError::InteriorNul { position: 10 },
         FromBytesWithNulError::NotNulTerminated,
     ] {
-        test_val! {err}
+        // no_display: Rust 1.90 changes the Display message
+        test_val! {err, no_display}
     }
 }
 

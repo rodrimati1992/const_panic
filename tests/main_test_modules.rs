@@ -6,7 +6,11 @@ macro_rules! trunc_fmt {
 }
 
 macro_rules! test_val {
-    ($value:expr $(, no_alternate $(@$no_alternate:tt)?)?) => ({
+    (
+        $value:expr
+        $(, no_alternate $(@$no_alternate:tt)?)?
+        $(, no_display $(@$no_display:tt)?)?
+    ) => ({
         use const_panic::{StdWrapper, FmtArg};
 
         let val = $value;
@@ -28,6 +32,7 @@ macro_rules! test_val {
             );
         }
 
+        $(#[cfg(any())] $($no_display)?)?
         {
             let display = format!("{}", val);
             assert_eq!(
@@ -36,6 +41,7 @@ macro_rules! test_val {
             );
         }
 
+        $(#[cfg(any())] $($no_display)?)?
         $(#[cfg(any())] $($no_alternate)?)?
         {
             let alt_display = format!("{:#}", val);
