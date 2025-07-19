@@ -4,12 +4,12 @@ This changelog is a summary of the changes made in each release.
 
 ### 0.2.13
 
-Added `PanicFmt` impls for:
-- `core::ffi::c_str::FromBytesWithNulError`
-- `core::ffi::c_str::FromBytesUntilNulError`
-- `core::convert::Infallible`
+Added `rust_1_88` feature.
 
-Fixed alt-debug formatting of `core::num::ParseIntError`
+Added `PanicFmt` impls for:
+- `core::ffi::c_str::FromBytesWithNulError` (requires `rust_1_88` feature)
+- `core::ffi::c_str::FromBytesUntilNulError` (requires `rust_1_88` feature)
+- `core::convert::Infallible`
 
 ### 0.2.12
 

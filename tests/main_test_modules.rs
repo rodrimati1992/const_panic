@@ -5,6 +5,48 @@ macro_rules! trunc_fmt {
     ($len:expr; $($args:tt)*) => ( const_panic::concat_fmt!($len, $len; $($args)*).unwrap() )
 }
 
+macro_rules! test_val {
+    ($value:expr $(, no_alternate $(@$no_alternate:tt)?)?) => ({
+        use const_panic::{StdWrapper, FmtArg};
+
+        let val = $value;
+
+        {
+            let debug = format!("{:?}", val);
+            assert_eq!(
+                trunc_fmt!(1024; StdWrapper(&val).to_panicvals(FmtArg::DEBUG)),
+                &*debug,
+            );
+        }
+
+        $(#[cfg(any())] $($no_alternate)?)?
+        {
+            let alt_debug = format!("{:#?}", val);
+            assert_eq!(
+                trunc_fmt!(1024; StdWrapper(&val).to_panicvals(FmtArg::ALT_DEBUG)),
+                &*alt_debug,
+            );
+        }
+
+        {
+            let display = format!("{}", val);
+            assert_eq!(
+                trunc_fmt!(1024; StdWrapper(&val).to_panicvals(FmtArg::DISPLAY)),
+                &*display,
+            );
+        }
+
+        $(#[cfg(any())] $($no_alternate)?)?
+        {
+            let alt_display = format!("{:#}", val);
+            assert_eq!(
+                trunc_fmt!(1024; StdWrapper(&val).to_panicvals(FmtArg::ALT_DISPLAY)),
+                &*alt_display,
+            );
+        }
+    })
+}
+
 mod main_tests {
     #[cfg(feature = "non_basic")]
     mod array_tests;
@@ -24,6 +66,9 @@ mod main_tests {
 
     #[cfg(feature = "rust_1_82")]
     mod rust_1_82_types_tests;
+
+    #[cfg(feature = "rust_1_88")]
+    mod rust_1_88_types_tests;
 
     #[cfg(feature = "non_basic")]
     mod impl_panicfmt_tests;
