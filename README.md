@@ -189,6 +189,9 @@ Enables formatting of additional items that require Rust 1.64.0 to do so.
 - `"rust_1_82"`(disabled by default):
 Enables formatting of additional items that require Rust 1.82.0 to do so.
 
+- `"rust_1_88"`(disabled by default):
+Enables formatting of additional items that require Rust 1.88.0 to do so.
+
 - `"derive"`(disabled by default):
 Enables the [`PanicFmt` derive] macro.
 

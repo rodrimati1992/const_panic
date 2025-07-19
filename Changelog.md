@@ -2,6 +2,15 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.13
+
+Added `rust_1_88` feature.
+
+Added `PanicFmt` impls for:
+- `core::ffi::c_str::FromBytesWithNulError` (requires `rust_1_88` feature)
+- `core::ffi::c_str::FromBytesUntilNulError` (requires `rust_1_88` feature)
+- `core::convert::Infallible`
+
 ### 0.2.12
 
 Added these helper attributes to `PanicFmt` derive and `impl_panicfmt` macro:

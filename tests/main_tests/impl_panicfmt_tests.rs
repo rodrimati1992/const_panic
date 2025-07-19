@@ -346,13 +346,9 @@ const_panic::impl_panicfmt! {
     )
 }
 
-
 #[test]
 fn attrs_braced_struct_test() {
-    let this = AttrsBracedStruct {
-        x: 3,
-        y: 5,
-    };
+    let this = AttrsBracedStruct { x: 3, y: 5 };
 
     assert_eq!(AttrsBracedStruct::PV_COUNT, 15);
 
@@ -380,12 +376,11 @@ const_panic::impl_panicfmt! {
 
 impl AttrsBracedStruct {
     const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsBracedStruct::PV_COUNT] {
-        const_panic::flatten_panicvals!(fmtarg, AttrsBracedStruct::PV_COUNT; 
+        const_panic::flatten_panicvals!(fmtarg, AttrsBracedStruct::PV_COUNT;
             self.x, " ", self.y
         )
     }
 }
-
 
 #[test]
 fn attrs_tupled_struct_test() {
@@ -411,12 +406,11 @@ const_panic::impl_panicfmt! {
 
 impl AttrsTupledStruct {
     const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsTupledStruct::PV_COUNT] {
-        const_panic::flatten_panicvals!(fmtarg, AttrsTupledStruct::PV_COUNT; 
+        const_panic::flatten_panicvals!(fmtarg, AttrsTupledStruct::PV_COUNT;
             self.1, " ", self.0
         )
     }
 }
-
 
 #[test]
 fn attrs_enum_test() {
@@ -451,7 +445,7 @@ const_panic::impl_panicfmt! {
 
 impl AttrsEnum {
     const fn display_fmt(&self, fmtarg: FmtArg) -> [PanicVal<'_>; AttrsEnum::PV_COUNT] {
-        const_panic::flatten_panicvals!(fmtarg, AttrsEnum::PV_COUNT; 
+        const_panic::flatten_panicvals!(fmtarg, AttrsEnum::PV_COUNT;
             display: match self {
                 Self::Foo => "foo",
                 Self::Bar => "bar",
@@ -459,4 +453,3 @@ impl AttrsEnum {
         )
     }
 }
-

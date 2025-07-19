@@ -12,9 +12,14 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        rust: [stable, beta, nightly, 1.82.0, 1.64.0, 1.57.0]
+        rust: [stable, beta, nightly, 1.88.0, 1.82.0, 1.64.0, 1.57.0]
 
     steps:
+    - uses: actions/checkout@v2
+    - name: ci-1-88-version-env_vars
+      if: ${{ matrix.rust == '1.88.0' }}
+      run: echo "rustv=rust_1_88" >> $GITHUB_ENV
+
     - uses: actions/checkout@v2
     - name: ci-1-82-version-env_vars
       if: ${{ matrix.rust == '1.82.0' }}

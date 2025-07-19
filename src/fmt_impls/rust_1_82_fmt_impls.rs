@@ -24,6 +24,12 @@ impl StdWrapper<&ParseIntError> {
 
     /// Formats a `ParseIntError` (supports both Debug and Display formatting).
     pub const fn to_panicval(self, fmtarg: FmtArg) -> PanicVal<'static> {
+        macro_rules! debug_fmt {
+            ($variant:ident) => {
+                concat!("ParseIntError { kind: ", stringify!($variant), " }")
+            };
+        }
+
         let this = self.0;
         match fmtarg.fmt_kind {
             FmtKind::Display => PanicVal::write_str(match this.kind() {
@@ -35,11 +41,11 @@ impl StdWrapper<&ParseIntError> {
                 _ => "<ParseIntError>",
             }),
             FmtKind::Debug => PanicVal::write_str(match this.kind() {
-                IntErrorKind::Empty => "ParseIntError { kind: Empty }",
-                IntErrorKind::InvalidDigit => "ParseIntError { kind: InvalidDigit }",
-                IntErrorKind::PosOverflow => "ParseIntError { kind: PosOverflow }",
-                IntErrorKind::NegOverflow => "ParseIntError { kind: NegOverflow }",
-                IntErrorKind::Zero => "ParseIntError { kind: Zero }",
+                IntErrorKind::Empty => debug_fmt!(Empty),
+                IntErrorKind::InvalidDigit => debug_fmt!(InvalidDigit),
+                IntErrorKind::PosOverflow => debug_fmt!(PosOverflow),
+                IntErrorKind::NegOverflow => debug_fmt!(NegOverflow),
+                IntErrorKind::Zero => debug_fmt!(Zero),
                 _ => "<IntErrorKind>",
             }),
         }
