@@ -278,7 +278,7 @@ mod fmt_impls {
 }
 
 pub use crate::{
-    concat_panic_::{concat_panic, MAX_PANIC_MSG_LEN},
+    concat_panic_::{concat_panic, concat_panic_truncate, MAX_PANIC_MSG_LEN},
     panic_val::PanicVal,
     wrapper::StdWrapper,
 };
