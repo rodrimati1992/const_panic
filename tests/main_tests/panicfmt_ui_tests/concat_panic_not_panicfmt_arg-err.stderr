@@ -1,0 +1,17 @@
+error[E0277]: the trait bound `NotFmt: PanicFmt` is not satisfied
+ --> tests/main_tests/panicfmt_ui_tests/concat_panic_not_panicfmt_arg-err.rs:4:15
+  |
+4 | const _: () = const_panic::concat_panic!(NotFmt);
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `PanicFmt` is not implemented for `NotFmt`
+  |
+  = help: the following other types implement trait `PanicFmt`:
+            &'a T
+            ()
+            *const T
+            *mut T
+            ArrayString<CAP>
+            Delimiter
+            FromBytesUntilNulError
+            FromBytesWithNulError
+          and $N others
+  = note: this error originates in the macro `$crate::coerce_fmt` which comes from the expansion of the macro `const_panic::concat_panic` (in Nightly builds, run with -Z macro-backtrace for more info)

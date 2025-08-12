@@ -99,5 +99,7 @@ mod main_tests {
 
     mod string_tests;
 
+    mod ui_tests;
+
     mod utils_tests;
 }

@@ -309,7 +309,7 @@ pub mod __ {
 #[cfg(feature = "non_basic")]
 #[doc(hidden)]
 mod reexported_non_basic {
-    pub use core::{option::Option, primitive::str};
+    pub use core::{mem::forget, option::Option, primitive::str, unreachable};
 
     pub use typewit::MakeTypeWitness;
 

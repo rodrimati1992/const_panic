@@ -67,6 +67,7 @@ macro_rules! enum_prim {
             }
 
             impl $type {
+                #[allow(dead_code)]
                 const BITS: u8 = $bits;
 
                 const fn from_prim(n: u8) -> Self {

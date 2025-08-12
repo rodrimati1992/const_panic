@@ -1,0 +1,15 @@
+error[E0282]: type annotations needed
+ --> tests/main_tests/panicfmt_ui_tests/flatten_panicvals_uninferred_types-err.rs:5:29
+  |
+5 | const _: &[PanicVal<'_>] = &flatten_panicvals!(FmtArg::DEBUG; 0);
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+  |
+  = note: this error originates in the macro `$crate::__to_pvf_kind` which comes from the expansion of the macro `flatten_panicvals` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0282]: type annotations needed
+ --> tests/main_tests/panicfmt_ui_tests/flatten_panicvals_uninferred_types-err.rs:7:29
+  |
+7 | const _: &[PanicVal<'_>] = &flatten_panicvals!(FmtArg::DEBUG, 10; 0);
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+  |
+  = note: this error originates in the macro `$crate::__to_pvf_kind` which comes from the expansion of the macro `flatten_panicvals` (in Nightly builds, run with -Z macro-backtrace for more info)

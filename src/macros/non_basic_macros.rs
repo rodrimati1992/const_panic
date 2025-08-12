@@ -495,12 +495,12 @@ macro_rules! __to_pvf_inner {
             [$tt, $($rem)*]
         }
     };
-    ($fmtargs:ident $prev:tt [&$tt:tt, $($rem:tt)*]) => {
+    ($fmtargs:ident $prev:tt [$tt0:tt $tt1:tt, $($rem:tt)*]) => {
         $crate::__to_pvf_expr!{
             $fmtargs
             $prev
             (1, single())
-            [&$tt, $($rem)*]
+            [$tt0 $tt1, $($rem)*]
         }
     };
 

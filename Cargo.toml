@@ -21,6 +21,7 @@ include = [
 
 [dependencies.typewit]
 version = "1.9.0"
+default-features = false
 
 [dependencies.const_panic_proc_macros]
 version = "=0.2.12"
@@ -32,8 +33,13 @@ version = "0.7"
 
 [dev-dependencies.rand]
 version = "0.8.4"
-default_features = false
+default-features = false
 features = ["small_rng"]
+
+# no such thing as optional dev-dependencies, aaaaaaah
+[dependencies.trybuild]
+version = "1.0"
+optional = true
 
 [features]
 default = ["non_basic"]
@@ -48,6 +54,7 @@ derive = ["const_panic_proc_macros", "non_basic"]
 
 # private feature
 test = []
+__ui_tests = ["trybuild", "test"]
 
 [package.metadata.docs.rs]
 features = ["derive", "rust_latest_stable", "docsrs"]

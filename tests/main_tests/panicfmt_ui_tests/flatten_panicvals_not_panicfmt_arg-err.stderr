@@ -1,0 +1,34 @@
+error[E0277]: the trait bound `NotFmt: PanicFmt` is not satisfied
+ --> tests/main_tests/panicfmt_ui_tests/flatten_panicvals_not_panicfmt_arg-err.rs:5:29
+  |
+5 | const _: &[PanicVal<'_>] = &flatten_panicvals!(FmtArg::DEBUG; NotFmt);
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `PanicFmt` is not implemented for `NotFmt`
+  |
+  = help: the following other types implement trait `PanicFmt`:
+            &'a T
+            ()
+            *const T
+            *mut T
+            ArrayString<CAP>
+            Delimiter
+            FromBytesUntilNulError
+            FromBytesWithNulError
+          and $N others
+  = note: this error originates in the macro `$crate::__to_pvf_kind` which comes from the expansion of the macro `flatten_panicvals` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `NotFmt: PanicFmt` is not satisfied
+ --> tests/main_tests/panicfmt_ui_tests/flatten_panicvals_not_panicfmt_arg-err.rs:7:63
+  |
+7 | const _: &[PanicVal<'_>] = &flatten_panicvals!(FmtArg::DEBUG; NotFmt => NotFmt);
+  |                                                               ^^^^^^ the trait `PanicFmt` is not implemented for `NotFmt`
+  |
+  = help: the following other types implement trait `PanicFmt`:
+            &'a T
+            ()
+            *const T
+            *mut T
+            ArrayString<CAP>
+            Delimiter
+            FromBytesUntilNulError
+            FromBytesWithNulError
+          and $N others

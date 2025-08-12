@@ -30,7 +30,7 @@ use crate::wrapper::StdWrapper;
 
 use core::marker::PhantomData;
 
-use typewit::TypeEq;
+use typewit::{Identity, TypeEq};
 
 /// Trait for types that can be formatted by const panics.
 ///
@@ -185,7 +185,7 @@ impl<S: ?Sized, T: ?Sized, K> IsPanicFmt<S, T, K> {
         // hack to make this bound work in 1.57.0:
         // K: CoerceReturn<&'a T>,
         // (before trait bounds were officially supported)
-        <K as typewit::Identity>::Type: CoerceReturn<&'a T>,
+        <K as Identity>::Type: CoerceReturn<&'a T>,
     {
         match <K as CoerceReturn<&'a T>>::__COERCE_TO_WITNESS {
             __CoerceToWitness::IsStdType(te) => te.to_left(StdWrapper(x)),
