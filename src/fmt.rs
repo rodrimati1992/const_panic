@@ -30,6 +30,8 @@ use crate::wrapper::StdWrapper;
 
 use core::marker::PhantomData;
 
+use typewit::{Identity, TypeEq};
+
 /// Trait for types that can be formatted by const panics.
 ///
 /// # Implementor
@@ -176,19 +178,19 @@ impl<S: ?Sized, T: ?Sized, K> IsPanicFmt<S, T, K> {
     pub const fn infer(self, _: &S) -> Self {
         self
     }
-}
 
-impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsStdType> {
     /// For coercing `&T` to `StdWrapper<&T>`.
-    pub const fn coerce(self, x: &T) -> StdWrapper<&T> {
-        StdWrapper(x)
-    }
-}
-
-impl<S: ?Sized, T: ?Sized> IsPanicFmt<S, T, IsCustomType> {
-    /// For coercing `&T` (with any amount of stacked references) to `&T`.
-    pub const fn coerce(self, x: &T) -> &T {
-        x
+    pub const fn coerce<'a>(self, x: &'a T) -> CoerceReturnOutput<&'a T, K>
+    where
+        // hack to make this bound work in 1.57.0:
+        // K: CoerceReturn<&'a T>,
+        // (before trait bounds were officially supported)
+        <K as Identity>::Type: CoerceReturn<&'a T>,
+    {
+        match <K as CoerceReturn<&'a T>>::__COERCE_TO_WITNESS {
+            __CoerceToWitness::IsStdType(te) => te.to_left(StdWrapper(x)),
+            __CoerceToWitness::IsCustomType(te) => te.to_left(x),
+        }
     }
 }
 
@@ -198,6 +200,49 @@ impl<S: ?Sized, T: ?Sized, K> Clone for IsPanicFmt<S, T, K> {
         *self
     }
 }
+
+/////////////////////////////////////////////////////////////////////
+
+/// Computes the type that the `T` argument is converted into by [`IsPanicFmt::coerce`].
+pub type CoerceReturnOutput<T, K> = <K as CoerceReturn<T>>::CoerceTo;
+
+/// Computes the type that the `T` argument is converted into by [`IsPanicFmt::coerce`].
+///
+/// This trait is sealed, it's implemented by [`IsStdType`] and [`IsCustomType`],
+/// and cannot be implemented by any other type.
+pub trait CoerceReturn<T>: Sized {
+    /// The type that the `T` argument is converted into.
+    type CoerceTo;
+
+    #[doc(hidden)]
+    const __COERCE_TO_WITNESS: __CoerceToWitness<T, Self>;
+}
+
+impl<T> CoerceReturn<T> for IsStdType {
+    type CoerceTo = StdWrapper<T>;
+
+    #[doc(hidden)]
+    const __COERCE_TO_WITNESS: __CoerceToWitness<T, Self> =
+        __CoerceToWitness::IsStdType(TypeEq::NEW);
+}
+impl<T> CoerceReturn<T> for IsCustomType {
+    type CoerceTo = T;
+
+    #[doc(hidden)]
+    const __COERCE_TO_WITNESS: __CoerceToWitness<T, Self> =
+        __CoerceToWitness::IsCustomType(TypeEq::NEW);
+}
+
+#[doc(hidden)]
+pub enum __CoerceToWitness<T, K: CoerceReturn<T>> {
+    #[non_exhaustive]
+    IsStdType(TypeEq<<K as CoerceReturn<T>>::CoerceTo, StdWrapper<T>>),
+
+    #[non_exhaustive]
+    IsCustomType(TypeEq<<K as CoerceReturn<T>>::CoerceTo, T>),
+}
+
+/////////////////////////////////////////////////////////////////////
 
 /// Carries all of the configuration for formatting functions.
 ///

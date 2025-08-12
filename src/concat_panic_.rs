@@ -49,12 +49,12 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     //
     // Also, given that most(?) panic messages are smaller than 1024 bytes long,
     // it's not going to be any less efficient in the common case.
-    if let Err(_) = panic_inner::<1024>(args) {}
+    if let Err(_) = panic_inner::<(), 1024>(args) {}
 
-    if let Err(_) = panic_inner::<{ 1024 * 6 }>(args) {}
+    if let Err(_) = panic_inner::<(), { 1024 * 6 }>(args) {}
 
-    match panic_inner::<MAX_PANIC_MSG_LEN>(args) {
-        Ok(x) => match x {},
+    match panic_inner::<_, MAX_PANIC_MSG_LEN>(args) {
+        Ok(x) => x,
         Err(_) => panic!(
             "\
             unreachable:\n\
@@ -243,7 +243,7 @@ macro_rules! make_buffer_writer_macros {
 #[cold]
 #[inline(never)]
 #[track_caller]
-const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never, NotEnoughSpace> {
+const fn panic_inner<T, const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<T, NotEnoughSpace> {
     let mut buffer = [0u8; LEN];
     let mut len = 0usize;
 
@@ -267,7 +267,6 @@ const fn panic_inner<const LEN: usize>(args: &[&[PanicVal<'_>]]) -> Result<Never
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct NotEnoughSpace;
-enum Never {}
 
 #[cfg(feature = "test")]
 use crate::test_utils::TestString;

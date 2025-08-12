@@ -2,6 +2,14 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.14
+
+Added `const_panic::fmt::CoerceReturn` trait
+
+Added `const_panic::fmt::CoerceReturnOutput` type alias
+
+Changed `IsPanicFmt::coerce` from two inherent methods to one generic inherent method. This improves compile-time error messages when the argument doesn't impl `PanicFmt`.
+
 ### 0.2.13
 
 Added `rust_1_88` feature.
