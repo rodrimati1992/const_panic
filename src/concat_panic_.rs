@@ -1,7 +1,7 @@
 use crate::{
     fmt::FmtKind,
     panic_val::{PanicClass, PanicVal, StrFmt},
-    utils::{bytes_up_to, string_cap, WasTruncated},
+    utils::{bytes_up_to, min_usize, string_cap, WasTruncated},
 };
 
 /// Panics by concatenating the argument slice.
@@ -49,9 +49,20 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     //
     // Also, given that most(?) panic messages are smaller than 1024 bytes long,
     // it's not going to be any less efficient in the common case.
-    if let Err(_) = panic_inner::<(), 1024>(args) {}
 
-    if let Err(_) = panic_inner::<(), { 1024 * 6 }>(args) {}
+    macro_rules! shorter_panic {($cap:expr) => ({
+        const CAP: usize = $cap;
+
+        if MAX_PANIC_MSG_LEN > CAP {
+            // using `min_usize` just in case monomorphizing `panic_inner` with 
+            // too large an array type on 16 bit causes a compilation error,
+            if let Err(_) = panic_inner::<(), { min_usize(MAX_PANIC_MSG_LEN, $cap) }>(args) {}
+        }
+    })}
+
+    shorter_panic!{1024}
+
+    shorter_panic!{1024 * 6}
 
     match panic_inner::<_, MAX_PANIC_MSG_LEN>(args) {
         Ok(x) => x,
@@ -67,8 +78,6 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
 
 /// The maximum length of panic messages (in bytes),
 /// after which the message is truncated.
-// this should probably be smaller on platforms where this
-// const fn is called at runtime, and the stack is finy.
 pub const MAX_PANIC_MSG_LEN: usize = if cfg!(target_pointer_width = "16") {
     512
 } else {

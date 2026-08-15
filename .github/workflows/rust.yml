@@ -47,10 +47,31 @@ jobs:
         cargo build --no-default-features
         cargo build
 
-        cargo doc --features="test ${{env.rustv}} derive"
+        cargo doc --features="test ${{env.rustv}}"
 
         cargo test --features "test"
         cargo test --no-default-features --features "test ${{env.rustv}}"
         cargo test --no-default-features --features "test ${{env.rustv}} non_basic"
+
+    - name: ci-proc-macros
+      if: ${{ matrix.rust != '1.64.0' && matrix.rust != '1.57.0' }}
+      run: |
+        rustup override set ${{ matrix.rust }}
+        cargo update
+        
+        cargo doc --features="test ${{env.rustv}} derive"
+
         cargo test --no-default-features --features "test ${{env.rustv}} non_basic derive"
+
+    - uses: actions/checkout@v2
+    - name: ci-nightly
+      if: ${{ matrix.rust == 'nightly' }}
+        rustup override set ${{ matrix.rust }}
+        cargo update
+
+        # makes sure that this crate builds on at least this 16-bit architecture
+        cargo build -Zbuild-std=core --target=msp430-none-elf \
+          --features "test rust_latest_stable non_basic"
+
+
 
