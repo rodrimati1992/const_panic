@@ -40,10 +40,6 @@ jobs:
         rustup override set ${{ matrix.rust }}
         cargo update
           
-        cd "${{github.workspace}}/const_panic_proc_macros/"
-        cargo test
-
-        cd "${{github.workspace}}/"
         cargo build --no-default-features
         cargo build
 
@@ -58,7 +54,11 @@ jobs:
       run: |
         rustup override set ${{ matrix.rust }}
         cargo update
-        
+
+        cd "${{github.workspace}}/const_panic_proc_macros/"
+        cargo test
+
+        cd "${{github.workspace}}/"
         cargo doc --features="test ${{env.rustv}} derive"
 
         cargo test --no-default-features --features "test ${{env.rustv}} non_basic derive"
