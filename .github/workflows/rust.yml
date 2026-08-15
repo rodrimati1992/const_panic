@@ -70,6 +70,8 @@ jobs:
         rustup override set ${{ matrix.rust }}
         cargo update
 
+        rustup component add rust-src
+
         # makes sure that this crate builds on at least this 16-bit architecture
         cargo build -Zbuild-std=core --target=msp430-none-elf \
           --features "test rust_latest_stable non_basic"
