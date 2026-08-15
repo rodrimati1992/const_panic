@@ -69,7 +69,11 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
 /// after which the message is truncated.
 // this should probably be smaller on platforms where this
 // const fn is called at runtime, and the stack is finy.
-pub const MAX_PANIC_MSG_LEN: usize = 32768;
+pub const MAX_PANIC_MSG_LEN: usize = if cfg!(target_pointer_width = "16") {
+    512
+} else {
+    32768
+};
 
 // writes a single PanicVal to an array
 macro_rules! write_panicval {
