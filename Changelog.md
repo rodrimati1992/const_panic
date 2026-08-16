@@ -2,6 +2,14 @@ This changelog is a summary of the changes made in each release.
 
 # 0.2
 
+### 0.2.17
+
+Changed maximum length of formatted panicking to be configurable using `CONST_PANIC_MAX_LENGTH` environment variable
+
+Added `ArrayString::is_empty` method
+
+Removed `#[automatically_derived]` on generated inherent impls, which triggers a rustc future compatibility warning.
+
 ### 0.2.16
 
 Shrunk the maximum length of panics on 16-bit platforms to 512 bytes to support them.
