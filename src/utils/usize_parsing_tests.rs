@@ -5,6 +5,7 @@ use core::fmt::Write;
 
 type UsizeFmtBuffer = arrayvec::ArrayString<{(usize::BITS as usize) / 2}>;
 
+
 fn format_usize(n: usize) -> UsizeFmtBuffer {
     let mut s = UsizeFmtBuffer::new();
     write!(s, "{n}").unwrap();
@@ -12,54 +13,71 @@ fn format_usize(n: usize) -> UsizeFmtBuffer {
 }
 
 
+#[track_caller]
+fn assert_parses_ok(s: &str) {
+    let parsed = parse_usize(s);
+    assert!(parsed.is_some(), "s = {s:?}  parsed = {parsed:?}");
+
+    assert_eq!(parsed, usize::from_str_radix(s, 10).ok(), "s = {s:?}");
+}
 
 #[test]
 fn from_literals_ok_parsing_test() {
-    for lit in [
-        "0",
-        "1",
-        "6",
-        "9",
-        "09",
-        "000012",
-        "10",
-        "16",
-        "99",
-        "100",
-        "101",
-        "10003",
-        "12345",
-        "54321",
-    ] {
-        let parsed = parse_usize(lit);
-        assert!(parsed.is_some(), "lit = {lit:?}  parsed = {parsed:?}");
+    assert_parses_ok("0");
+    assert_parses_ok("1");
+    assert_parses_ok("6");
+    assert_parses_ok("9");
+    assert_parses_ok("09");
+    assert_parses_ok("000012");
+    assert_parses_ok("10");
+    assert_parses_ok("16");
+    assert_parses_ok("99");
+    assert_parses_ok("100");
+    assert_parses_ok("101");
+    assert_parses_ok("10003");
+    assert_parses_ok("12345");
+    assert_parses_ok("54321");
+}
 
-        assert_eq!(parsed, usize::from_str_radix(lit, 10).ok(), "lit = {lit:?}");
-    }
+
+#[track_caller]
+fn assert_err(s: &str) {
+    let parsed = parse_usize(s);
+    assert!(parsed.is_none(), "s = {s:?}  parsed = {parsed:?}");
+
+    assert_eq!(parsed, usize::from_str_radix(s, 10).ok(), "s = {s:?}");
 }
 
 #[test]
 fn err_parsing_test() {
-    let mut too_large = format_usize(usize::MAX);
-    too_large.push('0');
-
-    for lit in [
-        "",
-        "_",
-        " ",
-        "1A4",
-        "0x",
-        "0x9",
-        "_100003",
-        "100_003",
-        "100003_",
-        &too_large,
-    ] {
-        let parsed = parse_usize(lit);
-        assert!(parsed.is_none(), "lit = {lit:?}  parsed = {parsed:?}");
-
-        assert_eq!(parsed, usize::from_str_radix(lit, 10).ok(), "lit = {lit:?}");
+    {
+        let mut too_large = UsizeFmtBuffer::new();
+        if usize::BITS < 128 {
+            write!(too_large, "{}", u128::try_from(usize::MAX).unwrap() + 1).unwrap();
+        } else if usize::BITS == 128 {
+            // u128::MAX + 1
+            too_large.push_str("340282366920938463463374607431768211456");
+        } else {
+            panic!("usizes are too large")
+        }
+        assert_err(&too_large);
     }
+
+    {        
+        let mut too_large = format_usize(usize::MAX);
+        too_large.push('0');
+        assert_err(&too_large);
+    }
+
+    assert_err("");
+    assert_err("_");
+    assert_err(" ");
+    assert_err("1A4");
+    assert_err("0x");
+    assert_err("0x9");
+    assert_err("_100003");
+    assert_err("100_003");
+    assert_err("100003_");
 }
 
 
@@ -73,7 +91,7 @@ fn first_and_last_integers_test() {
             .chain((usize::MAX - 2) ..= usize::MAX)
     {
         let s = format_usize(n);
-        assert_eq!(parse_usize(&s), usize::from_str_radix(&s, 10).ok(), "s = {s:?}");
+        assert_parses_ok(&s);
     }
 }
 

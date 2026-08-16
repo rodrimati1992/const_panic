@@ -78,7 +78,12 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
 
 /// The maximum length of panic messages (in bytes),
 /// after which the message is truncated.
-pub const MAX_PANIC_MSG_LEN: usize = if cfg!(target_pointer_width = "16") {
+pub const MAX_PANIC_MSG_LEN: usize = if let Some(cap) = option_env!("CONST_PANIC_MAX_LENGTH") {
+    match crate::utils::parse_usize(cap) {
+        Some(x) => x,
+        None => panic!("`CONST_PANIC_MAX_LENGTH` environment variable is not a valid integer"),
+    }
+} else if cfg!(target_pointer_width = "16") {
     512
 } else {
     32768
