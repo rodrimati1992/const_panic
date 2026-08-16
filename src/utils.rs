@@ -254,25 +254,25 @@ pub(crate) const fn parse_usize(input: &str) -> Option<usize> {
         if input.is_empty() {
             return None;
         }
-        
+
         let mut input = input.as_bytes();
-        
+
         let mut ret = 0usize;
-        
+
         while let [b, ref rem @ ..] = *input {
             ret = try_opt!(ret.checked_mul(10));
-    
+
             ret = match b {
                 b'0'..=b'9' => try_opt!(ret.checked_add((b - b'0') as usize)),
-                _ => return None
+                _ => return None,
             };
-            
+
             input = rem;
         }
-        
+
         Some(ret)
     }
-    
+
     #[cfg(feature = "rust_1_82")]
     {
         match usize::from_str_radix(input, 10) {

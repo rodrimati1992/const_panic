@@ -42,7 +42,6 @@ impl<'a> DataStructure<'a> {
     pub fn new(ast: &'a DeriveInput) -> Self {
         let name = &ast.ident;
 
-
         let mut variants = Vec::new();
 
         let data_variant: DataVariant = match &ast.data {

@@ -1,6 +1,5 @@
 use const_panic::MAX_PANIC_MSG_LEN;
 
-
 #[test]
 fn max_length_env_var_test() {
     #[track_caller]
@@ -9,7 +8,8 @@ fn max_length_env_var_test() {
 
         let err = std::panic::catch_unwind(|| {
             const_panic::concat_panic(&[&[const_panic::PanicVal::write_str(msg)]])
-        }).unwrap_err();
+        })
+        .unwrap_err();
 
         let truncated_found: &str = if let Some(x) = err.downcast_ref::<&str>() {
             x
@@ -27,8 +27,10 @@ fn max_length_env_var_test() {
     match dbg!(option_env!("CONST_PANIC_MAX_LENGTH")) {
         Some("" | "_") | None => {
             #[allow(clippy::assertions_on_constants)]
-            { assert!(MAX_PANIC_MSG_LEN >= 16, "{MAX_PANIC_MSG_LEN}"); }
-            
+            {
+                assert!(MAX_PANIC_MSG_LEN >= 16, "{MAX_PANIC_MSG_LEN}");
+            }
+
             inner("Hello, World!", "Hello, World!", MAX_PANIC_MSG_LEN);
         }
         Some("0") => {
@@ -45,7 +47,7 @@ fn max_length_env_var_test() {
             inner("Hello, world!", "Hello, wor", 10);
             inner("Hello, w風", "Hello, w", 10);
         }
-        Some("80000") => { 
+        Some("80000") => {
             let trunc = ('a'..='z').cycle().take(80000).collect::<String>();
             let msg = trunc.chars().chain("what?".chars()).collect::<String>();
 
@@ -55,8 +57,3 @@ fn max_length_env_var_test() {
         Some(arg) => panic!("there is no test for CONST_PANIC_MAX_LENGTH={arg:?}"),
     }
 }
-
-
-
-
-

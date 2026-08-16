@@ -186,7 +186,6 @@ macro_rules! unwrap_err {
     };
 }
 
-
 #[cfg(not(feature = "rust_1_82"))]
 macro_rules! try_opt {
     ($v:expr) => {
@@ -194,7 +193,7 @@ macro_rules! try_opt {
             Some(x) => x,
             None => return None,
         }
-    }
+    };
 }
 
 #[cfg(not(feature = "rust_1_82"))]

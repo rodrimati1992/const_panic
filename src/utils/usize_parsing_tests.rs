@@ -2,16 +2,13 @@ use super::parse_usize;
 
 use core::fmt::Write;
 
-
-type UsizeFmtBuffer = arrayvec::ArrayString<{(usize::BITS as usize) / 2}>;
-
+type UsizeFmtBuffer = arrayvec::ArrayString<{ (usize::BITS as usize) / 2 }>;
 
 fn format_usize(n: usize) -> UsizeFmtBuffer {
     let mut s = UsizeFmtBuffer::new();
     write!(s, "{n}").unwrap();
     s
 }
-
 
 #[track_caller]
 fn assert_parses_ok(s: &str) {
@@ -39,7 +36,6 @@ fn from_literals_ok_parsing_test() {
     assert_parses_ok("54321");
 }
 
-
 #[track_caller]
 fn assert_err(s: &str) {
     let parsed = parse_usize(s);
@@ -63,7 +59,7 @@ fn err_parsing_test() {
         assert_err(&too_large);
     }
 
-    {        
+    {
         let mut too_large = format_usize(usize::MAX);
         too_large.push('0');
         assert_err(&too_large);
@@ -80,21 +76,15 @@ fn err_parsing_test() {
     assert_err("100003_");
 }
 
-
 #[test]
 fn first_and_last_integers_test() {
     let mid = isize::MAX as usize;
 
-    for n in 
-        (0..=200)
-            .chain((mid - 2) ..= (mid + 2))
-            .chain((usize::MAX - 2) ..= usize::MAX)
+    for n in (0..=200)
+        .chain((mid - 2)..=(mid + 2))
+        .chain((usize::MAX - 2)..=usize::MAX)
     {
         let s = format_usize(n);
         assert_parses_ok(&s);
     }
 }
-
-
-
-
