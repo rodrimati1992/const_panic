@@ -24,10 +24,11 @@ fn max_length_env_var_test() {
 
     assert_eq!('風'.len_utf8(), 3);
 
-    let var = dbg!(option_env!("CONST_PANIC_MAX_LENGTH"));
-    match var.as_deref() {
+    match dbg!(option_env!("CONST_PANIC_MAX_LENGTH")) {
         Some("" | "_") | None => {
-            assert!(MAX_PANIC_MSG_LEN >= 16, "{MAX_PANIC_MSG_LEN}");
+            #[allow(clippy::assertions_on_constants)]
+            { assert!(MAX_PANIC_MSG_LEN >= 16, "{MAX_PANIC_MSG_LEN}"); }
+            
             inner("Hello, World!", "Hello, World!", MAX_PANIC_MSG_LEN);
         }
         Some("0") => {

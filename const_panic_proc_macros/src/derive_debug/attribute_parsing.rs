@@ -1,5 +1,5 @@
 use crate::{
-    datastructure::{DataStructure, DataVariant, Field, GenParamKind, Struct},
+    datastructure::{DataStructure, DataVariant, GenParamKind},
     syntax::ImplHeader,
     utils::{ParseBufferExt, SynResultExt},
     TokenStream2,
@@ -24,10 +24,10 @@ mod keyword {
 }
 
 #[derive(Copy, Clone)]
-pub(crate) enum ParseCtx<'a> {
+pub(crate) enum ParseCtx {
     Container,
-    Variant(usize, &'a Struct<'a>),
-    Field(&'a Field<'a>),
+    Variant,
+    Field,
 }
 
 struct ParsedAttributes<'a> {
@@ -94,8 +94,8 @@ pub(super) fn parse_attributes<'a>(ds: &'a DataStructure<'a>) -> syn::Result<Con
     }
 
     if ds.data_variant == DataVariant::Enum {
-        for (i, v) in ds.variants.iter().enumerate() {
-            let ctx = ParseCtx::Variant(i, v);
+        for v in ds.variants.iter() {
+            let ctx = ParseCtx::Variant;
             for attr in v.attrs {
                 res.combine_err(parse_attribute(&mut this, ds, ctx, attr));
             }
@@ -105,7 +105,7 @@ pub(super) fn parse_attributes<'a>(ds: &'a DataStructure<'a>) -> syn::Result<Con
     for v in &ds.variants {
         for f in &v.fields {
             for attr in f.attrs {
-                res.combine_err(parse_attribute(&mut this, ds, ParseCtx::Field(f), attr));
+                res.combine_err(parse_attribute(&mut this, ds, ParseCtx::Field, attr));
             }
         }
     }
@@ -118,7 +118,7 @@ pub(super) fn parse_attributes<'a>(ds: &'a DataStructure<'a>) -> syn::Result<Con
 fn parse_attribute<'a>(
     this: &mut ParsedAttributes<'a>,
     ds: &'a DataStructure<'a>,
-    ctx: ParseCtx<'a>,
+    ctx: ParseCtx,
     attribute: &Attribute,
 ) -> syn::Result<()> {
     if attribute.path().is_ident("pfmt") {
@@ -138,7 +138,7 @@ fn parse_attribute<'a>(
 fn parse_helper_attribute<'a>(
     this: &mut ParsedAttributes<'a>,
     ds: &'a DataStructure<'a>,
-    ctx: ParseCtx<'a>,
+    ctx: ParseCtx,
     input: &'_ ParseBuffer<'_>,
 ) -> syn::Result<()> {
     let empty = &crate::utils::Empty(input.span());
@@ -238,7 +238,7 @@ fn finish<'a>(
 }
 
 pub(crate) fn check_is_container(
-    ctx: &ParseCtx<'_>,
+    ctx: &ParseCtx,
     sp: &dyn syn::spanned::Spanned,
 ) -> syn::Result<()> {
     if matches!(ctx, ParseCtx::Container) {

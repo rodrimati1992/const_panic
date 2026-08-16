@@ -1,4 +1,6 @@
 #![no_std]
+#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::explicit_auto_deref)]
 
 extern crate alloc;
 

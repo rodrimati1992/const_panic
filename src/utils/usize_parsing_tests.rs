@@ -18,7 +18,7 @@ fn assert_parses_ok(s: &str) {
     let parsed = parse_usize(s);
     assert!(parsed.is_some(), "s = {s:?}  parsed = {parsed:?}");
 
-    assert_eq!(parsed, usize::from_str_radix(s, 10).ok(), "s = {s:?}");
+    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {s:?}");
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn assert_err(s: &str) {
     let parsed = parse_usize(s);
     assert!(parsed.is_none(), "s = {s:?}  parsed = {parsed:?}");
 
-    assert_eq!(parsed, usize::from_str_radix(s, 10).ok(), "s = {s:?}");
+    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {s:?}");
 }
 
 #[test]

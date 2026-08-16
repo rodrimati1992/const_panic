@@ -384,14 +384,18 @@ fn enum_panicvals_lower_bound() {
 #[derive(Debug, PanicFmt)]
 #[pfmt(panicvals_lower_bound = 100)]
 struct LbStruct<'a> {
+    #[allow(dead_code)]
     x: &'a [u8],
+    #[allow(dead_code)]
     y: u8,
 }
 
 #[derive(Debug, PanicFmt)]
 #[pfmt(panicvals_lower_bound = 101)]
 enum LbEnum {
+    #[allow(dead_code)]
     Up,
+    #[allow(dead_code)]
     Down,
 }
 
@@ -422,6 +426,7 @@ mod explicit_gpi {
 #[test]
 fn ignored_generic_params_and_impl_formatting() {
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct NoFmt;
 
     const_panic::inline_macro! {

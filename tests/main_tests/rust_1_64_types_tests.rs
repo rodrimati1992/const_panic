@@ -1,5 +1,3 @@
-use const_panic::{FmtArg, StdWrapper};
-
 #[test]
 #[allow(invalid_from_utf8)]
 fn test_utf8_error() {

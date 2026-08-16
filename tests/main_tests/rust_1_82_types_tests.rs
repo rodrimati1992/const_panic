@@ -5,22 +5,22 @@ use const_panic::{FmtArg, StdWrapper};
 #[test]
 fn test_parse_int_error() {
     {
-        let err: ParseIntError = u32::from_str_radix("", 10).unwrap_err();
+        let err: ParseIntError = "".parse::<u32>().unwrap_err();
         assert_eq!(*err.kind(), IntErrorKind::Empty);
         test_val! {err, no_alternate}
     }
     {
-        let err: ParseIntError = u32::from_str_radix("A", 10).unwrap_err();
+        let err: ParseIntError = "A".parse::<u32>().unwrap_err();
         assert_eq!(*err.kind(), IntErrorKind::InvalidDigit);
         test_val! {err, no_alternate}
     }
     {
-        let err: ParseIntError = u8::from_str_radix("256", 10).unwrap_err();
+        let err: ParseIntError = "256".parse::<u8>().unwrap_err();
         assert_eq!(*err.kind(), IntErrorKind::PosOverflow);
         test_val! {err, no_alternate}
     }
     {
-        let err: ParseIntError = i8::from_str_radix("-256", 10).unwrap_err();
+        let err: ParseIntError = "-256".parse::<i8>().unwrap_err();
         assert_eq!(*err.kind(), IntErrorKind::NegOverflow);
         test_val! {err, no_alternate}
     }

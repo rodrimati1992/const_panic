@@ -12,7 +12,7 @@ pub(crate) struct ImplHeader {
 }
 
 impl ImplHeader {
-    pub(crate) fn parse<'a>(name: &'a Ident, input: ParseStream<'_>) -> syn::Result<Self> {
+    pub(crate) fn parse(name: &Ident, input: ParseStream<'_>) -> syn::Result<Self> {
         let _ = input.parse::<Impl>()?;
         let mut generics = input.parse::<Generics>()?;
 
