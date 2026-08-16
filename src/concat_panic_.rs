@@ -76,18 +76,41 @@ pub const fn concat_panic(args: &[&[PanicVal<'_>]]) -> ! {
     }
 }
 
+
+macro_rules! len_on_16_bit { () => { 512 } }
+macro_rules! len_on_other_bits { () => { 32768 } }
+
+
 /// The maximum length of panic messages (in bytes),
 /// after which the message is truncated.
-pub const MAX_PANIC_MSG_LEN: usize = if let Some(cap) = option_env!("CONST_PANIC_MAX_LENGTH") {
-    match crate::utils::parse_usize(cap) {
-        Some(x) => x,
-        None => panic!("`CONST_PANIC_MAX_LENGTH` environment variable is not a valid integer"),
-    }
-} else if cfg!(target_pointer_width = "16") {
-    512
-} else {
-    32768
-};
+/// 
+/// # Value
+/// 
+/// The value of this constant is determined by these things, from higher to lower priority:
+/// - the `CONST_PANIC_MAX_LENGTH` environment variable, 
+///   in bytes and in base 10 (decimal).
+///   If the value of this env var is either an empty string or `_`,
+///   then it has the same effect as not defining it.
+/// - the amount of bits of the target platform:
+#[doc = concat!("    - on 16 bit: ", len_on_16_bit!(), " bytes")]
+#[doc = concat!("    - on any other bit count: ", len_on_other_bits!(), " bytes")]
+/// 
+pub const MAX_PANIC_MSG_LEN: usize = 
+    if let Some(cap) = {
+        match option_env!("CONST_PANIC_MAX_LENGTH") {
+            Some(var) if matches!(var.as_bytes(), b"" | b"_") => None,
+            var => var
+        }
+    } {
+        match crate::utils::parse_usize(cap) {
+            Some(x) => x,
+            None => panic!("`CONST_PANIC_MAX_LENGTH` environment variable is not a valid integer"),
+        }
+    } else if cfg!(target_pointer_width = "16") {
+        len_on_16_bit!()
+    } else {
+        len_on_other_bits!()
+    };
 
 // writes a single PanicVal to an array
 macro_rules! write_panicval {

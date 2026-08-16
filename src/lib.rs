@@ -161,6 +161,8 @@
 //!
 //! The panic message can only be up to [`MAX_PANIC_MSG_LEN`] long,
 //! after which it is truncated.
+//! The length can be configured by users, 
+//! as described in [the docs for the constant][`MAX_PANIC_MSG_LEN`].
 //!
 //! # Cargo features
 //!
