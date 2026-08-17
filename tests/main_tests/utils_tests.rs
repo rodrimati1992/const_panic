@@ -16,13 +16,6 @@ fn test_max_usize() {
     assert_eq!(utils::max_usize(5, 5), 5);
 }
 
-macro_rules! case {
-    ($bytes:expr, $upto:expr) => {{
-        const SLICE: &[u8] = bytes_up_to($bytes, $upto);
-        assert_eq!(slice,);
-    }};
-}
-
 #[test]
 fn test_bytes_up_to_isconst() {
     const SLICE: &[u8] = bytes_up_to(&[10, 20], 1);

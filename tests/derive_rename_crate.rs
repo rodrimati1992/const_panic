@@ -1,4 +1,4 @@
-//!
+//! a crate
 #![deny(missing_docs)]
 #![cfg(feature = "derive")]
 

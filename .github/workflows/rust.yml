@@ -35,6 +35,7 @@ jobs:
       if: ${{ matrix.rust == 'stable' || matrix.rust == 'beta' || matrix.rust == 'nightly' }}
       run: echo "rustv=rust_latest_stable" >> $GITHUB_ENV
 
+    - uses: actions/checkout@v2
     - name: ci-all-versions
       run: |
         rustup override set ${{ matrix.rust }}
@@ -49,6 +50,32 @@ jobs:
         cargo test --no-default-features --features "test ${{env.rustv}}"
         cargo test --no-default-features --features "test ${{env.rustv}} non_basic"
 
+    - name: env-var-to-set-panic-length-limit-0
+      run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
+      env: 
+        CONST_PANIC_MAX_LENGTH: 0
+
+    - name: env-var-to-set-panic-length-limit-3
+      run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
+      env: 
+        CONST_PANIC_MAX_LENGTH: 3
+
+    - name: env-var-to-set-panic-length-limit-10
+      run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
+      env: 
+        CONST_PANIC_MAX_LENGTH: 10
+
+    - name: env-var-to-set-panic-length-limit-80000
+      run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
+      env: 
+        CONST_PANIC_MAX_LENGTH: 80000
+
+    - name: env-var-to-set-panic-length-limit-_
+      run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
+      env: 
+        CONST_PANIC_MAX_LENGTH: '_'
+
+    - uses: actions/checkout@v2
     - name: ci-proc-macros
       if: ${{ matrix.rust != '1.64.0' && matrix.rust != '1.57.0' }}
       run: |
@@ -71,10 +98,34 @@ jobs:
         cargo update
 
         rustup component add rust-src
+        rustup component add miri
 
         # makes sure that this crate builds on at least this 16-bit architecture
         cargo build -Zbuild-std=core --target=msp430-none-elf \
           --features "test rust_latest_stable non_basic"
 
+
+        # testing passing env var to limit panic message length
+        
+        cargo miri test --config="env.CONST_PANIC_MAX_LENGTH=\"0\"" \
+          --features "rust_latest_stable non_basic"\
+          --test max_length_env_var_test 
+
+        cargo miri test --config="env.CONST_PANIC_MAX_LENGTH=\"3\"" \
+          --features "rust_latest_stable non_basic"\
+          --test max_length_env_var_test 
+
+        cargo miri test --config="env.CONST_PANIC_MAX_LENGTH=\"10\"" \
+          --features "rust_latest_stable non_basic"\
+          --test max_length_env_var_test
+
+        # a bit too expensive to run
+        # cargo miri test --config="env.CONST_PANIC_MAX_LENGTH=\"80000\"" \
+        #   --features "rust_latest_stable non_basic"\
+        #   --test max_length_env_var_test 
+
+        cargo miri test --config="env.CONST_PANIC_MAX_LENGTH=\"_\"" \
+          --features "rust_latest_stable non_basic"\
+          --test max_length_env_var_test 
 
 

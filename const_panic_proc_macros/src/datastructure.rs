@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(clippy::unneeded_struct_pattern)]
+
 use syn::{
     self, Attribute, Data, DeriveInput, Field as SynField, Fields as SynFields, Generics, Ident,
     Type, Visibility,
@@ -39,34 +42,32 @@ impl<'a> DataStructure<'a> {
     pub fn new(ast: &'a DeriveInput) -> Self {
         let name = &ast.ident;
 
-        let data_variant: DataVariant;
-
         let mut variants = Vec::new();
 
-        match &ast.data {
+        let data_variant: DataVariant = match &ast.data {
             Data::Enum(enum_) => {
                 for (variant, var) in enum_.variants.iter().enumerate() {
                     variants.push(Struct::new(
                         StructParams {
-                            variant: variant,
+                            variant,
                             attrs: &var.attrs,
                             name: &var.ident,
                         },
                         &var.fields,
                     ));
                 }
-                data_variant = DataVariant::Enum;
+                DataVariant::Enum
             }
             Data::Struct(struct_) => {
                 variants.push(Struct::new(
                     StructParams {
                         variant: 0,
                         attrs: &[],
-                        name: name,
+                        name,
                     },
                     &struct_.fields,
                 ));
-                data_variant = DataVariant::Struct;
+                DataVariant::Struct
             }
 
             Data::Union(union_) => {
@@ -76,15 +77,15 @@ impl<'a> DataStructure<'a> {
                     StructParams {
                         variant: 0,
                         attrs: &[],
-                        name: name,
+                        name,
                     },
                     sk,
                     fields,
                 );
                 variants.push(vari);
-                data_variant = DataVariant::Union;
+                DataVariant::Union
             }
-        }
+        };
 
         Self {
             vis: &ast.vis,
