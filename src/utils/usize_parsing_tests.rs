@@ -6,16 +6,16 @@ type UsizeFmtBuffer = arrayvec::ArrayString<{ (usize::BITS as usize) / 2 }>;
 
 fn format_usize(n: usize) -> UsizeFmtBuffer {
     let mut s = UsizeFmtBuffer::new();
-    write!(s, "{n}").unwrap();
+    write!(s, "{}", n).unwrap();
     s
 }
 
 #[track_caller]
 fn assert_parses_ok(s: &str) {
     let parsed = parse_usize(s);
-    assert!(parsed.is_some(), "s = {s:?}  parsed = {parsed:?}");
+    assert!(parsed.is_some(), "s = {:?}  parsed = {:?}", s, parsed);
 
-    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {s:?}");
+    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {:?}", s);
 }
 
 #[test]
@@ -39,9 +39,9 @@ fn from_literals_ok_parsing_test() {
 #[track_caller]
 fn assert_err(s: &str) {
     let parsed = parse_usize(s);
-    assert!(parsed.is_none(), "s = {s:?}  parsed = {parsed:?}");
+    assert!(parsed.is_none(), "s = {:?}  parsed = {:?}", s, parsed);
 
-    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {s:?}");
+    assert_eq!(parsed, s.parse::<usize>().ok(), "s = {:?}", s);
 }
 
 #[test]

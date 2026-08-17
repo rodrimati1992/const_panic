@@ -52,23 +52,28 @@ jobs:
 
     - name: env-var-to-set-panic-length-limit-0
       run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
-      env: CONST_PANIC_MAX_LENGTH: 0
+      env: 
+        CONST_PANIC_MAX_LENGTH: 0
 
     - name: env-var-to-set-panic-length-limit-3
       run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
-      env: CONST_PANIC_MAX_LENGTH: 3
+      env: 
+        CONST_PANIC_MAX_LENGTH: 3
 
     - name: env-var-to-set-panic-length-limit-10
       run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
-      env: CONST_PANIC_MAX_LENGTH: 10
+      env: 
+        CONST_PANIC_MAX_LENGTH: 10
 
     - name: env-var-to-set-panic-length-limit-80000
       run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
-      env: CONST_PANIC_MAX_LENGTH: 80000
+      env: 
+        CONST_PANIC_MAX_LENGTH: 80000
 
     - name: env-var-to-set-panic-length-limit-_
       run: cargo test --features "${{env.rustv}}" --test max_length_env_var_test -- --nocapture
-      env: CONST_PANIC_MAX_LENGTH: '_'
+      env: 
+        CONST_PANIC_MAX_LENGTH: '_'
 
     - uses: actions/checkout@v2
     - name: ci-proc-macros
@@ -93,6 +98,7 @@ jobs:
         cargo update
 
         rustup component add rust-src
+        rustup component add miri
 
         # makes sure that this crate builds on at least this 16-bit architecture
         cargo build -Zbuild-std=core --target=msp430-none-elf \
