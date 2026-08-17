@@ -98,6 +98,7 @@ jobs:
         cargo update
 
         rustup component add rust-src
+        rustup component add miri
 
         # makes sure that this crate builds on at least this 16-bit architecture
         cargo build -Zbuild-std=core --target=msp430-none-elf \
