@@ -28,7 +28,7 @@ fn max_length_env_var_test() {
         Some("" | "_") | None => {
             #[allow(clippy::assertions_on_constants)]
             {
-                assert!(MAX_PANIC_MSG_LEN >= 16, "{MAX_PANIC_MSG_LEN}");
+                assert!(MAX_PANIC_MSG_LEN >= 16, "{}", MAX_PANIC_MSG_LEN);
             }
 
             inner("Hello, World!", "Hello, World!", MAX_PANIC_MSG_LEN);
@@ -54,6 +54,6 @@ fn max_length_env_var_test() {
             inner(&trunc, &trunc, 80000);
             inner(&msg, &trunc, 80000);
         }
-        Some(arg) => panic!("there is no test for CONST_PANIC_MAX_LENGTH={arg:?}"),
+        Some(arg) => panic!("there is no test for CONST_PANIC_MAX_LENGTH={:?}", arg),
     }
 }
